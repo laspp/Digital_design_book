@@ -17,3 +17,6 @@ chapters/*.html
 *.tex
 
 .DS_Store
+
+# Claude Code project guidance — not meant for the public repo
+CLAUDE.md

@@ -15,6 +15,9 @@ book:
     - chapters/04-pipeline-hazards.qmd
     - chapters/05-memory.qmd
     - chapters/06-cocotb-verification.qmd
+    - references.qmd
+
+bibliography: references.bib
 
 # Format for the BOOK (used when rendering the whole project: `quarto render`)
 format:

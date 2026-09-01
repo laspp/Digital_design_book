@@ -27,7 +27,8 @@ goal of the second part of the course. Second, practically: separate
 modules with a fixed interface (see `pipeline_pkg.sv`) allow us to
 substitute an individual stage with a reference ("golden") implementation
 in the jigsaw testing methodology — discussed in more detail in the
-verification chapter.
+verification chapter. This five-stage IF/ID/EX/MEM/WB structure follows
+the classic pipelined datapath described by @patterson2017comporg.
 :::
 
 ## Modules for this week
@@ -67,6 +68,10 @@ endpackage
 
 ::: {.content-visible unless-format="revealjs"}
 ### Why a struct instead of individual signals
+
+`typedef struct packed` is standard synthesizable SystemVerilog
+[@ieee1800sv], so this pattern is portable across the tools you will use
+this semester.
 
 An alternative to the approach above would be for each control signal
 (`mem_read`, `mem_write`, `reg_write`, ...) to travel through the pipeline
