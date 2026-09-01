@@ -1,0 +1,10 @@
+---
+title: "Five-Stage Pipeline — Hazards"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# Pipeline hazards {#sec-hazards}
+
+*(placeholder — fill in with week 4 content: forwarding, stall, branch flush)*

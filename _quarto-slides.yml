@@ -1,0 +1,15 @@
+# Profile override used ONLY for per-chapter slide rendering
+# (`--profile slides`, wired up in scripts/render.sh's render_slides /
+# preview_slides). The main _quarto.yml declares `project: type: book`,
+# and Quarto book projects reject the revealjs format outright — trying
+# to render a chapter with `--to revealjs` from inside the project
+# otherwise fails with:
+#
+#   WARN: The revealjs format is not supported by book projects
+#
+# and produces no output. Activating this profile switches the project
+# type to `default` for that render/preview invocation only, so Quarto
+# falls back to each chapter's own `format: revealjs` front matter.
+# It leaves the book config in _quarto.yml untouched.
+project:
+  type: default

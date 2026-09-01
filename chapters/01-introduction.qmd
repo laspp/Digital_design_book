@@ -1,0 +1,10 @@
+---
+title: "Introduction and Review of Fundamentals"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# Introduction {#sec-introduction}
+
+*(placeholder — fill in with week 1 content: Si -> CMOS -> digital circuits -> FPGA, a fast recap)*

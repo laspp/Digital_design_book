@@ -1,0 +1,14 @@
+# Preface {.unnumbered}
+
+This material was written alongside the lectures for the course DN,
+redesigned around the theme of RISC-V SoC design. Each chapter corresponds
+to one week of lectures and serves a dual purpose:
+
+1. As **lecture notes** — rendered as a slide deck (reveal.js).
+2. As a **book chapter** — rendered as part of the combined PDF/HTML
+   course material.
+
+Content intended for only one of the two formats (e.g. discussion
+questions used in class, or in-depth derivations meant for the book) is
+marked with `content-visible` blocks — see the example in the chapter on
+pipeline structure.

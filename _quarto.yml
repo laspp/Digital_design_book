@@ -1,0 +1,69 @@
+project:
+  type: book
+
+book:
+  title: "Designing a RISC-V SoC"
+  subtitle: "Course material for DN"
+  author: "Name Surname"
+  date: today
+  downloads: [pdf]
+  chapters:
+    - index.qmd
+    - chapters/01-introduction.qmd
+    - chapters/02-sv-basics.qmd
+    - chapters/03-pipeline-structure.qmd
+    - chapters/04-pipeline-hazards.qmd
+    - chapters/05-memory.qmd
+    - chapters/06-cocotb-verification.qmd
+
+# Format for the BOOK (used when rendering the whole project: `quarto render`)
+format:
+  html:
+    theme: cosmo
+    toc: true
+    number-sections: true
+  pdf:
+    documentclass: scrreprt
+    classoption:
+      - DIV=9
+      - numbers=noendperiod
+      - parskip=half
+    papersize: a4
+    fontsize: 11pt
+    pdf-engine: xelatex
+    mainfont: "Liberation Serif"
+    sansfont: "Liberation Sans"
+    monofont: "Liberation Mono"
+    monofontoptions:
+      - Scale=0.88
+    colorlinks: true
+    linkcolor: accent
+    urlcolor: accent
+    citecolor: accent
+    toccolor: accent
+    highlight-style: github-light
+    include-in-header:
+      text: |
+        \usepackage{xcolor}
+        \definecolor{accent}{HTML}{1A5276}
+        \addtokomafont{disposition}{\sffamily\color{accent}}
+        \usepackage{framed}
+        \definecolor{shadecolor}{HTML}{F0F0F0}
+        \renewenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+    toc: true
+    number-sections: true
+    keep-tex: true
+
+# Note on lectures (slides):
+# Each chapter in chapters/ also has `format: revealjs` in its own YAML
+# header. Quarto book projects reject the revealjs format outright, so
+# rendering a chapter individually for slides requires the "slides"
+# profile (see _quarto-slides.yml), which switches the project type to
+# `default` for that invocation so Quarto falls back to the chapter's
+# own front matter. scripts/render.sh wires this up automatically.
+#
+# Example for a single week's lecture:
+#   quarto render chapters/03-pipeline-structure.qmd --to revealjs --profile slides
+#
+# Example for the whole book (PDF):
+#   quarto render --to pdf

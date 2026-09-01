@@ -1,0 +1,10 @@
+---
+title: "Memory — Implementation in SystemVerilog"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# Memory {#sec-memory}
+
+*(placeholder — fill in with week 5 content)*

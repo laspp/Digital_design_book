@@ -1,0 +1,10 @@
+---
+title: "Verification with CocoTB"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# Verification with CocoTB {#sec-cocotb}
+
+*(placeholder — fill in with week 6-7 content)*
