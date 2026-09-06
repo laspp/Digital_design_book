@@ -5,6 +5,6 @@ format:
     slide-level: 2
 ---
 
-# Memory {#sec-memory}
+# Memory {#sec-memory .unnumbered}
 
 *(placeholder — fill in with week 5 content)*

@@ -6,6 +6,8 @@
 *_files/
 chapters/*.html
 
+
+
 # LaTeX build intermediates (from PDF rendering)
 *.aux
 *.fdb_latexmk
@@ -20,3 +22,7 @@ chapters/*.html
 
 # Claude Code project guidance — not meant for the public repo
 CLAUDE.md
+
+#old materias
+digital_design-main.zip
+digital_design-main/

@@ -5,6 +5,6 @@ format:
     slide-level: 2
 ---
 
-# Pipeline hazards {#sec-hazards}
+# Pipeline hazards {#sec-hazards .unnumbered}
 
 *(placeholder — fill in with week 4 content: forwarding, stall, branch flush)*

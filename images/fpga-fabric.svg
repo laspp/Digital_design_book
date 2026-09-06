@@ -1,0 +1,107 @@
+<svg width="640" height="430" viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+<rect width="640" height="430" fill="#ffffff"/>
+<rect x="0" y="30" width="82" height="370" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="41.0" y="215.0" text-anchor="middle" fill="#1f2937" font-size="14" font-weight="600" transform="rotate(-90 41.0 215.0)">I/O block</text>
+<rect x="558" y="30" width="82" height="370" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="599.0" y="215.0" text-anchor="middle" fill="#1f2937" font-size="14" font-weight="600" transform="rotate(-90 599.0 215.0)">I/O block</text>
+<line x1="90" y1="44.0" x2="550" y2="44.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="56.0" x2="550" y2="56.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="154.0" x2="550" y2="154.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="166.0" x2="550" y2="166.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="264.0" x2="550" y2="264.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="276.0" x2="550" y2="276.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="374.0" x2="550" y2="374.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="90" y1="386.0" x2="550" y2="386.0" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="104.0" y1="30" x2="104.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="116.0" y1="30" x2="116.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="244.0" y1="30" x2="244.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="256.0" y1="30" x2="256.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="384.0" y1="30" x2="384.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="396.0" y1="30" x2="396.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="524.0" y1="30" x2="524.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="536.0" y1="30" x2="536.0" y2="400" stroke="#6b7280" stroke-width="1.5"/>
+<circle cx="104.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="104.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="116.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="244.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="256.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="384.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="396.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="44.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="56.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="154.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="166.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="264.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="276.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="524.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="374.0" r="2.6" fill="#C0392B"/>
+<circle cx="536.0" cy="386.0" r="2.6" fill="#C0392B"/>
+<rect x="130" y="70" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="180.0" y="110.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="270" y="70" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="320.0" y="110.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="410" y="70" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="460.0" y="110.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="130" y="180" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="180.0" y="220.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="270" y="180" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="320.0" y="220.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="410" y="180" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="460.0" y="220.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="130" y="290" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="180.0" y="330.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="270" y="290" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="320.0" y="330.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<rect x="410" y="290" width="100" height="70" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+<text x="460.0" y="330.0" text-anchor="middle" fill="#1f2937" font-size="16" font-weight="600">CLB</text>
+<circle cx="90" cy="412" r="3.5" fill="#C0392B"/>
+<text x="102" y="416" fill="#1f2937" font-size="12">PIP (programmable interconnect point)</text>
+</svg>

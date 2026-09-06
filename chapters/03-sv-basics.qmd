@@ -5,7 +5,7 @@ format:
     slide-level: 2
 ---
 
-# SystemVerilog basics {#sec-sv-basics}
+# SystemVerilog basics {#sec-sv-basics .unnumbered}
 
 ## Goal for this week
 

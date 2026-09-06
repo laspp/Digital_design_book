@@ -5,6 +5,6 @@ format:
     slide-level: 2
 ---
 
-# Verification with CocoTB {#sec-cocotb}
+# Verification with CocoTB {#sec-cocotb .unnumbered}
 
 *(placeholder — fill in with week 6-7 content)*

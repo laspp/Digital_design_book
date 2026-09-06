@@ -5,6 +5,6 @@ format:
     slide-level: 2
 ---
 
-# Introduction {#sec-introduction}
+# Introduction {#sec-introduction .unnumbered}
 
 *(placeholder — fill in with week 1 content: Si -> CMOS -> digital circuits -> FPGA, a fast recap)*

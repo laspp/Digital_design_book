@@ -10,11 +10,12 @@ book:
   chapters:
     - index.qmd
     - chapters/01-introduction.qmd
-    - chapters/02-sv-basics.qmd
-    - chapters/03-pipeline-structure.qmd
-    - chapters/04-pipeline-hazards.qmd
-    - chapters/05-memory.qmd
-    - chapters/06-cocotb-verification.qmd
+    - chapters/02-fpga-basics.qmd
+    - chapters/03-sv-basics.qmd
+    - chapters/04-pipeline-structure.qmd
+    - chapters/05-pipeline-hazards.qmd
+    - chapters/06-memory.qmd
+    - chapters/07-cocotb-verification.qmd
     - references.qmd
 
 bibliography: references.bib
