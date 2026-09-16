@@ -10,6 +10,7 @@
 #   make slides-02-sv-basics       Render chapter 2's slides
 #   make slides-02                 Same, via the short numeric alias
 #   make preview-03                Live-preview chapter 3's slides
+#   make preview                   Live-preview the whole book
 #   make book-pdf                  Render the whole book (PDF)
 #   make all                       Slides for every chapter + book (HTML)
 
@@ -28,7 +29,7 @@ PREVIEW_TARGETS := $(addprefix preview-,$(CHAPTER_NAMES))
 SLIDES_ALIASES  := $(addprefix slides-,$(CHAPTER_NUMS))
 PREVIEW_ALIASES := $(addprefix preview-,$(CHAPTER_NUMS))
 
-.PHONY: help all book-html book-pdf clean \
+.PHONY: help all book-html book-pdf preview clean \
         $(SLIDES_TARGETS) $(PREVIEW_TARGETS) $(SLIDES_ALIASES) $(PREVIEW_ALIASES)
 
 help:
@@ -40,6 +41,7 @@ help:
 	@echo "Other targets:"
 	@echo "  make book-html    Render the whole book (HTML)"
 	@echo "  make book-pdf     Render the whole book (PDF)"
+	@echo "  make preview      Live-preview the whole book"
 	@echo "  make all          Render slides for every chapter + the book (HTML)"
 	@echo "  make clean        Remove rendered output"
 
@@ -62,6 +64,9 @@ book-html:
 
 book-pdf:
 	$(RENDER) book pdf
+
+preview:
+	$(RENDER) book-preview
 
 all:
 	$(RENDER) all

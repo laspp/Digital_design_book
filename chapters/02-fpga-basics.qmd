@@ -225,6 +225,269 @@ reconfigurability is really one mechanism, repeated at every point in the
 fabric where a design decision has to be made. This is also, in one
 sentence, what a bitstream is: the full list of values for every one of
 these bits, for every CLB, PIP, and I/O block on the device.
+:::
 
-## Case study: Xilinx Series-7 
+## Case study: Xilinx Series-7
+
+::: {.content-visible when-format="revealjs"}
+- Series-7 is one real, concrete implementation of the CLB / routing /
+  I/O model we just built
+- Four sub-families share the same fabric, differing in size and speed:
+  Spartan-7 (low-cost), Artix-7, Kintex-7, Virtex-7 (high-end)
+:::
+
+::: {.content-visible unless-format="revealjs"}
+We have described the CLB, the routing plane, and the I/O block as three
+abstract building blocks, present in every FPGA regardless of vendor or
+generation. To see how a real device turns those abstractions into a
+concrete architecture, we now look at a specific family: Xilinx Series-7.
+Series-7 comprises four sub-families, Spartan-7, Artix-7, Kintex-7, and
+Virtex-7, all built from the same underlying fabric while trading off
+cost, logic capacity, and signal-processing performance. Spartan-7
+targets the low end of that range: small, cost-sensitive, high-volume
+applications. Virtex-7 sits at the opposite end, aimed at the highest
+connectivity bandwidth, logic capacity, and DSP throughput. Artix-7 and
+Kintex-7 fill the middle ground. Every member of the family, from the
+smallest Spartan-7 to the largest Virtex-7, is assembled from the same
+handful of building blocks described below; only their quantity and mix
+change from device to device.
+:::
+
+### CLB: SLICEL and SLICEM
+
+![Row and column relationship between CLBs and slices: each CLB tile holds slice X0 and slice X1, wired to its switch matrix, with Y counting up from the bottom of the column (redrawn from AMD/Xilinx UG474, Fig. 1)](../images/clb-series7-slices.svg)
+
+::: {.content-visible when-format="revealjs"}
+- Xilinx groups two slices into one CLB: **CLB0** (two SLICEL) or
+  **CLB1** (one SLICEM + one SLICEL)
+- **SLICEL** ("slice logical"): four LUT6s, eight flip-flops, a carry
+  chain, and combining muxes
+  - F7AMUX / F7BMUX: pair two LUT6s into one LUT7
+  - F8MUX: pair the two LUT7s into one LUT8
+  - Carry chain: dedicated hardware for fast addition
+  - 8 FFs: 4 configurable as FF or latch, 4 as FF only, sharing one
+    clock and clock-enable
+- **SLICEM** ("slice memory"): everything SLICEL has, plus the option to
+  use its LUTs as
+  - distributed RAM (small RAM built directly from LUT storage), or
+  - a 32-bit shift register
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Where the generic CLB we described earlier held one LUT and one
+flip-flop, a Series-7 CLB is considerably richer, and Xilinx builds it
+from two smaller units called slices. Two slice types exist. Every CLB is
+either a CLB0, containing two SLICEL ("slice logical") slices, or a CLB1,
+containing one SLICEM ("slice memory") and one SLICEL slice. Each slice,
+of either type, contains four six-input LUTs (LUT6) rather than the
+single LUT2 we used to introduce the idea — the same recursive
+fracturable-LUT construction we saw earlier, just taken further, and
+each LUT6 can equally well operate as two independent LUT5s sharing the
+same five inputs. To build functions wider than six inputs, the slice
+adds dedicated combining multiplexers on top of the LUTs themselves:
+F7AMUX and F7BMUX each merge a pair of LUT6 outputs into one seven-input
+function, and a further F8MUX merges the two resulting LUT7 outputs into
+a single eight-input function. This is the same output-mux idea from the
+generic CLB, just repurposed to widen LUTs instead of choosing between a
+combinational and a registered output.
+
+Because addition is one of the most common operations in digital design,
+each slice also includes a dedicated carry chain: fast, purpose-built
+hardware that propagates carry signals between adjacent slices without
+routing them back through the general interconnect, considerably
+speeding up adders and comparators compared to building the same carry
+logic out of ordinary LUTs. On the sequential side, each slice packs
+eight flip-flops rather than the one flip-flop per LUT we introduced
+earlier. Four of these are configurable to behave as either an
+edge-triggered flip-flop or a level-sensitive latch, while the remaining
+four are flip-flop only; all eight share one clock and one clock-enable
+signal, though each still has its own configuration bits for init value
+and set/reset behavior, echoing the per-flip-flop reconfigurability we
+discussed for the generic CLB.
+
+![SLICEL, simplified block diagram: four LUT6s feed the F7A/F7B/F8 combining muxes and the carry chain, each lane ending in an FF/Latch and an FF-only register sharing one clock and clock-enable (redrawn, not to scale, after AMD/Xilinx UG474, Fig. 2)](../images/slicel-block-diagram.svg)
+
+SLICEM slices add one more capability that SLICEL slices lack. A LUT's
+whole purpose, as we saw earlier, is to hold a fixed truth table in SRAM
+cells that the design's inputs address; that content does not change
+while the design runs. SLICEM's LUTs can instead be repurposed as small,
+fast, genuinely writable memory: either distributed RAM, where the LUT's
+SRAM cells are written and read directly by the design as if they were a
+tiny local memory, or a 32-bit shift register, where the same cells
+behave as a chain of delay elements. Both uses trade away the LUT's
+normal role as a combinational lookup table in exchange for a small
+amount of local storage exactly where it is needed, without consuming a
+dedicated block RAM.
+:::
+
+### Block RAM and DSP slices
+
+::: {.content-visible when-format="revealjs"}
+- **Block RAM (BRAM)**: dedicated, hard-wired memory, independent of
+  LUT-based distributed RAM
+  - Comes in 36 Kb and 18 Kb blocks, configurable into many width/depth
+    combinations (e.g. 32K×1, 16K×2, ... for a 36 Kb block)
+  - Modes: single-port, true dual-port (two independent read/write
+    ports), simple dual-port (one write port, one read port)
+  - A FIFO is a block RAM plus dedicated pointer/flag logic
+- **DSP slices**: dedicated, hard-wired arithmetic units (multiply, add,
+  accumulate) — no LUTs involved
+:::
+
+::: {.content-visible unless-format="revealjs"}
+SLICEM's distributed RAM is useful for small amounts of storage, but real
+designs routinely need much larger memories: register files, FIFOs, line
+buffers, caches. Building those out of LUTs alone would be both wasteful
+of logic resources and slow, so Series-7 devices additionally provide
+dedicated block RAM (BRAM): hard-wired memory macros scattered through
+the fabric, entirely separate from the CLBs. Each BRAM comes in one of
+two hard-wired sizes, 36 Kb or 18 Kb, and each size can be configured, at
+implementation time, into a range of width and depth combinations — a
+36 Kb block, for instance, can be organized as 32K words of 1 bit, 16K
+words of 2 bits, 8K words of 4 bits, and so on, trading width for depth
+as the design requires. Configuration also selects the memory's port
+structure: single-port, true dual-port (two fully independent address,
+read, and write ports), or simple dual-port (one port dedicated to
+writing, the other to reading). A FIFO is not a separate hardware
+primitive at all; it is simply a block RAM combined with dedicated
+pointer and flag logic that turns its linear address space into a
+first-in-first-out queue.
+
+Arithmetic is common enough, and multiplication expensive enough to
+build efficiently out of general LUT fabric, that Series-7 devices
+dedicate a third kind of hard-wired block to it: the DSP slice. A DSP
+slice implements a fixed pipeline of multiply, add, and accumulate
+hardware directly in silicon, entirely bypassing the LUT and carry-chain
+logic used for general-purpose addition. Just as with the CLB and BRAM,
+a DSP slice is configured rather than wired by hand — configuration bits
+select which of its internal operations are active and how they are
+chained together — but the arithmetic itself runs on dedicated hardware
+rather than being synthesized from LUTs, which is what makes DSP slices
+dramatically faster and more area-efficient than an equivalent LUT-based
+multiplier.
+:::
+
+### Clock management and interconnect
+
+::: {.content-visible when-format="revealjs"}
+- **Global clock buffers** distribute clocks with low skew across the
+  device
+- The device is divided into **clock regions** (50 CLB rows tall), each
+  fed by its own local clock network
+- A **clock management tile (CMT)** generates and conditions clocks
+  (frequency synthesis, phase shift, deskew) before they reach the
+  buffers
+- Interconnect is built from **switch boxes**: clusters of PIPs joining
+  the horizontal/vertical routing tracks that run between CLB rows and
+  columns
+- Same primitive as before: each PIP is an NMOS pass transistor gated by
+  one configuration SRAM bit
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A clock signal is unlike any other net on the chip: every register that
+uses it must see the same edge at very nearly the same instant, or the
+design's timing margins erode. General-purpose routing, built from PIPs
+and switch boxes with no particular guarantee on delay matching, is not
+good enough for this job, so Series-7 devices route clocks through a
+dedicated network instead. Global clock buffers distribute a small
+number of clock signals across the device with deliberately low skew,
+and the device's area is partitioned into clock regions, each spanning
+50 CLB rows, with its own local clock distribution so that skew stays low
+even far from the clock's entry point. Before a clock reaches those
+buffers, it can optionally pass through a clock management tile (CMT),
+dedicated hardware that synthesizes new frequencies, shifts phase, or
+removes accumulated skew — capabilities well beyond anything the general
+fabric could provide.
+
+Everything that is not a dedicated clock net still relies on the same
+general-purpose interconnect introduced earlier: horizontal and vertical
+routing tracks running between rows and columns of CLBs, joined at
+switch boxes wherever they cross. A switch box is simply a cluster of
+PIPs, and, exactly as in the generic architecture, each PIP reduces to
+one NMOS pass transistor gated by a single configuration SRAM bit.
+Series-7 does not introduce a new mechanism here at all — it is the same
+one-bit-per-connection primitive met earlier, just deployed at the scale
+a real device needs: thousands of switch boxes, each with many PIPs,
+giving the router enough freedom to connect any CLB, BRAM, or DSP
+slice's output to any other block's input.
+:::
+
+## FPGA design flow
+
+::: {.content-visible when-format="revealjs"}
+- The FPGA flow mirrors the ASIC flow, but the target primitive is a
+  LUT, not a standard cell
+- **Synthesis**: RTL → netlist (EDIF), with preliminary performance
+  estimates
+- **Translate**: merge multiple netlists into a single one
+- **Map**: group netlist logic into the device's physical primitives
+  (LUTs, flip-flops, carry chains, ...)
+- **Place**: assign each mapped primitive to a specific CLB/slice site
+- **Route**: connect placed primitives through PIPs and switch boxes
+  - **Static timing analysis**: finds the critical path and the
+    resulting maximum clock frequency
+- **Bitstream generation**: write every configuration SRAM bit to a
+  file the device (or a PROM) can load
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Earlier, when introducing routing, we noted that placing a design onto
+an FPGA comes down to two questions: which CLB implements which piece of
+logic, and which routing resources carry the signals between them. The
+FPGA design flow is the sequence of tool steps that answers those
+questions automatically, turning an RTL description into the bitstream
+that configures every SRAM bit we have discussed in this chapter. That
+flow closely resembles the one used for ASICs, since both ultimately map
+a hardware description down to physical resources on silicon, but it
+differs in one important respect: the target primitive throughout is a
+LUT and its associated flip-flop, not a standard cell from an ASIC
+library, which shapes what several of the intermediate steps actually do.
+
+The flow begins with design entry, typically RTL written in a hardware
+description language, and proceeds to synthesis. Synthesis interprets
+that RTL and produces a synthesized circuit netlist, generally stored in
+the standard EDIF format, along with preliminary performance estimates
+that give an early, optimistic sense of whether the design will meet
+its timing goals before the slower steps that follow. A translate step
+then merges this netlist with any others belonging to the same design
+(for instance, netlists from separately synthesized IP blocks) into one
+single netlist: a text description of every component in the design and
+how its terminals connect to every other component's terminals.
+
+The next two steps are where the LUT-based nature of FPGAs really shows.
+Mapping takes the logical symbols in that merged netlist, ordinary gates
+such as ANDs, ORs, and multiplexers, and groups them into the physical
+components the target device actually provides: LUTs of a specific
+width, flip-flops, carry-chain segments, and so on. This is conceptually
+similar to technology mapping in an ASIC flow, except the "cell library"
+being mapped to is not a fixed set of gates but the fracturable-LUT
+building blocks we described earlier in this chapter. Placing then takes
+every one of those mapped components and assigns it to one specific site
+on the chip, a particular slice within a particular CLB, deciding, in
+other words, which CLB implements which piece of logic. Routing follows,
+connecting every placed component to every other one it needs to reach
+by selecting a path through the switch boxes and PIPs of the routing
+plane, deciding which routing resources carry each signal.
+
+Routing also produces the reports that tell us whether the design
+actually works at the clock frequency we want. A static timing analyzer
+performs a static analysis of the fully placed and routed circuit,
+accounting for every source of delay along every path, logic delay
+through LUTs, routing delay through PIPs, and everything in between, to
+identify the circuit's critical path: the longest path from the output
+of one register to the input of another. Because a synchronous design
+can run no faster than its slowest register-to-register path allows,
+the critical path directly determines the design's maximum clock
+frequency, which is exactly the number this whole flow exists to
+maximize.
+
+Once placement and routing succeed and timing closes, the last step is
+bitstream generation: writing out the configuration file for the FPGA,
+the complete list of values for every LUT content bit, every flip-flop's
+configuration, every PIP, and every I/O block setting that we introduced
+across this chapter. That bit file can be downloaded directly onto the
+FPGA, configuring its (volatile) SRAM cells as we described earlier, or
+converted into a PROM file: a non-volatile store that reprograms the
+FPGA automatically, from power-up, every time the board is powered on.
 :::
