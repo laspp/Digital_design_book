@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>5&nbsp; SystemVerilog — Syntax and Synthesizable Coding Style – Designing a RISC-V SoC</title>
+<title>4&nbsp; SystemVerilog — Syntax and Synthesizable Coding Style – Designing a RISC-V SoC</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -117,7 +117,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-sv-basics.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/04-sv-basics.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -165,50 +165,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/02-introduction.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/05-pipeline-structure.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/06-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/07-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/08-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -223,13 +217,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#sec-sv-basics" id="toc-sec-sv-basics" class="nav-link active" data-scroll-target="#sec-sv-basics">SystemVerilog basics</a>
   <ul class="collapse">
-  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">5.1</span> Goal for this week</a></li>
-  <li><a href="#it-looks-like-c.-it-isnt." id="toc-it-looks-like-c.-it-isnt." class="nav-link" data-scroll-target="#it-looks-like-c.-it-isnt."><span class="header-section-number">5.2</span> It looks like C. It isn’t.</a></li>
-  <li><a href="#signals-vs.-variables" id="toc-signals-vs.-variables" class="nav-link" data-scroll-target="#signals-vs.-variables"><span class="header-section-number">5.3</span> Signals vs.&nbsp;variables</a></li>
-  <li><a href="#combinational-logic-always_comb" id="toc-combinational-logic-always_comb" class="nav-link" data-scroll-target="#combinational-logic-always_comb"><span class="header-section-number">5.4</span> Combinational logic: <code>always_comb</code></a></li>
-  <li><a href="#sequential-logic-always_ff" id="toc-sequential-logic-always_ff" class="nav-link" data-scroll-target="#sequential-logic-always_ff"><span class="header-section-number">5.5</span> Sequential logic: <code>always_ff</code></a></li>
-  <li><a href="#reset-styles" id="toc-reset-styles" class="nav-link" data-scroll-target="#reset-styles"><span class="header-section-number">5.6</span> Reset styles</a></li>
-  <li><a href="#from-syntax-to-the-pipeline" id="toc-from-syntax-to-the-pipeline" class="nav-link" data-scroll-target="#from-syntax-to-the-pipeline"><span class="header-section-number">5.7</span> From syntax to the pipeline</a></li>
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</a></li>
+  <li><a href="#it-looks-like-c.-it-isnt." id="toc-it-looks-like-c.-it-isnt." class="nav-link" data-scroll-target="#it-looks-like-c.-it-isnt."><span class="header-section-number">4.2</span> It looks like C. It isn’t.</a></li>
+  <li><a href="#signals-vs.-variables" id="toc-signals-vs.-variables" class="nav-link" data-scroll-target="#signals-vs.-variables"><span class="header-section-number">4.3</span> Signals vs.&nbsp;variables</a></li>
+  <li><a href="#combinational-logic-always_comb" id="toc-combinational-logic-always_comb" class="nav-link" data-scroll-target="#combinational-logic-always_comb"><span class="header-section-number">4.4</span> Combinational logic: <code>always_comb</code></a></li>
+  <li><a href="#sequential-logic-always_ff" id="toc-sequential-logic-always_ff" class="nav-link" data-scroll-target="#sequential-logic-always_ff"><span class="header-section-number">4.5</span> Sequential logic: <code>always_ff</code></a></li>
+  <li><a href="#reset-styles" id="toc-reset-styles" class="nav-link" data-scroll-target="#reset-styles"><span class="header-section-number">4.6</span> Reset styles</a></li>
+  <li><a href="#from-syntax-to-the-pipeline" id="toc-from-syntax-to-the-pipeline" class="nav-link" data-scroll-target="#from-syntax-to-the-pipeline"><span class="header-section-number">4.7</span> From syntax to the pipeline</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -239,7 +233,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></h1>
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></h1>
 </div>
 
 
@@ -258,21 +252,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="sec-sv-basics" class="level1 unnumbered">
 <h1 class="unnumbered">SystemVerilog basics</h1>
-<section id="goal-for-this-week" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">5.1</span> Goal for this week</h2>
+<section id="goal-for-this-week" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</h2>
 <ul>
 <li>Learn to read SystemVerilog by knowing exactly where the C-like syntax stops being a reliable guide</li>
 <li>Separate combinational logic (<code>always_comb</code>) from sequential logic (<code>always_ff</code>), and the assignment operator each one requires</li>
 <li>Recognize latch inference and reset styles on sight, before they show up as bugs in your own pipeline stages</li>
 </ul>
 </section>
-<section id="it-looks-like-c.-it-isnt." class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="it-looks-like-c.-it-isnt."><span class="header-section-number">5.2</span> It looks like C. It isn’t.</h2>
+<section id="it-looks-like-c.-it-isnt." class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="it-looks-like-c.-it-isnt."><span class="header-section-number">4.2</span> It looks like C. It isn’t.</h2>
 <p>The snippet above is syntactically close enough to C that it is tempting to read it top to bottom, one statement after another. That reading is wrong, and it is the single most important thing to unlearn this week. A module is not a function that runs once and returns — it is a piece of hardware that exists for as long as the circuit is powered. <code>y1</code> and <code>y2</code> are not computed “first” and “second”; they are two separate wires, each continuously driven by its own gate, both existing simultaneously and forever. There is no call stack, no return value, and no “after” — only signals that settle to a value whenever their inputs change.</p>
 <p>Every construct in this chapter is a variation on this same fact: SV syntax borrows C’s punctuation, but describes structure and behavior in time, not a sequence of steps.</p>
 </section>
-<section id="signals-vs.-variables" class="level2" data-number="5.3">
-<h2 data-number="5.3" class="anchored" data-anchor-id="signals-vs.-variables"><span class="header-section-number">5.3</span> Signals vs.&nbsp;variables</h2>
+<section id="signals-vs.-variables" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="signals-vs.-variables"><span class="header-section-number">4.3</span> Signals vs.&nbsp;variables</h2>
 <p>A CS variable holds a value because you assigned it one; nothing drives it otherwise. A <code>logic</code> signal in SV is closer to a wire with memory — it holds whatever it was last driven to, by whichever <code>assign</code> or <code>always</code> block is responsible for it, and it is an error (caught by simulation, not always by synthesis) for more than one such block to drive it.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, RUN, DONE} state_t;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -282,13 +276,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>} packet_t;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><code>typedef enum</code> gives a set of named constants a single type, instead of scattering magic numbers through the code. <code>typedef struct packed</code> bundles related signals into one name that can travel through a module’s ports or a pipeline register as a single unit — you will see exactly this pattern in <code>pipeline_pkg.sv</code> next chapter, where control signals are grouped this way instead of being passed as individual wires.</p>
 </section>
-<section id="combinational-logic-always_comb" class="level2" data-number="5.4">
-<h2 data-number="5.4" class="anchored" data-anchor-id="combinational-logic-always_comb"><span class="header-section-number">5.4</span> Combinational logic: <code>always_comb</code></h2>
+<section id="combinational-logic-always_comb" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="combinational-logic-always_comb"><span class="header-section-number">4.4</span> Combinational logic: <code>always_comb</code></h2>
 <p>An <code>always_comb</code> block re-evaluates itself immediately whenever any signal it reads changes — closer to a spreadsheet formula that recalculates on every input edit than to a function you call. Assignment inside it uses <code>=</code> (blocking), read as “this is what the output equals right now,” not “do this step, then the next.”</p>
 <p>The example above is an incomplete 2-to-1-style decoder: two of the four <code>sel</code> cases are unhandled. In a spreadsheet, an unhandled case would just show a blank cell. In hardware, <code>y</code> cannot go blank — if no branch assigns it, the only way to keep <code>y</code> at <em>some</em> value is to remember the previous one. Synthesis does exactly that: it infers a latch. This is almost never what you want in a synchronous design, and it is the most common bugr <code>always_comb</code> produces. The fix is always the same: every signal assigned in an <code>always_comb</code> block must be assigned on <em>every</em> path through it — in practice, an <code>else</code> or a <code>default</code> branch on every <code>if</code>/<code>case</code>.</p>
 </section>
-<section id="sequential-logic-always_ff" class="level2" data-number="5.5">
-<h2 data-number="5.5" class="anchored" data-anchor-id="sequential-logic-always_ff"><span class="header-section-number">5.5</span> Sequential logic: <code>always_ff</code></h2>
+<section id="sequential-logic-always_ff" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="sequential-logic-always_ff"><span class="header-section-number">4.5</span> Sequential logic: <code>always_ff</code></h2>
 <p><code>always_ff</code> describes a block that updates only at a clock edge — a register, not a formula. It uses <code>&lt;=</code> (non-blocking assignment), which reads as “at this clock edge, schedule this update,” rather than <code>=</code>’s “this is the value right now.” The distinction matters the moment two <code>always_ff</code> blocks depend on each other, which is exactly the situation every pipeline register is in.</p>
 <p>Consider two registers meant to swap values on the same clock edge:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
@@ -297,13 +291,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>With non-blocking assignment, both right-hand sides are read using each register’s value <em>before</em> this clock edge, and both updates take effect together — the swap works, matching what “on every clock edge, in parallel” should mean. Replace <code>&lt;=</code> with <code>=</code> and the second line reads the value the first line just wrote, collapsing two parallel updates into a sequential one — the swap silently fails, and nothing about the syntax warns you. This is why the pairing on the previous slide has no exceptions: <code>=</code> in combinational logic, <code>&lt;=</code> in clocked logic, every time.</p>
 </section>
-<section id="reset-styles" class="level2" data-number="5.6">
-<h2 data-number="5.6" class="anchored" data-anchor-id="reset-styles"><span class="header-section-number">5.6</span> Reset styles</h2>
+<section id="reset-styles" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="reset-styles"><span class="header-section-number">4.6</span> Reset styles</h2>
 <p>Both styles produce a register that clears <code>q</code> to zero on reset; they differ in <em>when</em> the clear can happen. A synchronous reset only takes effect at a clock edge — <code>rst</code> is just another input to the same logic that decides the next value of <code>q</code>. An asynchronous reset takes effect the moment <code>rst</code> asserts, independent of the clock, which is why it appears in the sensitivity list alongside <code>posedge clk</code>.</p>
 <p>The DFF you will build next chapter as a pipeline register uses exactly this pattern — it is worth being able to tell the two styles apart on sight, since the choice affects how quickly a stalled or flushed pipeline stage can be forced back to a known state.</p>
 </section>
-<section id="from-syntax-to-the-pipeline" class="level2" data-number="5.7">
-<h2 data-number="5.7" class="anchored" data-anchor-id="from-syntax-to-the-pipeline"><span class="header-section-number">5.7</span> From syntax to the pipeline</h2>
+<section id="from-syntax-to-the-pipeline" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="from-syntax-to-the-pipeline"><span class="header-section-number">4.7</span> From syntax to the pipeline</h2>
 <p>Every construct introduced in this chapter reappears immediately in the next one. <code>typedef enum</code> and <code>typedef struct packed</code> are how <code>pipeline_pkg.sv</code> groups control signals; <code>always_ff</code> with the non-blocking assignment and reset style you just saw is how <code>if_id_reg</code> and the other pipeline registers are built; <code>always_comb</code> with the blocking assignment and complete-branch discipline is how the ALU and decoder avoid the latch-inference trap. Nothing in the pipeline chapter introduces new syntax — it only puts this chapter’s syntax to work on a larger example.</p>
 
 
@@ -713,12 +707,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="../chapters/03-fpga-basics.html" class="pagination-link" aria-label="FPGA Fundamentals">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="../chapters/05-pipeline-structure.html" class="pagination-link" aria-label="Five-Stage Pipeline — Structure">
-        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

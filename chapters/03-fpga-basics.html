@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>4&nbsp; FPGA Fundamentals – Designing a RISC-V SoC</title>
+<title>3&nbsp; FPGA Fundamentals – Designing a RISC-V SoC</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -31,7 +31,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../chapters/04-sv-basics.html" rel="next">
-<link href="../chapters/02-introduction.html" rel="prev">
+<link href="../chapters/01-digital-ic-basics.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -82,7 +82,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/03-fpga-basics.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/03-fpga-basics.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -130,50 +130,44 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/02-introduction.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/05-pipeline-structure.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/06-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/07-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/08-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -188,22 +182,22 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#sec-fpga-basics" id="toc-sec-fpga-basics" class="nav-link active" data-scroll-target="#sec-fpga-basics">FPGA Fundamentals</a>
   <ul class="collapse">
-  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</a></li>
-  <li><a href="#why-reconfigurable-hardware" id="toc-why-reconfigurable-hardware" class="nav-link" data-scroll-target="#why-reconfigurable-hardware"><span class="header-section-number">4.2</span> Why reconfigurable hardware?</a></li>
-  <li><a href="#the-three-building-blocks" id="toc-the-three-building-blocks" class="nav-link" data-scroll-target="#the-three-building-blocks"><span class="header-section-number">4.3</span> The three building blocks</a>
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">3.1</span> Goal for this week</a></li>
+  <li><a href="#why-reconfigurable-hardware" id="toc-why-reconfigurable-hardware" class="nav-link" data-scroll-target="#why-reconfigurable-hardware"><span class="header-section-number">3.2</span> Why reconfigurable hardware?</a></li>
+  <li><a href="#the-three-building-blocks" id="toc-the-three-building-blocks" class="nav-link" data-scroll-target="#the-three-building-blocks"><span class="header-section-number">3.3</span> The three building blocks</a>
   <ul class="collapse">
-  <li><a href="#configurable-logic-block-clb" id="toc-configurable-logic-block-clb" class="nav-link" data-scroll-target="#configurable-logic-block-clb"><span class="header-section-number">4.3.1</span> Configurable Logic Block (CLB)</a></li>
-  <li><a href="#routing-plane-programmable-interconnect" id="toc-routing-plane-programmable-interconnect" class="nav-link" data-scroll-target="#routing-plane-programmable-interconnect"><span class="header-section-number">4.3.2</span> Routing plane: programmable interconnect</a></li>
-  <li><a href="#io-blocks" id="toc-io-blocks" class="nav-link" data-scroll-target="#io-blocks"><span class="header-section-number">4.3.3</span> I/O blocks</a></li>
-  <li><a href="#reconfigurability-level-by-level" id="toc-reconfigurability-level-by-level" class="nav-link" data-scroll-target="#reconfigurability-level-by-level"><span class="header-section-number">4.3.4</span> Reconfigurability, level by level</a></li>
+  <li><a href="#configurable-logic-block-clb" id="toc-configurable-logic-block-clb" class="nav-link" data-scroll-target="#configurable-logic-block-clb"><span class="header-section-number">3.3.1</span> Configurable Logic Block (CLB)</a></li>
+  <li><a href="#routing-plane-programmable-interconnect" id="toc-routing-plane-programmable-interconnect" class="nav-link" data-scroll-target="#routing-plane-programmable-interconnect"><span class="header-section-number">3.3.2</span> Routing plane: programmable interconnect</a></li>
+  <li><a href="#io-blocks" id="toc-io-blocks" class="nav-link" data-scroll-target="#io-blocks"><span class="header-section-number">3.3.3</span> I/O blocks</a></li>
+  <li><a href="#reconfigurability-level-by-level" id="toc-reconfigurability-level-by-level" class="nav-link" data-scroll-target="#reconfigurability-level-by-level"><span class="header-section-number">3.3.4</span> Reconfigurability, level by level</a></li>
   </ul></li>
-  <li><a href="#case-study-xilinx-series-7" id="toc-case-study-xilinx-series-7" class="nav-link" data-scroll-target="#case-study-xilinx-series-7"><span class="header-section-number">4.4</span> Case study: Xilinx Series-7</a>
+  <li><a href="#case-study-xilinx-series-7" id="toc-case-study-xilinx-series-7" class="nav-link" data-scroll-target="#case-study-xilinx-series-7"><span class="header-section-number">3.4</span> Case study: Xilinx Series-7</a>
   <ul class="collapse">
-  <li><a href="#clb-slicel-and-slicem" id="toc-clb-slicel-and-slicem" class="nav-link" data-scroll-target="#clb-slicel-and-slicem"><span class="header-section-number">4.4.1</span> CLB: SLICEL and SLICEM</a></li>
-  <li><a href="#block-ram-and-dsp-slices" id="toc-block-ram-and-dsp-slices" class="nav-link" data-scroll-target="#block-ram-and-dsp-slices"><span class="header-section-number">4.4.2</span> Block RAM and DSP slices</a></li>
-  <li><a href="#clock-management-and-interconnect" id="toc-clock-management-and-interconnect" class="nav-link" data-scroll-target="#clock-management-and-interconnect"><span class="header-section-number">4.4.3</span> Clock management and interconnect</a></li>
+  <li><a href="#clb-slicel-and-slicem" id="toc-clb-slicel-and-slicem" class="nav-link" data-scroll-target="#clb-slicel-and-slicem"><span class="header-section-number">3.4.1</span> CLB: SLICEL and SLICEM</a></li>
+  <li><a href="#block-ram-and-dsp-slices" id="toc-block-ram-and-dsp-slices" class="nav-link" data-scroll-target="#block-ram-and-dsp-slices"><span class="header-section-number">3.4.2</span> Block RAM and DSP slices</a></li>
+  <li><a href="#clock-management-and-interconnect" id="toc-clock-management-and-interconnect" class="nav-link" data-scroll-target="#clock-management-and-interconnect"><span class="header-section-number">3.4.3</span> Clock management and interconnect</a></li>
   </ul></li>
-  <li><a href="#fpga-design-flow" id="toc-fpga-design-flow" class="nav-link" data-scroll-target="#fpga-design-flow"><span class="header-section-number">4.5</span> FPGA design flow</a></li>
+  <li><a href="#fpga-design-flow" id="toc-fpga-design-flow" class="nav-link" data-scroll-target="#fpga-design-flow"><span class="header-section-number">3.5</span> FPGA design flow</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -213,7 +207,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></h1>
+<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></h1>
 </div>
 
 
@@ -232,16 +226,16 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="sec-fpga-basics" class="level1 unnumbered">
 <h1 class="unnumbered">FPGA Fundamentals</h1>
-<section id="goal-for-this-week" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</h2>
+<section id="goal-for-this-week" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">3.1</span> Goal for this week</h2>
 <ul>
 <li>Place the FPGA on the spectrum between a general-purpose CPU and a fixed ASIC, and see why that position makes it the right prototyping target for this course</li>
 <li>Break the FPGA fabric down into its three building blocks: CLB, routing plane, I/O blocks</li>
 <li>Open up a CLB far enough to see the LUT + flip-flop pair that will later become “the thing our synthesized SystemVerilog turns into”</li>
 </ul>
 </section>
-<section id="why-reconfigurable-hardware" class="level2" data-number="4.2">
-<h2 data-number="4.2" class="anchored" data-anchor-id="why-reconfigurable-hardware"><span class="header-section-number">4.2</span> Why reconfigurable hardware?</h2>
+<section id="why-reconfigurable-hardware" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="why-reconfigurable-hardware"><span class="header-section-number">3.2</span> Why reconfigurable hardware?</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/cpu-fpga-asic-spectrum.svg" class="img-fluid figure-img"></p>
@@ -253,8 +247,8 @@ ul.task-list li input[type="checkbox"] {
 <p>Comparing the CPU and the TPU, what we would really like is both properties at once: the flexibility to repurpose the device, and hardware tailored to the application at hand to squeeze out its full potential. Reconfigurable hardware, the field-programmable gate array (FPGA), gives us both, and its name spells out how. “Gate array” comes from the internal structure: logic blocks arranged on a matrix-like fabric, echoing the gate-array architecture used in some ASICs. “Programmable” does not mean the FPGA executes a software program in the traditional sense, though it can in a limited way. Instead, it refers to the reconfigurable property itself, achieved by loading a bitstream, a special binary configuration file, onto the device. “Field” refers to the field of application: an FPGA can adapt its internal structure to whatever application is at hand, out in the field, long after manufacturing.</p>
 <p>This is exactly the trade-off an FPGA offers. It sits between the CPU and the ASIC by turning the hardware itself into a form of software: the logical function of every building block, and the wiring between them, is set by the bitstream loaded after manufacturing. We get most of an ASIC’s advantage of “hardware built for the job” without paying its fixed non-recurring engineering (NRE) cost or its all-or-nothing commitment. That is exactly why this course targets FPGAs. A mistake in a lab assignment costs a re-synthesis and a few minutes, not a re-spun die. FPGAs are also the standard vehicle for rapid prototyping and hardware acceleration in industry for the same reason. Reconfigurability turns hardware design into something you can iterate on.</p>
 </section>
-<section id="the-three-building-blocks" class="level2" data-number="4.3">
-<h2 data-number="4.3" class="anchored" data-anchor-id="the-three-building-blocks"><span class="header-section-number">4.3</span> The three building blocks</h2>
+<section id="the-three-building-blocks" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="the-three-building-blocks"><span class="header-section-number">3.3</span> The three building blocks</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/fpga-fabric.svg" class="img-fluid figure-img"></p>
@@ -262,8 +256,8 @@ ul.task-list li input[type="checkbox"] {
 </figure>
 </div>
 <p>Every FPGA, regardless of vendor or generation, is built from the same three kinds of block. CLBs (also called logic elements) sit in a regular grid and implement the actual logic functions and storage of the design. Between and around them runs the routing plane: a fabric of wires and programmable switches whose only job is to connect a CLB’s outputs to the inputs of other CLBs, in whatever pattern the design needs. At the edges of the die, I/O blocks connect the fabric to physical pins, translating between the FPGA’s internal signal levels and whatever the outside world expects. None of these three blocks is useful without the other two: a CLB with no routing to reach it is dead logic, and routing with nothing to connect is just wire. Placing a design onto an FPGA is precisely the problem of deciding which CLB implements which piece of logic (placement) and which routing resources carry the signals between them (routing). We will meet both steps again when we look at the FPGA design flow.</p>
-<section id="configurable-logic-block-clb" class="level3" data-number="4.3.1">
-<h3 data-number="4.3.1" class="anchored" data-anchor-id="configurable-logic-block-clb"><span class="header-section-number">4.3.1</span> Configurable Logic Block (CLB)</h3>
+<section id="configurable-logic-block-clb" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="configurable-logic-block-clb"><span class="header-section-number">3.3.1</span> Configurable Logic Block (CLB)</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/clb-slice.svg" class="img-fluid figure-img"></p>
@@ -289,8 +283,8 @@ ul.task-list li input[type="checkbox"] {
 <p>Few real digital circuits are purely combinational. Almost every design also needs elements that are synchronous to a clock. To support that, every CLB slice also includes a D flip-flop (DFF) fed from the LUT’s output. As we saw earlier, a DFF copies its input (D) to its output (Q) on the active edge of the clock signal, clk. Through configuration bits, the developer can adapt that DFF’s behavior, choosing whether it triggers on the rising or falling edge, and setting its initial or reset value. This exposes yet another layer of reconfigurability inside the CLB.</p>
 <p>The last element of the CLB is the output mux, which picks between the raw LUT output and the flip-flop’s registered output. That mux’s select line is, like the LUT’s memory cells, just another bit in configuration SRAM. The same physical slice can act as combinational logic or as a single-bit register, purely depending on how it is configured. Real devices bundle several LUT + flip-flop slices, wider LUTs, and extra logic (carry chains, muxes for combining LUTs into wider functions) into one CLB. We look at a concrete example of that when we cover a real device architecture later.</p>
 </section>
-<section id="routing-plane-programmable-interconnect" class="level3" data-number="4.3.2">
-<h3 data-number="4.3.2" class="anchored" data-anchor-id="routing-plane-programmable-interconnect"><span class="header-section-number">4.3.2</span> Routing plane: programmable interconnect</h3>
+<section id="routing-plane-programmable-interconnect" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="routing-plane-programmable-interconnect"><span class="header-section-number">3.3.2</span> Routing plane: programmable interconnect</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/routing-pip.svg" class="img-fluid figure-img"></p>
@@ -300,8 +294,8 @@ ul.task-list li input[type="checkbox"] {
 <p>Routing plays two closely related roles. First, it lets many individual CLBs act as one large digital design: a real circuit needs far more logic and storage than a single CLB slice can hold, so the design is spread across hundreds or thousands of CLBs, and routing is what stitches their individual outputs together into one coherent datapath. Second, routing connects that internal logic to the outside world, joining CLBs to the I/O blocks that carry signals in and out of the fabric. Without it, CLBs and I/O blocks would be correct but disconnected islands of logic.</p>
 <p>Between the rows and columns of CLBs run wiring tracks, and at every point where a horizontal and a vertical track cross, a switch box can optionally join them. The atomic component of a switch box is the PIP: a single NMOS transistor used purely as a switch, with its gate driven by one configuration SRAM bit. When that bit is 0, the transistor is off and the two tracks it sits between are electrically separate. When it is 1, the transistor conducts and the tracks become one net. A design’s entire wiring, meaning every connection from one CLB’s output to another CLB’s input, reduces to which of these thousands of PIPs are turned on. This is also why the router is typically the slowest step in the FPGA implementation tools: placement decides which CLB does what, but routing has to find, among a huge and only partially connected mesh of tracks and switch boxes, one specific set of PIPs that realizes every net in the design without any two nets shorting together.</p>
 </section>
-<section id="io-blocks" class="level3" data-number="4.3.3">
-<h3 data-number="4.3.3" class="anchored" data-anchor-id="io-blocks"><span class="header-section-number">4.3.3</span> I/O blocks</h3>
+<section id="io-blocks" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="io-blocks"><span class="header-section-number">3.3.3</span> I/O blocks</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/io-block.svg" class="img-fluid figure-img"></p>
@@ -310,16 +304,16 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>An I/O block is the boundary between the reconfigurable fabric and a fixed physical pin, and it has to support more than “just wire a signal through.” On the output side, a signal from the fabric can optionally be registered right at the pin before it reaches a tri-state buffer. That buffer’s output-enable (OE) input decides whether the pad is actively driven at all, which is what makes a genuinely bidirectional pin possible. The same pad can be released to high-impedance and read as an input whenever the design is not driving it. The input side mirrors this with its own optional register. Registering directly in the I/O block, rather than in the nearest CLB, shortens the path the signal has to travel before it is captured, which matters because I/O timing margins are usually tighter than internal fabric timing. As with everything else on the chip, whether each of these registers is used, and whether a pin behaves as input, output, or bidirectional, is a configuration decision, not a fact fixed at fabrication.</p>
 </section>
-<section id="reconfigurability-level-by-level" class="level3" data-number="4.3.4">
-<h3 data-number="4.3.4" class="anchored" data-anchor-id="reconfigurability-level-by-level"><span class="header-section-number">4.3.4</span> Reconfigurability, level by level</h3>
+<section id="reconfigurability-level-by-level" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="reconfigurability-level-by-level"><span class="header-section-number">3.3.4</span> Reconfigurability, level by level</h3>
 <p>We have now seen five separate places where a single configuration SRAM bit changes what the FPGA does. Inside the CLB, one set of bits picks the function stored in each LUT, another set picks whether the D flip-flop triggers on the rising or falling edge and what value it resets to, and one more bit decides whether the slice’s output is the LUT’s raw combinational result or the flip-flop’s registered one. Out in the routing plane, a bit per PIP decides which pairs of tracks are joined into the same net. At the I/O block, bits decide whether a register is used on the input or output path, and whether a pin drives, receives, or does both. None of these is a special case. Every one of them is the same primitive: an SRAM cell whose value the configuration step writes before the device does anything useful. What looks like five different kinds of reconfigurability is really one mechanism, repeated at every point in the fabric where a design decision has to be made. This is also, in one sentence, what a bitstream is: the full list of values for every one of these bits, for every CLB, PIP, and I/O block on the device.</p>
 </section>
 </section>
-<section id="case-study-xilinx-series-7" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="case-study-xilinx-series-7"><span class="header-section-number">4.4</span> Case study: Xilinx Series-7</h2>
+<section id="case-study-xilinx-series-7" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="case-study-xilinx-series-7"><span class="header-section-number">3.4</span> Case study: Xilinx Series-7</h2>
 <p>We have described the CLB, the routing plane, and the I/O block as three abstract building blocks, present in every FPGA regardless of vendor or generation. To see how a real device turns those abstractions into a concrete architecture, we now look at a specific family: Xilinx Series-7. Series-7 comprises four sub-families, Spartan-7, Artix-7, Kintex-7, and Virtex-7, all built from the same underlying fabric while trading off cost, logic capacity, and signal-processing performance. Spartan-7 targets the low end of that range: small, cost-sensitive, high-volume applications. Virtex-7 sits at the opposite end, aimed at the highest connectivity bandwidth, logic capacity, and DSP throughput. Artix-7 and Kintex-7 fill the middle ground. Every member of the family, from the smallest Spartan-7 to the largest Virtex-7, is assembled from the same handful of building blocks described below; only their quantity and mix change from device to device.</p>
-<section id="clb-slicel-and-slicem" class="level3" data-number="4.4.1">
-<h3 data-number="4.4.1" class="anchored" data-anchor-id="clb-slicel-and-slicem"><span class="header-section-number">4.4.1</span> CLB: SLICEL and SLICEM</h3>
+<section id="clb-slicel-and-slicem" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="clb-slicel-and-slicem"><span class="header-section-number">3.4.1</span> CLB: SLICEL and SLICEM</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="../images/clb-series7-slices.svg" class="img-fluid figure-img"></p>
@@ -336,19 +330,19 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>SLICEM slices add one more capability that SLICEL slices lack. A LUT’s whole purpose, as we saw earlier, is to hold a fixed truth table in SRAM cells that the design’s inputs address; that content does not change while the design runs. SLICEM’s LUTs can instead be repurposed as small, fast, genuinely writable memory: either distributed RAM, where the LUT’s SRAM cells are written and read directly by the design as if they were a tiny local memory, or a 32-bit shift register, where the same cells behave as a chain of delay elements. Both uses trade away the LUT’s normal role as a combinational lookup table in exchange for a small amount of local storage exactly where it is needed, without consuming a dedicated block RAM.</p>
 </section>
-<section id="block-ram-and-dsp-slices" class="level3" data-number="4.4.2">
-<h3 data-number="4.4.2" class="anchored" data-anchor-id="block-ram-and-dsp-slices"><span class="header-section-number">4.4.2</span> Block RAM and DSP slices</h3>
+<section id="block-ram-and-dsp-slices" class="level3" data-number="3.4.2">
+<h3 data-number="3.4.2" class="anchored" data-anchor-id="block-ram-and-dsp-slices"><span class="header-section-number">3.4.2</span> Block RAM and DSP slices</h3>
 <p>SLICEM’s distributed RAM is useful for small amounts of storage, but real designs routinely need much larger memories: register files, FIFOs, line buffers, caches. Building those out of LUTs alone would be both wasteful of logic resources and slow, so Series-7 devices additionally provide dedicated block RAM (BRAM): hard-wired memory macros scattered through the fabric, entirely separate from the CLBs. Each BRAM comes in one of two hard-wired sizes, 36 Kb or 18 Kb, and each size can be configured, at implementation time, into a range of width and depth combinations — a 36 Kb block, for instance, can be organized as 32K words of 1 bit, 16K words of 2 bits, 8K words of 4 bits, and so on, trading width for depth as the design requires. Configuration also selects the memory’s port structure: single-port, true dual-port (two fully independent address, read, and write ports), or simple dual-port (one port dedicated to writing, the other to reading). A FIFO is not a separate hardware primitive at all; it is simply a block RAM combined with dedicated pointer and flag logic that turns its linear address space into a first-in-first-out queue.</p>
 <p>Arithmetic is common enough, and multiplication expensive enough to build efficiently out of general LUT fabric, that Series-7 devices dedicate a third kind of hard-wired block to it: the DSP slice. A DSP slice implements a fixed pipeline of multiply, add, and accumulate hardware directly in silicon, entirely bypassing the LUT and carry-chain logic used for general-purpose addition. Just as with the CLB and BRAM, a DSP slice is configured rather than wired by hand — configuration bits select which of its internal operations are active and how they are chained together — but the arithmetic itself runs on dedicated hardware rather than being synthesized from LUTs, which is what makes DSP slices dramatically faster and more area-efficient than an equivalent LUT-based multiplier.</p>
 </section>
-<section id="clock-management-and-interconnect" class="level3" data-number="4.4.3">
-<h3 data-number="4.4.3" class="anchored" data-anchor-id="clock-management-and-interconnect"><span class="header-section-number">4.4.3</span> Clock management and interconnect</h3>
+<section id="clock-management-and-interconnect" class="level3" data-number="3.4.3">
+<h3 data-number="3.4.3" class="anchored" data-anchor-id="clock-management-and-interconnect"><span class="header-section-number">3.4.3</span> Clock management and interconnect</h3>
 <p>A clock signal is unlike any other net on the chip: every register that uses it must see the same edge at very nearly the same instant, or the design’s timing margins erode. General-purpose routing, built from PIPs and switch boxes with no particular guarantee on delay matching, is not good enough for this job, so Series-7 devices route clocks through a dedicated network instead. Global clock buffers distribute a small number of clock signals across the device with deliberately low skew, and the device’s area is partitioned into clock regions, each spanning 50 CLB rows, with its own local clock distribution so that skew stays low even far from the clock’s entry point. Before a clock reaches those buffers, it can optionally pass through a clock management tile (CMT), dedicated hardware that synthesizes new frequencies, shifts phase, or removes accumulated skew — capabilities well beyond anything the general fabric could provide.</p>
 <p>Everything that is not a dedicated clock net still relies on the same general-purpose interconnect introduced earlier: horizontal and vertical routing tracks running between rows and columns of CLBs, joined at switch boxes wherever they cross. A switch box is simply a cluster of PIPs, and, exactly as in the generic architecture, each PIP reduces to one NMOS pass transistor gated by a single configuration SRAM bit. Series-7 does not introduce a new mechanism here at all — it is the same one-bit-per-connection primitive met earlier, just deployed at the scale a real device needs: thousands of switch boxes, each with many PIPs, giving the router enough freedom to connect any CLB, BRAM, or DSP slice’s output to any other block’s input.</p>
 </section>
 </section>
-<section id="fpga-design-flow" class="level2" data-number="4.5">
-<h2 data-number="4.5" class="anchored" data-anchor-id="fpga-design-flow"><span class="header-section-number">4.5</span> FPGA design flow</h2>
+<section id="fpga-design-flow" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="fpga-design-flow"><span class="header-section-number">3.5</span> FPGA design flow</h2>
 <p>Earlier, when introducing routing, we noted that placing a design onto an FPGA comes down to two questions: which CLB implements which piece of logic, and which routing resources carry the signals between them. The FPGA design flow is the sequence of tool steps that answers those questions automatically, turning an RTL description into the bitstream that configures every SRAM bit we have discussed in this chapter. That flow closely resembles the one used for ASICs, since both ultimately map a hardware description down to physical resources on silicon, but it differs in one important respect: the target primitive throughout is a LUT and its associated flip-flop, not a standard cell from an ASIC library, which shapes what several of the intermediate steps actually do.</p>
 <p>The flow begins with design entry, typically RTL written in a hardware description language, and proceeds to synthesis. Synthesis interprets that RTL and produces a synthesized circuit netlist, generally stored in the standard EDIF format, along with preliminary performance estimates that give an early, optimistic sense of whether the design will meet its timing goals before the slower steps that follow. A translate step then merges this netlist with any others belonging to the same design (for instance, netlists from separately synthesized IP blocks) into one single netlist: a text description of every component in the design and how its terminals connect to every other component’s terminals.</p>
 <p>The next two steps are where the LUT-based nature of FPGAs really shows. Mapping takes the logical symbols in that merged netlist, ordinary gates such as ANDs, ORs, and multiplexers, and groups them into the physical components the target device actually provides: LUTs of a specific width, flip-flops, carry-chain segments, and so on. This is conceptually similar to technology mapping in an ASIC flow, except the “cell library” being mapped to is not a fixed set of gates but the fracturable-LUT building blocks we described earlier in this chapter. Placing then takes every one of those mapped components and assigns it to one specific site on the chip, a particular slice within a particular CLB, deciding, in other words, which CLB implements which piece of logic. Routing follows, connecting every placed component to every other one it needs to reach by selecting a path through the switch boxes and PIPs of the routing plane, deciding which routing resources carry each signal.</p>
@@ -761,13 +755,13 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/02-introduction.html" class="pagination-link" aria-label="Introduction and Review of Fundamentals">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span>
+      <a href="../chapters/01-digital-ic-basics.html" class="pagination-link" aria-label="Basics of Digital Integrated Circuits">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="../chapters/04-sv-basics.html" class="pagination-link" aria-label="SystemVerilog — Syntax and Synthesizable Coding Style">
-        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
