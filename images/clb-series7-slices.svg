@@ -1,0 +1,76 @@
+<svg width="700" height="430" viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+  <rect width="700" height="430" fill="#ffffff"/>
+
+  <text x="350" y="20" text-anchor="middle" font-size="13" fill="#5f6b7a">Row and column relationship between CLBs and slices (Series-7)</text>
+
+  <!-- axis glyph -->
+  <line x1="40" y1="350" x2="40" y2="270" stroke="#374151" stroke-width="1.6"/>
+  <path d="M 34 278 L 40 268 L 46 278" fill="none" stroke="#374151" stroke-width="1.6"/>
+  <text x="40" y="260" text-anchor="middle" font-size="12" fill="#1f2937">Y</text>
+  <line x1="40" y1="350" x2="115" y2="350" stroke="#374151" stroke-width="1.6"/>
+  <path d="M 107 344 L 117 350 L 107 356" fill="none" stroke="#374151" stroke-width="1.6"/>
+  <text x="126" y="354" font-size="12" fill="#1f2937">X</text>
+
+  <!-- vertical routing-column connectors between switch matrices -->
+  <line x1="175" y1="22" x2="175" y2="50" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M 169 30 L 175 20 L 181 30" fill="none" stroke="#9aa5b1" stroke-width="1.5"/>
+  <line x1="175" y1="130" x2="175" y2="150" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="175" y1="230" x2="175" y2="250" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="175" y1="330" x2="175" y2="358" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M 169 350 L 175 360 L 181 350" fill="none" stroke="#9aa5b1" stroke-width="1.5"/>
+
+  <!-- switch matrix, row Y2 -->
+  <rect x="130" y="50" width="90" height="80" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="175" y="86" text-anchor="middle" font-size="12" fill="#5f6b7a">Switch</text>
+  <text x="175" y="100" text-anchor="middle" font-size="12" fill="#5f6b7a">Matrix</text>
+  <line x1="220" y1="90" x2="280" y2="90" stroke="#374151" stroke-width="1.8"/>
+
+  <!-- switch matrix, row Y1 -->
+  <rect x="130" y="150" width="90" height="80" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="175" y="186" text-anchor="middle" font-size="12" fill="#5f6b7a">Switch</text>
+  <text x="175" y="200" text-anchor="middle" font-size="12" fill="#5f6b7a">Matrix</text>
+  <line x1="220" y1="190" x2="280" y2="190" stroke="#374151" stroke-width="1.8"/>
+
+  <!-- switch matrix, row Y0 -->
+  <rect x="130" y="250" width="90" height="80" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="175" y="286" text-anchor="middle" font-size="12" fill="#5f6b7a">Switch</text>
+  <text x="175" y="300" text-anchor="middle" font-size="12" fill="#5f6b7a">Matrix</text>
+  <line x1="220" y1="290" x2="280" y2="290" stroke="#374151" stroke-width="1.8"/>
+
+  <!-- slice headers, above the top CLB -->
+  <text x="315" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#1f2937">SLICE(0)</text>
+  <text x="385" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#1f2937">SLICE(1)</text>
+
+  <!-- CLB row Y2 -->
+  <rect x="280" y="50" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="315" y="94" text-anchor="middle" font-size="13" fill="#1f2937">X0Y2</text>
+  <rect x="350" y="50" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="385" y="94" text-anchor="middle" font-size="13" fill="#1f2937">X1Y2</text>
+  <text x="430" y="94" font-size="12.5" fill="#5f6b7a">Y = 2</text>
+
+  <!-- CLB row Y1 (with callout) -->
+  <rect x="280" y="150" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="315" y="194" text-anchor="middle" font-size="13" fill="#1f2937">X0Y1</text>
+  <rect x="350" y="150" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="385" y="194" text-anchor="middle" font-size="13" fill="#1f2937">X1Y1</text>
+  <text x="430" y="194" font-size="12.5" fill="#5f6b7a">Y = 1</text>
+
+  <rect x="272" y="142" width="156" height="96" rx="8" fill="none" stroke="#C0392B" stroke-width="1.8" stroke-dasharray="5 3"/>
+  <line x1="428" y1="190" x2="490" y2="190" stroke="#C0392B" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="496" y="195" font-size="13" fill="#7a2a1c">one CLB = 2 slices</text>
+
+  <!-- CLB row Y0 -->
+  <rect x="280" y="250" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="315" y="294" text-anchor="middle" font-size="13" fill="#1f2937">X0Y0</text>
+  <rect x="350" y="250" width="70" height="80" rx="6" fill="#EAF1F6" stroke="#1A5276" stroke-width="2"/>
+  <text x="385" y="294" text-anchor="middle" font-size="13" fill="#1f2937">X1Y0</text>
+  <text x="430" y="294" font-size="12.5" fill="#5f6b7a">Y = 0</text>
+
+  <!-- X column labels -->
+  <text x="315" y="345" text-anchor="middle" font-size="12.5" fill="#5f6b7a">X = 0</text>
+  <text x="385" y="345" text-anchor="middle" font-size="12.5" fill="#5f6b7a">X = 1</text>
+
+  <!-- caption -->
+  <text x="350" y="390" text-anchor="middle" font-size="12.5" fill="#5f6b7a">Each CLB tile holds slice X0 (left) and slice X1 (right);</text>
+  <text x="350" y="406" text-anchor="middle" font-size="12.5" fill="#5f6b7a">Y increases with every row, counting up from the bottom of the column</text>
+</svg>

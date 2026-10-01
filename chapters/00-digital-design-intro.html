@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.31">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>1&nbsp; Introduction to Digital Design – Designing a RISC-V SoC</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/01-digital-ic-basics.html" rel="next">
+<link href="../index.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-467c603866d931062acf9dde62877a13.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/00-digital-design-intro.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-digital-design-intro" id="toc-sec-digital-design-intro" class="nav-link active" data-scroll-target="#sec-digital-design-intro">Introduction to Digital Design</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">1.1</span> Goal for this week</a></li>
+  <li><a href="#the-p-n-junction" id="toc-the-p-n-junction" class="nav-link" data-scroll-target="#the-p-n-junction"><span class="header-section-number">1.2</span> The P-N junction</a>
+  <ul class="collapse">
+  <li><a href="#the-depletion-region" id="toc-the-depletion-region" class="nav-link" data-scroll-target="#the-depletion-region"><span class="header-section-number">1.2.1</span> The depletion region</a></li>
+  </ul></li>
+  <li><a href="#cmos-technology" id="toc-cmos-technology" class="nav-link" data-scroll-target="#cmos-technology"><span class="header-section-number">1.3</span> CMOS technology</a>
+  <ul class="collapse">
+  <li><a href="#mosfet-transistors" id="toc-mosfet-transistors" class="nav-link" data-scroll-target="#mosfet-transistors"><span class="header-section-number">1.3.1</span> MOSFET transistors</a></li>
+  <li><a href="#complementary-mos" id="toc-complementary-mos" class="nav-link" data-scroll-target="#complementary-mos"><span class="header-section-number">1.3.2</span> Complementary MOS</a></li>
+  </ul></li>
+  <li><a href="#cmos-characteristics" id="toc-cmos-characteristics" class="nav-link" data-scroll-target="#cmos-characteristics"><span class="header-section-number">1.4</span> CMOS characteristics</a>
+  <ul class="collapse">
+  <li><a href="#transfer-function" id="toc-transfer-function" class="nav-link" data-scroll-target="#transfer-function"><span class="header-section-number">1.4.1</span> Transfer function</a></li>
+  <li><a href="#noise-margins" id="toc-noise-margins" class="nav-link" data-scroll-target="#noise-margins"><span class="header-section-number">1.4.2</span> Noise margins</a></li>
+  <li><a href="#power" id="toc-power" class="nav-link" data-scroll-target="#power"><span class="header-section-number">1.4.3</span> Power</a></li>
+  <li><a href="#dynamic-behavior" id="toc-dynamic-behavior" class="nav-link" data-scroll-target="#dynamic-behavior"><span class="header-section-number">1.4.4</span> Dynamic behavior</a></li>
+  </ul></li>
+  <li><a href="#manufacturing-cmos-integrated-circuits" id="toc-manufacturing-cmos-integrated-circuits" class="nav-link" data-scroll-target="#manufacturing-cmos-integrated-circuits"><span class="header-section-number">1.5</span> Manufacturing CMOS integrated circuits</a>
+  <ul class="collapse">
+  <li><a href="#photolithography-process" id="toc-photolithography-process" class="nav-link" data-scroll-target="#photolithography-process"><span class="header-section-number">1.5.1</span> Photolithography process</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-digital-design-intro" class="level1 unnumbered">
+<h1 class="unnumbered">Introduction to Digital Design</h1>
+<section id="goal-for-this-week" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">1.1</span> Goal for this week</h2>
+<ul>
+<li>See why the P-N junction’s one-way conduction is the basic building block behind every diode and every transistor</li>
+<li>Follow how a MOSFET’s gate voltage creates, and destroys, a conducting channel between source and drain, turning it into a voltage-controlled switch</li>
+<li>Build the CMOS inverter from one NMOS and one PMOS, and see why that pairing is what gives CMOS its low static power</li>
+<li>Separate static and dynamic power, and see which design choices trade one for the other</li>
+<li>Connect the transistor-level picture to the chip-level one: how NMOS and PMOS actually end up side by side on the same piece of silicon, and roughly how a wafer becomes a chip</li>
+</ul>
+</section>
+<section id="the-p-n-junction" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="the-p-n-junction"><span class="header-section-number">1.2</span> The P-N junction</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/silicon-doping.png" class="img-fluid figure-img" width="600"></p>
+<figcaption>N-type and P-type silicon: doping replaces some silicon atoms with impurities that donate either a free electron or a hole</figcaption>
+</figure>
+</div>
+<p>One of the fundamental facts of solid-state electronics is how a P-N junction behaves. On its own, pure silicon is a poor conductor. We fix that through doping, deliberately introducing a small number of impurity atoms into the silicon lattice to change how many free charge carriers it has. Dope silicon with an element that has more valence electrons than silicon, such as phosphorus or arsenic, and the extra electrons become free carriers. We call the result n-type silicon, “n” for the negative charge of its majority carrier. Dope it instead with an element that has fewer valence electrons, such as boron or gallium, and the missing electron leaves behind a “hole”, a position that behaves like a mobile positive charge. We call that p-type silicon.</p>
+<p>Bring a block of n-type and a block of p-type silicon into contact, and the junction between them behaves in a way neither material does alone. Current flows easily in one direction, forward bias, and is almost completely blocked in the other, reverse bias. This one-way behavior is not a separate property we add. It falls directly out of how charge moves across the junction, and it is the basic mechanism behind every diode, and in turn, every transistor we build in this course.</p>
+<section id="the-depletion-region" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="the-depletion-region"><span class="header-section-number">1.2.1</span> The depletion region</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/pn-junction-bias.png" class="img-fluid figure-img" width="700"></p>
+<figcaption>The depletion region at a P-N junction, and how reverse bias and forward bias each move the electric field relative to the battery’s field</figcaption>
+</figure>
+</div>
+<p>Right at the junction, free electrons from the n-side and free holes from the p-side meet and recombine, leaving behind a thin region with no free carriers at all. We call this the depletion region. What is left behind there is not neutral. It is the fixed, immobile dopant ions that donated those carriers in the first place, and those fixed charges set up an electric field across the depletion region, pointing from the n-side toward the p-side.</p>
+<section id="equilibrium" class="level4" data-number="1.2.1.1">
+<h4 data-number="1.2.1.1" class="anchored" data-anchor-id="equilibrium"><span class="header-section-number">1.2.1.1</span> Equilibrium</h4>
+<p>With no external voltage applied, that built-in field reaches a balance point. It is strong enough to stop any further electrons or holes from diffusing across the junction, but no stronger. We call this the equilibrium state. Electrically, it behaves like a small built-in barrier, often called the Coulomb barrier, that a carrier has to overcome before it can cross from one side to the other.</p>
+</section>
+<section id="reverse-bias" class="level4" data-number="1.2.1.2">
+<h4 data-number="1.2.1.2" class="anchored" data-anchor-id="reverse-bias"><span class="header-section-number">1.2.1.2</span> Reverse bias</h4>
+<p>Apply an external voltage with its positive terminal on the n-side, and that external field points the same way as the junction’s built-in field. The two add together, the depletion region widens, and the barrier an electron would need to cross gets taller, not shorter. For current to flow at all, electrons from the n-side would have to reach the junction and recombine with holes on the p-side, and a reverse-biased junction actively drives electrons away from the junction instead. The result is that almost no current flows.</p>
+</section>
+<section id="forward-bias" class="level4" data-number="1.2.1.3">
+<h4 data-number="1.2.1.3" class="anchored" data-anchor-id="forward-bias"><span class="header-section-number">1.2.1.3</span> Forward bias</h4>
+<p>Flip the polarity, and the external field now opposes the built-in field instead of reinforcing it. The depletion region shrinks, the Coulomb barrier collapses, and carriers can cross the junction with very little resistance. This is forward bias, and it is the conducting state of a diode.</p>
+</section>
+</section>
+</section>
+<section id="cmos-technology" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="cmos-technology"><span class="header-section-number">1.3</span> CMOS technology</h2>
+<p>Complementary Metal-Oxide-Semiconductor (CMOS) technology is, practically speaking, unavoidable in digital design. It builds every logic function from paired n-type and p-type MOSFETs, and that pairing is what lets it combine very low static power with high noise immunity and fast switching, all at once. That combination is exactly what large-scale integration needs, whether that means a battery-powered microcontroller or the millions of logic gates on a modern microprocessor. Every digital building block we design in this course, down to the CLB we met in the FPGA fabric, ultimately bottoms out in CMOS transistors like the ones in this chapter.</p>
+<section id="mosfet-transistors" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="mosfet-transistors"><span class="header-section-number">1.3.1</span> MOSFET transistors</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/mosfet-symbols.png" class="img-fluid figure-img" width="500"></p>
+<figcaption>NMOS and PMOS schematic symbols: the four-terminal version shows the body connection explicitly, the three-terminal version assumes it</figcaption>
+</figure>
+</div>
+<p>We will mostly use the MOSFET as a switch, though it can also amplify signals. At first glance it looks like a four-terminal device: gate, source, drain, and body. A voltage on the gate decides whether, and how strongly, current can flow between source and drain. The body terminal shifts the device’s voltage-current characteristics and is normally just tied to a fixed supply rail, which is why many schematic symbols leave it out and show only three terminals.</p>
+<p>The name spells out what the device is built from. “Metal-Oxide- Semiconductor” describes its physical structure. “Field-Effect Transistor” describes how it works: an electric field, not a direct physical connection, controls the current.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/nmos-cross-section.png" class="img-fluid figure-img" width="500"></p>
+<figcaption>NMOS cross-section: a metal gate over an oxide insulator, sitting above a p-type substrate with two n+ regions for source and drain</figcaption>
+</figure>
+</div>
+<p>We illustrate an NMOS. Its gate is a metal layer separated from the p-type substrate beneath it by a thin oxide layer, which insulates the gate and prevents any DC current from flowing into it. Source and drain are both n+ regions embedded directly in that p-type substrate. The names describe their role in conduction: the source supplies the charge carriers, electrons for an n-channel device and holes for a p-channel one, that flow through the channel, and the drain is where those carriers leave it.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/nmos-channel-formation.png" class="img-fluid figure-img" width="700"></p>
+<figcaption>Turning an NMOS on: a positive gate voltage pulls electrons to the surface and forms a conducting channel between source and drain, which collapses again once the gate voltage is removed</figcaption>
+</figure>
+</div>
+<p>To turn an NMOS on, we apply a positive voltage to the gate. That voltage attracts electrons from the p-type substrate toward the surface and pushes holes downward and away, purely through the electric field it creates, which is exactly what makes this a field-effect transistor. Once enough electrons have gathered at the surface, they form a bridge, the channel, connecting source and drain, and current can flow between them. How long that channel is, geometrically, is a property of the fabrication technology used.</p>
+<p>In effect, the MOS transistor behaves as a controlled switch. Take the voltage off the gate, and the electrons no longer have anywhere to stay. The channel dissolves, and the connection between drain and source opens back up.</p>
+</section>
+<section id="complementary-mos" class="level3" data-number="1.3.2">
+<h3 data-number="1.3.2" class="anchored" data-anchor-id="complementary-mos"><span class="header-section-number">1.3.2</span> Complementary MOS</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/cmos-inverter.png" class="img-fluid figure-img" width="700"></p>
+<figcaption>CMOS inverter: tying NMOS and PMOS gates together means exactly one of them conducts for any input, pulling the output to either ground or VDD</figcaption>
+</figure>
+</div>
+<p>A CMOS gate pairs an NMOS and a PMOS transistor that share a common gate input. We already know how to turn an NMOS on, and a PMOS is its mirror image: it turns on when the gate is low rather than high. Tie a positive voltage to the shared gate, and the NMOS turns on while the PMOS turns off, pulling the output down to ground. Tie the gate to ground instead, and the PMOS turns on while the NMOS turns off, pulling the output up to VDD. In both cases, exactly one of the two transistors conducts, never both, and the output ends up at the opposite logic level from the input. That is an inverter, and it is the simplest possible CMOS gate.</p>
+</section>
+</section>
+<section id="cmos-characteristics" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="cmos-characteristics"><span class="header-section-number">1.4</span> CMOS characteristics</h2>
+<section id="transfer-function" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" class="anchored" data-anchor-id="transfer-function"><span class="header-section-number">1.4.1</span> Transfer function</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/cmos-transfer-function.png" class="img-fluid figure-img" width="400"></p>
+<figcaption>CMOS inverter transfer function: the output stays near VDD or near ground across most of the input range, and switches abruptly near VDD/2</figcaption>
+</figure>
+</div>
+<p>The transfer function shows how the output voltage depends on the input voltage. For a CMOS inverter, it is almost a step function. For a wide range of low inputs, the PMOS is on and the NMOS is off, and the output sits close to VDD. For a wide range of high inputs, the roles reverse and the output sits close to ground. Only in a narrow band around VDD/2 do both transistors conduct at once, and the output swings sharply from one rail to the other. That sharp transition is exactly what we want from a digital gate. It is what keeps a “1” looking like a clean 1 and a “0” looking like a clean 0, right up until the input crosses the switching threshold.</p>
+</section>
+<section id="noise-margins" class="level3" data-number="1.4.2">
+<h3 data-number="1.4.2" class="anchored" data-anchor-id="noise-margins"><span class="header-section-number">1.4.2</span> Noise margins</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/cmos-noise-margins.png" class="img-fluid figure-img" width="400"></p>
+<figcaption>A noisy signal riding on a CMOS logic level. As long as the noise stays within the flat regions of the transfer function, it never gets interpreted as the wrong logic level</figcaption>
+</figure>
+</div>
+<p>Because the transfer function stays flat near VDD and near ground across most of the input range, a CMOS gate tolerates a surprising amount of noise. A signal can pick up noise from neighboring wires or supply fluctuations and still be read correctly, as long as that noise does not push the voltage past the switching threshold in the middle of the transfer function. This margin between “close enough to a clean logic level” and “close enough to flip the gate’s decision” is the noise margin, and CMOS’s wide noise margins are one of the main reasons it dominates digital design.</p>
+</section>
+<section id="power" class="level3" data-number="1.4.3">
+<h3 data-number="1.4.3" class="anchored" data-anchor-id="power"><span class="header-section-number">1.4.3</span> Power</h3>
+<p>CMOS technology is known for its low power consumption, which is one of its biggest advantages over older logic families. We split that power consumption into two categories: static power and dynamic power.</p>
+<p><strong>Static power</strong> (also called leakage power) is what the circuit consumes while it is not switching at all. It comes mostly from small leakage currents through transistors that are nominally off, and it becomes a much bigger concern as transistor geometries shrink.</p>
+<p><strong>Dynamic power</strong> is what the circuit consumes while it is actively switching. Every time a gate’s output toggles, we have to charge or discharge its load capacitance, and that costs energy. We can express the dynamic power of a single node as</p>
+<p><span class="math display">\[P_{dynamic} = \alpha C V^2 f\]</span></p>
+<p>where <span class="math inline">\(\alpha\)</span> is the activity factor (the fraction of clock cycles in which the node actually switches), <span class="math inline">\(C\)</span> is the load capacitance, <span class="math inline">\(V\)</span> is the supply voltage, and <span class="math inline">\(f\)</span> is the switching frequency.</p>
+</section>
+<section id="dynamic-behavior" class="level3" data-number="1.4.4">
+<h3 data-number="1.4.4" class="anchored" data-anchor-id="dynamic-behavior"><span class="header-section-number">1.4.4</span> Dynamic behavior</h3>
+<p>A CMOS gate does not switch instantaneously. To change its output, it first has to charge the load capacitance, when the output rises, or discharge it, when the output falls. That load capacitance is not one single thing. It is the sum of the input capacitance of every gate the output drives, the capacitance of the interconnect wiring between them, and the capacitance of the reverse-biased P-N junctions inside the transistors themselves. To make a gate switch faster, we have a few levers: raise the supply voltage, widen the transistor’s channel width-to-length ratio, or simply drive fewer downstream gates from the same output.</p>
+</section>
+</section>
+<section id="manufacturing-cmos-integrated-circuits" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="manufacturing-cmos-integrated-circuits"><span class="header-section-number">1.5</span> Manufacturing CMOS integrated circuits</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/cmos-chip-cross-section.png" class="img-fluid figure-img" width="700"></p>
+<figcaption>Cross-section of a CMOS chip: the PMOS sits inside an n-well so it can share the same p-type substrate as the NMOS</figcaption>
+</figure>
+</div>
+<p>Building CMOS means putting NMOS and PMOS transistors on the very same piece of silicon, even though an NMOS wants a p-type substrate and a PMOS wants an n-type one. The usual solution is an n-well: a pocket of n-type silicon diffused into the p-type substrate, deep enough to host a complete PMOS transistor, source, drain, and body, while the NMOS transistors around it sit directly in the surrounding p-type substrate as before. Everything above that, the oxide layers and the metal wiring that connects the transistors into actual logic gates, is built in the same set of process steps for both transistor types.</p>
+<section id="photolithography-process" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="photolithography-process"><span class="header-section-number">1.5.1</span> Photolithography process</h3>
+<p>Turning a bare silicon wafer into a working chip is a repeated pattern of deposit, pattern, and etch, applied layer by layer. It starts with the wafer itself, onto which we grow a thin layer of silicon dioxide (SiO2) through oxidation. On top of that, we spin on a photoresist, a light-sensitive polymer. By default we use a negative resist, which becomes soluble wherever light hits it, though a positive resist, which behaves the opposite way, is also an option depending on the process.</p>
+<p>Next comes the stepper exposure. A glass mask carrying the pattern for this layer is brought close to the wafer. Its opaque regions block UV light, and its transparent regions let it through, exposing the resist beneath in exactly the shape we want to process. After exposure, we develop and bake the wafer: an acid or base solution washes away the soluble part of the resist, and baking hardens what is left into a solid protective mask.</p>
+<p>With that mask in place, acid etching removes material, typically the oxide layer, wherever the resist is not protecting it. A spin, rinse, and dry step cleans the wafer before whatever comes next, whether that is another masked layer or a different process step entirely. Once a layer is finished, we strip away the remaining photoresist, and the wafer is ready for the next pass through this same cycle, one layer at a time, until the full set of transistors and interconnect is complete.</p>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../index.html" class="pagination-link" aria-label="Preface">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Preface</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/01-digital-ic-basics.html" class="pagination-link" aria-label="Basics of Digital Integrated Circuits">
+        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

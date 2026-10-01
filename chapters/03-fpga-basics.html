@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.31">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>4&nbsp; FPGA Fundamentals – Designing a RISC-V SoC</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/04-sv-basics.html" rel="next">
+<link href="../chapters/02-introduction.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-467c603866d931062acf9dde62877a13.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/03-fpga-basics.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/02-introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-fpga-basics" id="toc-sec-fpga-basics" class="nav-link active" data-scroll-target="#sec-fpga-basics">FPGA Fundamentals</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</a></li>
+  <li><a href="#why-reconfigurable-hardware" id="toc-why-reconfigurable-hardware" class="nav-link" data-scroll-target="#why-reconfigurable-hardware"><span class="header-section-number">4.2</span> Why reconfigurable hardware?</a></li>
+  <li><a href="#the-three-building-blocks" id="toc-the-three-building-blocks" class="nav-link" data-scroll-target="#the-three-building-blocks"><span class="header-section-number">4.3</span> The three building blocks</a>
+  <ul class="collapse">
+  <li><a href="#configurable-logic-block-clb" id="toc-configurable-logic-block-clb" class="nav-link" data-scroll-target="#configurable-logic-block-clb"><span class="header-section-number">4.3.1</span> Configurable Logic Block (CLB)</a></li>
+  <li><a href="#routing-plane-programmable-interconnect" id="toc-routing-plane-programmable-interconnect" class="nav-link" data-scroll-target="#routing-plane-programmable-interconnect"><span class="header-section-number">4.3.2</span> Routing plane: programmable interconnect</a></li>
+  <li><a href="#io-blocks" id="toc-io-blocks" class="nav-link" data-scroll-target="#io-blocks"><span class="header-section-number">4.3.3</span> I/O blocks</a></li>
+  <li><a href="#reconfigurability-level-by-level" id="toc-reconfigurability-level-by-level" class="nav-link" data-scroll-target="#reconfigurability-level-by-level"><span class="header-section-number">4.3.4</span> Reconfigurability, level by level</a></li>
+  </ul></li>
+  <li><a href="#case-study-xilinx-series-7" id="toc-case-study-xilinx-series-7" class="nav-link" data-scroll-target="#case-study-xilinx-series-7"><span class="header-section-number">4.4</span> Case study: Xilinx Series-7</a>
+  <ul class="collapse">
+  <li><a href="#clb-slicel-and-slicem" id="toc-clb-slicel-and-slicem" class="nav-link" data-scroll-target="#clb-slicel-and-slicem"><span class="header-section-number">4.4.1</span> CLB: SLICEL and SLICEM</a></li>
+  <li><a href="#block-ram-and-dsp-slices" id="toc-block-ram-and-dsp-slices" class="nav-link" data-scroll-target="#block-ram-and-dsp-slices"><span class="header-section-number">4.4.2</span> Block RAM and DSP slices</a></li>
+  <li><a href="#clock-management-and-interconnect" id="toc-clock-management-and-interconnect" class="nav-link" data-scroll-target="#clock-management-and-interconnect"><span class="header-section-number">4.4.3</span> Clock management and interconnect</a></li>
+  </ul></li>
+  <li><a href="#fpga-design-flow" id="toc-fpga-design-flow" class="nav-link" data-scroll-target="#fpga-design-flow"><span class="header-section-number">4.5</span> FPGA design flow</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-fpga-basics" class="level1 unnumbered">
+<h1 class="unnumbered">FPGA Fundamentals</h1>
+<section id="goal-for-this-week" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">4.1</span> Goal for this week</h2>
+<ul>
+<li>Place the FPGA on the spectrum between a general-purpose CPU and a fixed ASIC, and see why that position makes it the right prototyping target for this course</li>
+<li>Break the FPGA fabric down into its three building blocks: CLB, routing plane, I/O blocks</li>
+<li>Open up a CLB far enough to see the LUT + flip-flop pair that will later become “the thing our synthesized SystemVerilog turns into”</li>
+</ul>
+</section>
+<section id="why-reconfigurable-hardware" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="why-reconfigurable-hardware"><span class="header-section-number">4.2</span> Why reconfigurable hardware?</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/cpu-fpga-asic-spectrum.svg" class="img-fluid figure-img"></p>
+<figcaption>The CPU-FPGA-ASIC spectrum: flexibility and reprogrammability trade off against efficiency and fixed-function performance</figcaption>
+</figure>
+</div>
+<p>As we saw in previous chapters, a CPU is a general-purpose integrated circuit: its function is defined not by its hardware but by the software program a developer writes for it. Development cost and time are low, since a single instruction set can be programmed in general-purpose or domain-specific languages to meet almost any demand — from database search to signal processing and beyond. But this same generality is also the CPU’s biggest disadvantage. A CPU performs well on workloads like databases, yet it can be slow on compute-intensive problems such as neural network inference.</p>
+<p>ASIC designs overcome this general-purpose bottleneck by mapping the application directly into hardware rather than software. A well-known example is Google’s Tensor Processing Unit (TPU), built to accelerate the compute-intensive workloads of neural network inference. Its designers tailored the architecture to that one problem, wiring together a matrix of arithmetic logic units (ALUs) instead of following the standard CPU approach of a five-stage pipeline. Comparing a CPU and a TPU on neural network inference, the TPU wins decisively — but hand it a database search instead, and it is useless. This is the core limitation of ASIC accelerators: each one targets a single application, and once fabricated, it cannot be repurposed for anything else.</p>
+<p>Comparing the CPU and the TPU, what we would really like is both properties at once: the flexibility to repurpose the device, and hardware tailored to the application at hand to squeeze out its full potential. Reconfigurable hardware, the field-programmable gate array (FPGA), gives us both, and its name spells out how. “Gate array” comes from the internal structure: logic blocks arranged on a matrix-like fabric, echoing the gate-array architecture used in some ASICs. “Programmable” does not mean the FPGA executes a software program in the traditional sense, though it can in a limited way. Instead, it refers to the reconfigurable property itself, achieved by loading a bitstream, a special binary configuration file, onto the device. “Field” refers to the field of application: an FPGA can adapt its internal structure to whatever application is at hand, out in the field, long after manufacturing.</p>
+<p>This is exactly the trade-off an FPGA offers. It sits between the CPU and the ASIC by turning the hardware itself into a form of software: the logical function of every building block, and the wiring between them, is set by the bitstream loaded after manufacturing. We get most of an ASIC’s advantage of “hardware built for the job” without paying its fixed non-recurring engineering (NRE) cost or its all-or-nothing commitment. That is exactly why this course targets FPGAs. A mistake in a lab assignment costs a re-synthesis and a few minutes, not a re-spun die. FPGAs are also the standard vehicle for rapid prototyping and hardware acceleration in industry for the same reason. Reconfigurability turns hardware design into something you can iterate on.</p>
+</section>
+<section id="the-three-building-blocks" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="the-three-building-blocks"><span class="header-section-number">4.3</span> The three building blocks</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/fpga-fabric.svg" class="img-fluid figure-img"></p>
+<figcaption>FPGA fabric: CLBs embedded in a routing plane, flanked by I/O blocks</figcaption>
+</figure>
+</div>
+<p>Every FPGA, regardless of vendor or generation, is built from the same three kinds of block. CLBs (also called logic elements) sit in a regular grid and implement the actual logic functions and storage of the design. Between and around them runs the routing plane: a fabric of wires and programmable switches whose only job is to connect a CLB’s outputs to the inputs of other CLBs, in whatever pattern the design needs. At the edges of the die, I/O blocks connect the fabric to physical pins, translating between the FPGA’s internal signal levels and whatever the outside world expects. None of these three blocks is useful without the other two: a CLB with no routing to reach it is dead logic, and routing with nothing to connect is just wire. Placing a design onto an FPGA is precisely the problem of deciding which CLB implements which piece of logic (placement) and which routing resources carry the signals between them (routing). We will meet both steps again when we look at the FPGA design flow.</p>
+<section id="configurable-logic-block-clb" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="configurable-logic-block-clb"><span class="header-section-number">4.3.1</span> Configurable Logic Block (CLB)</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/clb-slice.svg" class="img-fluid figure-img"></p>
+<figcaption>One CLB slice: a LUT2 and a flip-flop, with the output mux picking between the combinational and registered result</figcaption>
+</figure>
+</div>
+<p>The CLB is the main carrier of reconfigurability in an FPGA and its elementary building block. You can think of the CLB as the FPGA equivalent of an assembler instruction, the most basic element everything else is built from. The term itself differs across vendors. Xilinx calls it a logic slice, while Altera calls it a logic element. Either way, they refer to the same thing. As the primary building block for digital circuits, a CLB must support combinational logic, sequential logic, and combinations of the two. It consists of a look-up table (LUT), a flip-flop, and an output mux.</p>
+<p>A LUT implements combinational logic through memory lookup rather than by wiring gates together. Structurally, it consists of SRAM (static random-access memory) cells paired with a multiplexer that selects which cell’s content is forwarded to the output, based on the signal inputs. To see this concretely, consider the smallest useful case, a two-input LUT, or LUT2. With two inputs there are four possible input combinations, so a LUT2 is built from four memory cells and a 4-to-1 multiplexer. The two inputs act as the multiplexer’s select lines, in other words as an <em>address</em>, and the output is simply whatever bit is stored in the addressed cell.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/LUT.PNG" class="img-fluid figure-img"></p>
+<figcaption>LUT2 internals: the two inputs address one of four SRAM cells, and the addressed cell’s stored bit is forwarded to the output</figcaption>
+</figure>
+</div>
+<p>To implement logical functions with two input variables, you need to map the truth table into SRAM cells. For example to implement a two-input NAND on a LUT2, we do not build a NAND gate at all: we store the NAND truth table’s output column (1, 1, 1, 0) into the four memory cells, in the order addressed by the two inputs, and the LUT now behaves as a NAND for as long as that configuration is loaded. The reconfigurability of LUTs is what makes FPGAs so flexible: the same LUT can just as easily hold an AND, an XOR, or any other two-input function. Reconfiguring the FPGA never touches a wire between gates. It only rewrites these memory cells. Because those cells are ordinary SRAM, they are volatile: power off the board and the “circuit” is gone, which is why every FPGA design needs a configuration step after every power-up.</p>
+<p>We do not build larger LUTs as one giant memory array wired to a huge multiplexer. Instead, real FPGA architectures build them recursively from smaller LUTs, adding one extra input and one extra multiplexer stage at a time. A LUT3 is nothing more than two LUT2s, both fed by the same two inputs, with their outputs chosen between by a 2:1 mux controlled by the third input. Extending the same idea, a LUT4 is built from two LUT3s, each in turn built from two LUT2s, combined by one more 2:1 mux controlled by the fourth input. Each additional input doubles the number of underlying LUT2 building blocks and adds one more layer of multiplexing on top. This recursive structure is exactly why vendors describe their larger LUTs as fracturable: the same physical hardware that implements one LUT4 can, with a small configuration change, split back into two independent LUT3s, or four independent LUT2s, letting the synthesis tool pack more, smaller functions into fewer CLBs when a design does not need the full input width.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/LUT8.png" class="img-fluid figure-img"></p>
+<figcaption>Building a LUT4 from four LUT2s: two levels of 2:1 muxing, selected by in3 and in4</figcaption>
+</figure>
+</div>
+<p>Few real digital circuits are purely combinational. Almost every design also needs elements that are synchronous to a clock. To support that, every CLB slice also includes a D flip-flop (DFF) fed from the LUT’s output. As we saw earlier, a DFF copies its input (D) to its output (Q) on the active edge of the clock signal, clk. Through configuration bits, the developer can adapt that DFF’s behavior, choosing whether it triggers on the rising or falling edge, and setting its initial or reset value. This exposes yet another layer of reconfigurability inside the CLB.</p>
+<p>The last element of the CLB is the output mux, which picks between the raw LUT output and the flip-flop’s registered output. That mux’s select line is, like the LUT’s memory cells, just another bit in configuration SRAM. The same physical slice can act as combinational logic or as a single-bit register, purely depending on how it is configured. Real devices bundle several LUT + flip-flop slices, wider LUTs, and extra logic (carry chains, muxes for combining LUTs into wider functions) into one CLB. We look at a concrete example of that when we cover a real device architecture later.</p>
+</section>
+<section id="routing-plane-programmable-interconnect" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="routing-plane-programmable-interconnect"><span class="header-section-number">4.3.2</span> Routing plane: programmable interconnect</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/routing-pip.svg" class="img-fluid figure-img"></p>
+<figcaption>Two CLBs connected through a switch box. A PIP is one config-bit-controlled NMOS pass transistor</figcaption>
+</figure>
+</div>
+<p>Routing plays two closely related roles. First, it lets many individual CLBs act as one large digital design: a real circuit needs far more logic and storage than a single CLB slice can hold, so the design is spread across hundreds or thousands of CLBs, and routing is what stitches their individual outputs together into one coherent datapath. Second, routing connects that internal logic to the outside world, joining CLBs to the I/O blocks that carry signals in and out of the fabric. Without it, CLBs and I/O blocks would be correct but disconnected islands of logic.</p>
+<p>Between the rows and columns of CLBs run wiring tracks, and at every point where a horizontal and a vertical track cross, a switch box can optionally join them. The atomic component of a switch box is the PIP: a single NMOS transistor used purely as a switch, with its gate driven by one configuration SRAM bit. When that bit is 0, the transistor is off and the two tracks it sits between are electrically separate. When it is 1, the transistor conducts and the tracks become one net. A design’s entire wiring, meaning every connection from one CLB’s output to another CLB’s input, reduces to which of these thousands of PIPs are turned on. This is also why the router is typically the slowest step in the FPGA implementation tools: placement decides which CLB does what, but routing has to find, among a huge and only partially connected mesh of tracks and switch boxes, one specific set of PIPs that realizes every net in the design without any two nets shorting together.</p>
+</section>
+<section id="io-blocks" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="io-blocks"><span class="header-section-number">4.3.3</span> I/O blocks</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/io-block.svg" class="img-fluid figure-img"></p>
+<figcaption>I/O block output and input paths: an optional register and a tri-state buffer on output, an optional register on input</figcaption>
+</figure>
+</div>
+<p>An I/O block is the boundary between the reconfigurable fabric and a fixed physical pin, and it has to support more than “just wire a signal through.” On the output side, a signal from the fabric can optionally be registered right at the pin before it reaches a tri-state buffer. That buffer’s output-enable (OE) input decides whether the pad is actively driven at all, which is what makes a genuinely bidirectional pin possible. The same pad can be released to high-impedance and read as an input whenever the design is not driving it. The input side mirrors this with its own optional register. Registering directly in the I/O block, rather than in the nearest CLB, shortens the path the signal has to travel before it is captured, which matters because I/O timing margins are usually tighter than internal fabric timing. As with everything else on the chip, whether each of these registers is used, and whether a pin behaves as input, output, or bidirectional, is a configuration decision, not a fact fixed at fabrication.</p>
+</section>
+<section id="reconfigurability-level-by-level" class="level3" data-number="4.3.4">
+<h3 data-number="4.3.4" class="anchored" data-anchor-id="reconfigurability-level-by-level"><span class="header-section-number">4.3.4</span> Reconfigurability, level by level</h3>
+<p>We have now seen five separate places where a single configuration SRAM bit changes what the FPGA does. Inside the CLB, one set of bits picks the function stored in each LUT, another set picks whether the D flip-flop triggers on the rising or falling edge and what value it resets to, and one more bit decides whether the slice’s output is the LUT’s raw combinational result or the flip-flop’s registered one. Out in the routing plane, a bit per PIP decides which pairs of tracks are joined into the same net. At the I/O block, bits decide whether a register is used on the input or output path, and whether a pin drives, receives, or does both. None of these is a special case. Every one of them is the same primitive: an SRAM cell whose value the configuration step writes before the device does anything useful. What looks like five different kinds of reconfigurability is really one mechanism, repeated at every point in the fabric where a design decision has to be made. This is also, in one sentence, what a bitstream is: the full list of values for every one of these bits, for every CLB, PIP, and I/O block on the device.</p>
+</section>
+</section>
+<section id="case-study-xilinx-series-7" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="case-study-xilinx-series-7"><span class="header-section-number">4.4</span> Case study: Xilinx Series-7</h2>
+<p>We have described the CLB, the routing plane, and the I/O block as three abstract building blocks, present in every FPGA regardless of vendor or generation. To see how a real device turns those abstractions into a concrete architecture, we now look at a specific family: Xilinx Series-7. Series-7 comprises four sub-families, Spartan-7, Artix-7, Kintex-7, and Virtex-7, all built from the same underlying fabric while trading off cost, logic capacity, and signal-processing performance. Spartan-7 targets the low end of that range: small, cost-sensitive, high-volume applications. Virtex-7 sits at the opposite end, aimed at the highest connectivity bandwidth, logic capacity, and DSP throughput. Artix-7 and Kintex-7 fill the middle ground. Every member of the family, from the smallest Spartan-7 to the largest Virtex-7, is assembled from the same handful of building blocks described below; only their quantity and mix change from device to device.</p>
+<section id="clb-slicel-and-slicem" class="level3" data-number="4.4.1">
+<h3 data-number="4.4.1" class="anchored" data-anchor-id="clb-slicel-and-slicem"><span class="header-section-number">4.4.1</span> CLB: SLICEL and SLICEM</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/clb-series7-slices.svg" class="img-fluid figure-img"></p>
+<figcaption>Row and column relationship between CLBs and slices: each CLB tile holds slice X0 and slice X1, wired to its switch matrix, with Y counting up from the bottom of the column (redrawn from AMD/Xilinx UG474, Fig. 1)</figcaption>
+</figure>
+</div>
+<p>Where the generic CLB we described earlier held one LUT and one flip-flop, a Series-7 CLB is considerably richer, and Xilinx builds it from two smaller units called slices. Two slice types exist. Every CLB is either a CLB0, containing two SLICEL (“slice logical”) slices, or a CLB1, containing one SLICEM (“slice memory”) and one SLICEL slice. Each slice, of either type, contains four six-input LUTs (LUT6) rather than the single LUT2 we used to introduce the idea — the same recursive fracturable-LUT construction we saw earlier, just taken further, and each LUT6 can equally well operate as two independent LUT5s sharing the same five inputs. To build functions wider than six inputs, the slice adds dedicated combining multiplexers on top of the LUTs themselves: F7AMUX and F7BMUX each merge a pair of LUT6 outputs into one seven-input function, and a further F8MUX merges the two resulting LUT7 outputs into a single eight-input function. This is the same output-mux idea from the generic CLB, just repurposed to widen LUTs instead of choosing between a combinational and a registered output.</p>
+<p>Because addition is one of the most common operations in digital design, each slice also includes a dedicated carry chain: fast, purpose-built hardware that propagates carry signals between adjacent slices without routing them back through the general interconnect, considerably speeding up adders and comparators compared to building the same carry logic out of ordinary LUTs. On the sequential side, each slice packs eight flip-flops rather than the one flip-flop per LUT we introduced earlier. Four of these are configurable to behave as either an edge-triggered flip-flop or a level-sensitive latch, while the remaining four are flip-flop only; all eight share one clock and one clock-enable signal, though each still has its own configuration bits for init value and set/reset behavior, echoing the per-flip-flop reconfigurability we discussed for the generic CLB.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/slicel-block-diagram.svg" class="img-fluid figure-img"></p>
+<figcaption>SLICEL, simplified block diagram: four LUT6s feed the F7A/F7B/F8 combining muxes and the carry chain, each lane ending in an FF/Latch and an FF-only register sharing one clock and clock-enable (redrawn, not to scale, after AMD/Xilinx UG474, Fig. 2)</figcaption>
+</figure>
+</div>
+<p>SLICEM slices add one more capability that SLICEL slices lack. A LUT’s whole purpose, as we saw earlier, is to hold a fixed truth table in SRAM cells that the design’s inputs address; that content does not change while the design runs. SLICEM’s LUTs can instead be repurposed as small, fast, genuinely writable memory: either distributed RAM, where the LUT’s SRAM cells are written and read directly by the design as if they were a tiny local memory, or a 32-bit shift register, where the same cells behave as a chain of delay elements. Both uses trade away the LUT’s normal role as a combinational lookup table in exchange for a small amount of local storage exactly where it is needed, without consuming a dedicated block RAM.</p>
+</section>
+<section id="block-ram-and-dsp-slices" class="level3" data-number="4.4.2">
+<h3 data-number="4.4.2" class="anchored" data-anchor-id="block-ram-and-dsp-slices"><span class="header-section-number">4.4.2</span> Block RAM and DSP slices</h3>
+<p>SLICEM’s distributed RAM is useful for small amounts of storage, but real designs routinely need much larger memories: register files, FIFOs, line buffers, caches. Building those out of LUTs alone would be both wasteful of logic resources and slow, so Series-7 devices additionally provide dedicated block RAM (BRAM): hard-wired memory macros scattered through the fabric, entirely separate from the CLBs. Each BRAM comes in one of two hard-wired sizes, 36 Kb or 18 Kb, and each size can be configured, at implementation time, into a range of width and depth combinations — a 36 Kb block, for instance, can be organized as 32K words of 1 bit, 16K words of 2 bits, 8K words of 4 bits, and so on, trading width for depth as the design requires. Configuration also selects the memory’s port structure: single-port, true dual-port (two fully independent address, read, and write ports), or simple dual-port (one port dedicated to writing, the other to reading). A FIFO is not a separate hardware primitive at all; it is simply a block RAM combined with dedicated pointer and flag logic that turns its linear address space into a first-in-first-out queue.</p>
+<p>Arithmetic is common enough, and multiplication expensive enough to build efficiently out of general LUT fabric, that Series-7 devices dedicate a third kind of hard-wired block to it: the DSP slice. A DSP slice implements a fixed pipeline of multiply, add, and accumulate hardware directly in silicon, entirely bypassing the LUT and carry-chain logic used for general-purpose addition. Just as with the CLB and BRAM, a DSP slice is configured rather than wired by hand — configuration bits select which of its internal operations are active and how they are chained together — but the arithmetic itself runs on dedicated hardware rather than being synthesized from LUTs, which is what makes DSP slices dramatically faster and more area-efficient than an equivalent LUT-based multiplier.</p>
+</section>
+<section id="clock-management-and-interconnect" class="level3" data-number="4.4.3">
+<h3 data-number="4.4.3" class="anchored" data-anchor-id="clock-management-and-interconnect"><span class="header-section-number">4.4.3</span> Clock management and interconnect</h3>
+<p>A clock signal is unlike any other net on the chip: every register that uses it must see the same edge at very nearly the same instant, or the design’s timing margins erode. General-purpose routing, built from PIPs and switch boxes with no particular guarantee on delay matching, is not good enough for this job, so Series-7 devices route clocks through a dedicated network instead. Global clock buffers distribute a small number of clock signals across the device with deliberately low skew, and the device’s area is partitioned into clock regions, each spanning 50 CLB rows, with its own local clock distribution so that skew stays low even far from the clock’s entry point. Before a clock reaches those buffers, it can optionally pass through a clock management tile (CMT), dedicated hardware that synthesizes new frequencies, shifts phase, or removes accumulated skew — capabilities well beyond anything the general fabric could provide.</p>
+<p>Everything that is not a dedicated clock net still relies on the same general-purpose interconnect introduced earlier: horizontal and vertical routing tracks running between rows and columns of CLBs, joined at switch boxes wherever they cross. A switch box is simply a cluster of PIPs, and, exactly as in the generic architecture, each PIP reduces to one NMOS pass transistor gated by a single configuration SRAM bit. Series-7 does not introduce a new mechanism here at all — it is the same one-bit-per-connection primitive met earlier, just deployed at the scale a real device needs: thousands of switch boxes, each with many PIPs, giving the router enough freedom to connect any CLB, BRAM, or DSP slice’s output to any other block’s input.</p>
+</section>
+</section>
+<section id="fpga-design-flow" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="fpga-design-flow"><span class="header-section-number">4.5</span> FPGA design flow</h2>
+<p>Earlier, when introducing routing, we noted that placing a design onto an FPGA comes down to two questions: which CLB implements which piece of logic, and which routing resources carry the signals between them. The FPGA design flow is the sequence of tool steps that answers those questions automatically, turning an RTL description into the bitstream that configures every SRAM bit we have discussed in this chapter. That flow closely resembles the one used for ASICs, since both ultimately map a hardware description down to physical resources on silicon, but it differs in one important respect: the target primitive throughout is a LUT and its associated flip-flop, not a standard cell from an ASIC library, which shapes what several of the intermediate steps actually do.</p>
+<p>The flow begins with design entry, typically RTL written in a hardware description language, and proceeds to synthesis. Synthesis interprets that RTL and produces a synthesized circuit netlist, generally stored in the standard EDIF format, along with preliminary performance estimates that give an early, optimistic sense of whether the design will meet its timing goals before the slower steps that follow. A translate step then merges this netlist with any others belonging to the same design (for instance, netlists from separately synthesized IP blocks) into one single netlist: a text description of every component in the design and how its terminals connect to every other component’s terminals.</p>
+<p>The next two steps are where the LUT-based nature of FPGAs really shows. Mapping takes the logical symbols in that merged netlist, ordinary gates such as ANDs, ORs, and multiplexers, and groups them into the physical components the target device actually provides: LUTs of a specific width, flip-flops, carry-chain segments, and so on. This is conceptually similar to technology mapping in an ASIC flow, except the “cell library” being mapped to is not a fixed set of gates but the fracturable-LUT building blocks we described earlier in this chapter. Placing then takes every one of those mapped components and assigns it to one specific site on the chip, a particular slice within a particular CLB, deciding, in other words, which CLB implements which piece of logic. Routing follows, connecting every placed component to every other one it needs to reach by selecting a path through the switch boxes and PIPs of the routing plane, deciding which routing resources carry each signal.</p>
+<p>Routing also produces the reports that tell us whether the design actually works at the clock frequency we want. A static timing analyzer performs a static analysis of the fully placed and routed circuit, accounting for every source of delay along every path, logic delay through LUTs, routing delay through PIPs, and everything in between, to identify the circuit’s critical path: the longest path from the output of one register to the input of another. Because a synchronous design can run no faster than its slowest register-to-register path allows, the critical path directly determines the design’s maximum clock frequency, which is exactly the number this whole flow exists to maximize.</p>
+<p>Once placement and routing succeed and timing closes, the last step is bitstream generation: writing out the configuration file for the FPGA, the complete list of values for every LUT content bit, every flip-flop’s configuration, every PIP, and every I/O block setting that we introduced across this chapter. That bit file can be downloaded directly onto the FPGA, configuring its (volatile) SRAM cells as we described earlier, or converted into a PROM file: a non-volatile store that reprograms the FPGA automatically, from power-up, every time the board is powered on.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/02-introduction.html" class="pagination-link" aria-label="Introduction and Review of Fundamentals">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Introduction and Review of Fundamentals</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/04-sv-basics.html" class="pagination-link" aria-label="SystemVerilog — Syntax and Synthesizable Coding Style">
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
