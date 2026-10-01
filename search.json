@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Designing a RISC-V SoC",
     "section": "",
-    "text": "Preface\nThis material was written alongside the lectures for the course DN, redesigned around the theme of RISC-V SoC design. Each chapter corresponds to one week of lectures and serves a dual purpose:\n\nAs lecture notes — rendered as a slide deck (reveal.js).\nAs a book chapter — rendered as part of the combined PDF/HTML course material.\n\nContent intended for only one of the two formats (e.g. discussion questions used in class, or in-depth derivations meant for the book) is marked with content-visible blocks — see the example in the chapter on pipeline structure.\n\n\n\n\n\n\nWork in progress\n\n\n\nThis material is a work in progress. It is written and revised alongside the course as it is taught, so chapters vary in polish, and some sections still need further revision. Please read it with that in mind, and feel free to flag anything that is unclear, incomplete, or incorrect.",
+    "text": "Preface\nThis material was written alongside the lectures for the course DN, redesigned around the theme of RISC-V SoC design. Each chapter corresponds to one week of lectures and serves a dual purpose:\n\nAs lecture notes — rendered as a slide deck (reveal.js).\nAs a book chapter — rendered as part of the combined PDF/HTML course material.\n\nContent intended for only one of the two formats (e.g. discussion questions used in class, or in-depth derivations meant for the book) is marked with content-visible blocks — see the example in the chapter on pipeline structure.\n\n\n\n\n\n\nWarningWork in progress\n\n\n\nThis material is a work in progress. It is written and revised alongside the course as it is taught, so chapters vary in polish, and some sections still need further revision. Please read it with that in mind, and feel free to flag anything that is unclear, incomplete, or incorrect.",
     "crumbs": [
       "Preface"
     ]
@@ -304,7 +304,7 @@
     "href": "chapters/05-pipeline-structure.html#next-step",
     "title": "5  Five-Stage Pipeline — Structure",
     "section": "5.4 Next step",
-    "text": "5.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. “IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.”\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
+    "text": "5.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
     "crumbs": [
       "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
@@ -344,7 +344,7 @@
     "href": "references.html",
     "title": "9  References",
     "section": "",
-    "text": "IEEE. 2017. “IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.”\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. “The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA.” RISC-V Foundation.",
+    "text": "IEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA. RISC-V Foundation.",
     "crumbs": [
       "<span class='chapter-number'>9</span>  <span class='chapter-title'>References</span>"
     ]

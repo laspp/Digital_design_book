@@ -2,17 +2,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.31">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>4&nbsp; SystemVerilog — Syntax and Synthesizable Coding Style – Designing a RISC-V SoC</title>
 <style>
-code{white-space: pre-wrap;}
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -73,10 +79,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-467c603866d931062acf9dde62877a13.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-fd0503e23dce65854c81c5baaade3bdf.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -268,12 +274,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="signals-vs.-variables" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="signals-vs.-variables"><span class="header-section-number">4.3</span> Signals vs.&nbsp;variables</h2>
 <p>A CS variable holds a value because you assigned it one; nothing drives it otherwise. A <code>logic</code> signal in SV is closer to a wire with memory — it holds whatever it was last driven to, by whichever <code>assign</code> or <code>always</code> block is responsible for it, and it is an error (caught by simulation, not always by synthesis) for more than one such block to drive it.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, RUN, DONE} state_t;</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, RUN, DONE} state_t;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="kw">packed</span> {</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       valid;</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">7</span>:<span class="dv">0</span>] <span class="ot">data</span>;</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>} packet_t;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>} packet_t;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>typedef enum</code> gives a set of named constants a single type, instead of scattering magic numbers through the code. <code>typedef struct packed</code> bundles related signals into one name that can travel through a module’s ports or a pipeline register as a single unit — you will see exactly this pattern in <code>pipeline_pkg.sv</code> next chapter, where control signals are grouped this way instead of being passed as individual wires.</p>
 </section>
 <section id="combinational-logic-always_comb" class="level2" data-number="4.4">
@@ -285,10 +291,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="4.5" class="anchored" data-anchor-id="sequential-logic-always_ff"><span class="header-section-number">4.5</span> Sequential logic: <code>always_ff</code></h2>
 <p><code>always_ff</code> describes a block that updates only at a clock edge — a register, not a formula. It uses <code>&lt;=</code> (non-blocking assignment), which reads as “at this clock edge, schedule this update,” rather than <code>=</code>’s “this is the value right now.” The distinction matters the moment two <code>always_ff</code> blocks depend on each other, which is exactly the situation every pipeline register is in.</p>
 <p>Consider two registers meant to swap values on the same clock edge:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  a &lt;= b;</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  b &lt;= a;</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>With non-blocking assignment, both right-hand sides are read using each register’s value <em>before</em> this clock edge, and both updates take effect together — the swap works, matching what “on every clock edge, in parallel” should mean. Replace <code>&lt;=</code> with <code>=</code> and the second line reads the value the first line just wrote, collapsing two parallel updates into a sequential one — the swap silently fails, and nothing about the syntax warns you. This is why the pairing on the previous slide has no exceptions: <code>=</code> in combinational logic, <code>&lt;=</code> in clocked logic, every time.</p>
 </section>
 <section id="reset-styles" class="level2" data-number="4.6">
@@ -356,13 +362,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
