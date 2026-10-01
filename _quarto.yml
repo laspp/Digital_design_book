@@ -3,19 +3,21 @@ project:
 
 book:
   title: "Designing a RISC-V SoC"
-  subtitle: "Course material for DN"
-  author: "Name Surname"
+  subtitle: "Course material for subject  Digital Design"
+  author: "Ratko Pilipović"
   date: today
   downloads: [pdf]
   chapters:
     - index.qmd
-    - chapters/01-introduction.qmd
-    - chapters/02-fpga-basics.qmd
-    - chapters/03-sv-basics.qmd
-    - chapters/04-pipeline-structure.qmd
-    - chapters/05-pipeline-hazards.qmd
-    - chapters/06-memory.qmd
-    - chapters/07-cocotb-verification.qmd
+    - chapters/00-digital-design-intro.qmd
+    - chapters/01-digital-ic-basics.qmd
+    - chapters/02-introduction.qmd
+    - chapters/03-fpga-basics.qmd
+    - chapters/04-sv-basics.qmd
+    - chapters/05-pipeline-structure.qmd
+    - chapters/06-pipeline-hazards.qmd
+    - chapters/07-memory.qmd
+    - chapters/08-cocotb-verification.qmd
     - references.qmd
 
 bibliography: references.bib
