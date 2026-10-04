@@ -79,7 +79,7 @@ We will meet both steps again when we look at the FPGA design flow.
 
 ### Configurable Logic Block (CLB)
 
-![One CLB slice: a LUT2 and a flip-flop, with the output mux picking between the combinational and registered result](../images/clb-slice.svg)
+![One CLB slice: a LUT2 and a flip-flop, with the output mux picking between the combinational and registered result](../images/blocks/clb-slice.svg)
 
 ::: {.content-visible when-format="revealjs"}
 - A **look-up table (LUT)** implements combinational logic by memory
@@ -98,7 +98,7 @@ The CLB is the main carrier of reconfigurability in an FPGA and its elementary b
 
 A LUT implements combinational logic through memory lookup rather than by wiring gates together. Structurally, it consists of SRAM (static random-access memory) cells paired with a multiplexer that selects which cell's content is forwarded to the output, based on the signal inputs. To see this concretely, consider the smallest useful case, a two-input LUT, or LUT2. With two inputs there are four possible input combinations, so a LUT2 is built from four memory cells and a 4-to-1 multiplexer. The two inputs act as the multiplexer's select lines, in other words as an *address*, and the output is simply whatever bit is stored in the addressed cell.
 
-![LUT2 internals: the two inputs address one of four SRAM cells, and the addressed cell's stored bit is forwarded to the output](../images/LUT.PNG)
+![LUT2 internals: the two inputs address one of four SRAM cells, and the addressed cell's stored bit is forwarded to the output](../images/blocks/lut2-internals.svg){width=55%}
 
 
 
@@ -109,7 +109,7 @@ loaded. The reconfigurability of LUTs is what makes FPGAs so flexible: the same 
 
 We do not build larger LUTs as one giant memory array wired to a huge multiplexer. Instead, real FPGA architectures build them recursively from smaller LUTs, adding one extra input and one extra multiplexer stage at a time. A LUT3 is nothing more than two LUT2s, both fed by the same two inputs, with their outputs chosen between by a 2:1 mux controlled by the third input. Extending the same idea, a LUT4 is built from two LUT3s, each in turn built from two LUT2s, combined by one more 2:1 mux controlled by the fourth input. Each additional input doubles the number of underlying LUT2 building blocks and adds one more layer of multiplexing on top. This recursive structure is exactly why vendors describe their larger LUTs as fracturable: the same physical hardware that implements one LUT4 can, with a small configuration change, split back into two independent LUT3s, or four independent LUT2s, letting the synthesis tool pack more, smaller functions into fewer CLBs when a design does not need the full input width.
 
-![Building a LUT4 from four LUT2s: two levels of 2:1 muxing, selected by in3 and in4](../images/LUT8.png)
+![Building a LUT4 from four LUT2s: two levels of 2:1 muxing, selected by in3 and in4](../images/blocks/lut4-from-lut2.svg)
 
 Few real digital circuits are purely combinational. Almost every design also needs elements that are synchronous to a clock. To support that, every CLB slice also includes a D flip-flop (DFF) fed from the LUT's output. As we saw earlier, a DFF copies its input (D) to its output (Q) on the active edge of the clock signal, clk. Through configuration bits, the developer can adapt that DFF's behavior, choosing whether it triggers on the rising or falling edge, and setting its initial or reset value. This exposes yet another layer of reconfigurability inside the CLB.
 
@@ -168,7 +168,7 @@ design without any two nets shorting together.
 
 ### I/O blocks
 
-![I/O block output and input paths: an optional register and a tri-state buffer on output, an optional register on input](../images/io-block.svg)
+![I/O block output and input paths: an optional register and a tri-state buffer on output, an optional register on input](../images/blocks/io-block.svg)
 
 ::: {.content-visible when-format="revealjs"}
 - I/O blocks are the only place signals leave or enter the fabric

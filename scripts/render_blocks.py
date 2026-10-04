@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Render schemdraw block diagrams (images/blocks/*.py) to SVG and PDF.
 
-Each source defines draw() -> schemdraw.Drawing. The .svg/.pdf next to it
+Each source defines draw() -> schemdraw.Drawing (files starting with
+_ are shared helpers, e.g. _style.py). The .svg/.pdf next to it
 are generated and git-ignored; only stale outputs are re-rendered unless
 --force.
 
@@ -20,6 +21,7 @@ def render(src: Path, force: bool) -> bool:
     if not force and svg.exists() and pdf.exists() \
             and min(svg.stat().st_mtime, pdf.stat().st_mtime) >= src.stat().st_mtime:
         return False
+    sys.path.insert(0, str(BLOCKS_DIR))   # lets sources import _style.py
     spec = importlib.util.spec_from_file_location(src.stem, src)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -35,6 +37,8 @@ def main() -> int:
     ap.add_argument("--force", action="store_true", help="re-render everything")
     args = ap.parse_args()
     for src in sorted(BLOCKS_DIR.glob("*.py")):
+        if src.name.startswith("_"):   # shared helpers, not diagrams
+            continue
         try:
             render(src, args.force)
         except Exception as e:
