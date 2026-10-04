@@ -633,9 +633,7 @@ endmodule
 Each `?:` tests one value of `sel` and, if it does not match, hands the
 decision to the next. The last branch, `in3`, is the default that is taken
 when no earlier condition is true, so there is always a value for `out`.
-The synthesized result is in @fig-mux4to1. Compare it with the 2-to-1
-multiplexer written with `always_comb` in the next chapter: same hardware,
-different notation.
+The synthesized result is in @fig-mux4to1.
 
 ![The `mux4to1` module as drawn by Yosys.](../images/rtl/mux4to1.svg){#fig-mux4to1}
 :::
@@ -713,19 +711,14 @@ onto the dedicated carry logic of an FPGA.
 
 ::: {.content-visible when-format="revealjs"}
 - Everything so far was **combinational**, written with `assign`
-- Next chapter: bigger combinational blocks with `always_comb`, and
-  state with `always_ff`
-- Rule of thumb: **`assign` / `always_comb` for logic, `always_ff` for
-  registers**
+- Still to come: procedural blocks, `always_comb` for larger
+  combinational descriptions and `always_ff` for state
 :::
 
 ::: {.content-visible unless-format="revealjs"}
 Everything we wrote in this chapter is combinational: outputs depend only
 on the current inputs, and nothing remembers anything. That was enough to
-describe multiplexers and adders, but a processor also needs state. The next
-chapter introduces the procedural blocks that describe it: `always_comb`
-for larger combinational descriptions, and `always_ff` for registers that
-update on a clock edge. The one rule to carry forward is that each hardware
-element has exactly one notation, `assign` or `always_comb` for logic and
-`always_ff` for registers.
+describe multiplexers and adders, but a processor also needs state. That
+calls for procedural blocks: `always_comb` for larger combinational
+descriptions, and `always_ff` for registers that update on a clock edge.
 :::

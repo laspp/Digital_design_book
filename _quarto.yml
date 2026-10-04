@@ -13,7 +13,6 @@ book:
     - chapters/01-digital-ic-basics.qmd
     - chapters/03-fpga-basics.qmd
     - chapters/04-sv-basics.qmd
-    - chapters/05-sv-basics.qmd
     - chapters/06-pipeline-structure.qmd
     - chapters/07-pipeline-hazards.qmd
     - chapters/08-memory.qmd
