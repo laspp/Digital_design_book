@@ -36,14 +36,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--force", action="store_true", help="re-render everything")
     args = ap.parse_args()
+    failed = 0
     for src in sorted(BLOCKS_DIR.glob("*.py")):
         if src.name.startswith("_"):   # shared helpers, not diagrams
             continue
         try:
             render(src, args.force)
-        except Exception as e:
+        except Exception as e:         # keep going: one bad diagram must not hide the rest
             print(f"error: {src.name}: {e}", file=sys.stderr)
-            return 1
+            failed += 1
+    if failed:
+        return 1
     return 0
 
 
