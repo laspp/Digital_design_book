@@ -1,0 +1,236 @@
+---
+title: "SystemVerilog — Syntax and Synthesizable Coding Style"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# SystemVerilog basics {#sec-sv-basics .unnumbered}
+
+## Goal for this week
+
+- Learn to read SystemVerilog by knowing exactly where the C-like syntax
+  stops being a reliable guide
+- Separate combinational logic (`always_comb`) from sequential logic
+  (`always_ff`), and the assignment operator each one requires
+- Recognize latch inference and reset styles on sight, before they show up
+  as bugs in your own pipeline stages
+
+## It looks like C. It isn't.
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module weird (input  logic a, b,
+              output logic y1, y2);
+  assign y1 = a & b;
+  assign y2 = a | b;
+endmodule
+```
+
+**Discussion question:** which line executes first, the assignment to `y1`
+or the assignment to `y2`?
+:::
+
+::: {.content-visible unless-format="revealjs"}
+The snippet above is syntactically close enough to C that it is tempting to
+read it top to bottom, one statement after another. That reading is wrong,
+and it is the single most important thing to unlearn this week. A module is
+not a function that runs once and returns — it is a piece of hardware that
+exists for as long as the circuit is powered. `y1` and `y2` are not
+computed "first" and "second"; they are two separate wires, each
+continuously driven by its own gate, both existing simultaneously and
+forever. There is no call stack, no return value, and no "after" — only
+signals that settle to a value whenever their inputs change.
+
+Every construct in this chapter is a variation on this same fact: SV syntax
+borrows C's punctuation, but describes structure and behavior in time, not
+a sequence of steps.
+:::
+
+## Signals vs. variables
+
+::: {.content-visible when-format="revealjs"}
+- `logic` — a signal that remembers its last driven value
+- Vectors: `logic [7:0] data;`
+- `typedef enum` and `typedef struct packed` group related signals under a
+  name
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A CS variable holds a value because you assigned it one; nothing drives it
+otherwise. A `logic` signal in SV is closer to a wire with memory — it
+holds whatever it was last driven to, by whichever `assign` or `always`
+block is responsible for it, and it is an error (caught by simulation, not
+always by synthesis) for more than one such block to drive it.
+
+```systemverilog
+typedef enum logic [1:0] {IDLE, RUN, DONE} state_t;
+
+typedef struct packed {
+  logic       valid;
+  logic [7:0] data;
+} packet_t;
+```
+
+`typedef enum` gives a set of named constants a single type, instead of
+scattering magic numbers through the code. `typedef struct packed` bundles
+related signals into one name that can travel through a module's ports or
+a pipeline register as a single unit — you will see exactly this pattern
+in `pipeline_pkg.sv` next chapter, where control signals are grouped this
+way instead of being passed as individual wires.
+:::
+
+## Combinational logic: `always_comb`
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_comb begin
+  if (sel == 2'b00)      y = in0;
+  else if (sel == 2'b01) y = in1;
+  // missing: sel == 2'b10, 2'b11
+end
+```
+
+**Discussion question:** what does synthesis have to build for `y` when
+`sel` is `2'b10`?
+:::
+
+::: {.content-visible unless-format="revealjs"}
+An `always_comb` block re-evaluates itself immediately whenever any signal
+it reads changes — closer to a spreadsheet formula that recalculates on
+every input edit than to a function you call. Assignment inside it uses
+`=` (blocking), read as "this is what the output equals right now," not
+"do this step, then the next."
+
+The example above is an incomplete 2-to-1-style decoder: two of the four
+`sel` cases are unhandled. In a spreadsheet, an unhandled case would just
+show a blank cell. In hardware, `y` cannot go blank — if no branch assigns
+it, the only way to keep `y` at *some* value is to remember the previous
+one. Synthesis does exactly that: it infers a latch. This is almost never
+what you want in a synchronous design, and it is the most common bug
+`always_comb` produces. The fix is always the same: every signal assigned
+in an `always_comb` block must be assigned on *every* path through it —
+in practice, an `else` or a `default` branch on every `if`/`case`.
+
+The complete version of the simplest case, a 2-to-1 multiplexer, has no
+missing branch and therefore synthesizes to pure combinational logic, with
+no memory element anywhere (@fig-mux2):
+
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+  else     y = in0;
+end
+```
+
+![A 2-to-1 multiplexer: `sel` chooses which input appears at `y`.](../images/blocks/mux2.svg){#fig-mux2 width=45%}
+:::
+
+## Sequential logic: `always_ff`
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_ff @(posedge clk) begin
+  q <= d;   // non-blocking
+end
+```
+
+- `always_comb` → blocking, `=`
+- `always_ff` → non-blocking, `<=`
+- No exceptions to this pairing
+:::
+
+::: {.content-visible unless-format="revealjs"}
+`always_ff` describes a block that updates only at a clock edge — a
+register, not a formula. It uses `<=` (non-blocking assignment), which
+reads as "at this clock edge, schedule this update," rather than `=`'s
+"this is the value right now." The distinction matters the moment two
+`always_ff` blocks depend on each other, which is exactly the situation
+every pipeline register is in.
+
+Consider two registers meant to swap values on the same clock edge:
+
+```systemverilog
+always_ff @(posedge clk) begin
+  a <= b;
+  b <= a;
+end
+```
+
+With non-blocking assignment, both right-hand sides are read using each
+register's value *before* this clock edge, and both updates take effect
+together — the swap works, matching what "on every clock edge, in
+parallel" should mean. Replace `<=` with `=` and the second line reads the
+value the first line just wrote, collapsing two parallel updates into a
+sequential one — the swap silently fails, and nothing about the syntax
+warns you. This is why the pairing on the previous slide has no
+exceptions: `=` in combinational logic, `<=` in clocked logic, every time.
+
+Putting both block types together gives the smallest useful piece of a
+pipeline stage: the multiplexer from the previous section feeding a
+register. The `always_comb` block becomes the mux, the `always_ff` block
+becomes the flip-flop, and the only wire between them is `y` (@fig-mux2-reg).
+
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+  else     y = in0;
+end
+
+always_ff @(posedge clk) q <= y;
+```
+
+![Synthesized result of the code above, drawn by Yosys from the full module in `images/rtl/mux2_reg.sv`: the mux feeds the D input of an 8-bit register.](../images/rtl/mux2_reg.svg){#fig-mux2-reg width=80%}
+:::
+
+## Reset styles
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+// Synchronous reset
+always_ff @(posedge clk) begin
+  if (rst) q <= '0;
+  else     q <= d;
+end
+```
+
+```systemverilog
+// Asynchronous reset
+always_ff @(posedge clk or posedge rst) begin
+  if (rst) q <= '0;
+  else     q <= d;
+end
+```
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Both styles produce a register that clears `q` to zero on reset; they
+differ in *when* the clear can happen. A synchronous reset only takes
+effect at a clock edge — `rst` is just another input to the same logic
+that decides the next value of `q`. An asynchronous reset takes effect the
+moment `rst` asserts, independent of the clock, which is why it appears in
+the sensitivity list alongside `posedge clk`.
+
+The DFF you will build next chapter as a pipeline register uses exactly
+this pattern — it is worth being able to tell the two styles apart on
+sight, since the choice affects how quickly a stalled or flushed pipeline
+stage can be forced back to a known state.
+:::
+
+## From syntax to the pipeline
+
+::: {.content-visible when-format="revealjs"}
+Next week: these constructs, applied to a real five-stage pipeline
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Every construct introduced in this chapter reappears immediately in the
+next one. `typedef enum` and `typedef struct packed` are how
+`pipeline_pkg.sv` groups control signals; `always_ff` with the
+non-blocking assignment and reset style you just saw is how `if_id_reg`
+and the other pipeline registers are built; `always_comb` with the
+blocking assignment and complete-branch discipline is how the ALU and
+decoder avoid the latch-inference trap. Nothing in the pipeline chapter
+introduces new syntax — it only puts this chapter's syntax to work on a
+larger example.
+:::
