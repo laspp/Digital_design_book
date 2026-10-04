@@ -35,3 +35,5 @@ CLAUDE.md
 digital_design-main.zip
 digital_design-main/
 **/*.quarto_ipynb
+
+__pycache__/

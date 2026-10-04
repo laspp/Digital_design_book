@@ -123,7 +123,7 @@ always_comb begin
 end
 ```
 
-![A 2-to-1 multiplexer: `sel` chooses which input appears at `y`.](images/blocks/mux2.svg){#fig-mux2 width=45%}
+![A 2-to-1 multiplexer: `sel` chooses which input appears at `y`.](../images/blocks/mux2.svg){#fig-mux2 width=45%}
 :::
 
 ## Sequential logic: `always_ff`

@@ -12,3 +12,12 @@ Content intended for only one of the two formats (e.g. discussion
 questions used in class, or in-depth derivations meant for the book) is
 marked with `content-visible` blocks — see the example in the chapter on
 pipeline structure.
+
+::: {.callout-warning}
+## Work in progress
+
+This material is a work in progress. It is written and revised alongside
+the course as it is taught, so chapters vary in polish, and some sections
+still need further revision. Please read it with that in mind, and feel
+free to flag anything that is unclear, incomplete, or incorrect.
+:::
