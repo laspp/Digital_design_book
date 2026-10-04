@@ -11,6 +11,7 @@ book:
     - index.qmd
     - chapters/00-digital-design-intro.qmd
     - chapters/01-digital-ic-basics.qmd
+    - chapters/02-sv-modeling.qmd
     - chapters/03-fpga-basics.qmd
     - chapters/04-sv-basics.qmd
     - chapters/05-pipeline-structure.qmd

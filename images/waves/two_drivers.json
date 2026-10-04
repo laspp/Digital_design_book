@@ -1,0 +1,7 @@
+{ "signal": [
+    { "name": "a",          "wave": "0.1.0.1." },
+    { "name": "b",          "wave": "0...1..." },
+    { "name": "c (wire)",   "wave": "0.x...1.", "data": [] }
+  ],
+  "head": { "text": "assign c = a;  assign c = b;   (c is a wire driven twice)", "tock": 0 }
+}

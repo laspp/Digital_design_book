@@ -1,6 +1,9 @@
 # Chapter 4 — SystemVerilog basics: outline
 
-Working outline for `chapters/04-sv-basics.qmd`. Not part of the book build.
+Working outline. Sections 1–3 were turned into the new chapter
+`chapters/02-sv-modeling.qmd` ("Modeling Digital Systems with
+SystemVerilog"); the remaining sections stay in
+`chapters/04-sv-basics.qmd`. Not part of the book build.
 
 **Sources**
 
