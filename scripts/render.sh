@@ -11,6 +11,8 @@
 #   ./scripts/render.sh all                            Render slides for every chapter + the book (html)
 #
 # Requires: quarto (https://quarto.org/docs/get-started/)
+# Wave diagrams (images/waves/*.json) are rendered first: pip install wavedrom cairosvg schemdraw
+# and block diagrams (images/blocks/*.py)
 # For PDF book output: a LaTeX engine, e.g. `quarto install tinytex`
 
 set -euo pipefail
@@ -35,6 +37,11 @@ check_quarto() {
     echo "See https://quarto.org/docs/get-started/ for installation instructions." >&2
     exit 1
   fi
+}
+
+render_waves() {
+  python3 "$SCRIPT_DIR/render_waves.py"
+  python3 "$SCRIPT_DIR/render_blocks.py"
 }
 
 render_slides() {
@@ -91,6 +98,8 @@ main() {
   if [[ $# -lt 1 ]]; then
     usage
   fi
+
+  render_waves
 
   case "$1" in
     slides)

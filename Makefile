@@ -29,7 +29,7 @@ PREVIEW_TARGETS := $(addprefix preview-,$(CHAPTER_NAMES))
 SLIDES_ALIASES  := $(addprefix slides-,$(CHAPTER_NUMS))
 PREVIEW_ALIASES := $(addprefix preview-,$(CHAPTER_NUMS))
 
-.PHONY: help all book-html book-pdf preview clean \
+.PHONY: help all waves blocks book-html book-pdf preview clean \
         $(SLIDES_TARGETS) $(PREVIEW_TARGETS) $(SLIDES_ALIASES) $(PREVIEW_ALIASES)
 
 help:
@@ -39,6 +39,8 @@ help:
 	@echo "Same names with 'preview-' instead of 'slides-' live-preview a chapter."
 	@echo ""
 	@echo "Other targets:"
+	@echo "  make waves        Render images/waves/*.json to SVG/PDF"
+	@echo "  make blocks       Render images/blocks/*.py to SVG/PDF"
 	@echo "  make book-html    Render the whole book (HTML)"
 	@echo "  make book-pdf     Render the whole book (PDF)"
 	@echo "  make preview      Live-preview the whole book"
@@ -58,6 +60,12 @@ slides-$(word 1,$(subst -, ,$(1))): slides-$(1)
 preview-$(word 1,$(subst -, ,$(1))): preview-$(1)
 endef
 $(foreach c,$(CHAPTER_NAMES),$(eval $(call chapter_alias,$(c))))
+
+waves:
+	./scripts/render_waves.py
+
+blocks:
+	./scripts/render_blocks.py
 
 book-html:
 	$(RENDER) book html

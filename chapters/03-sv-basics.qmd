@@ -107,10 +107,23 @@ The example above is an incomplete 2-to-1-style decoder: two of the four
 show a blank cell. In hardware, `y` cannot go blank — if no branch assigns
 it, the only way to keep `y` at *some* value is to remember the previous
 one. Synthesis does exactly that: it infers a latch. This is almost never
-what you want in a synchronous design, and it is the most common bugr
+what you want in a synchronous design, and it is the most common bug
 `always_comb` produces. The fix is always the same: every signal assigned
 in an `always_comb` block must be assigned on *every* path through it —
 in practice, an `else` or a `default` branch on every `if`/`case`.
+
+The complete version of the simplest case, a 2-to-1 multiplexer, has no
+missing branch and therefore synthesizes to pure combinational logic, with
+no memory element anywhere (@fig-mux2):
+
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+  else     y = in0;
+end
+```
+
+![A 2-to-1 multiplexer: `sel` chooses which input appears at `y`.](images/blocks/mux2.svg){#fig-mux2 width=45%}
 :::
 
 ## Sequential logic: `always_ff`

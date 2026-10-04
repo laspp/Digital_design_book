@@ -8,6 +8,14 @@ chapters/*.html
 
 
 
+# Generated wave diagrams (sources are images/waves/*.json)
+images/waves/*.svg
+images/waves/*.pdf
+
+# Generated block diagrams (sources are images/blocks/*.py)
+images/blocks/*.svg
+images/blocks/*.pdf
+
 # LaTeX build intermediates (from PDF rendering)
 *.aux
 *.fdb_latexmk

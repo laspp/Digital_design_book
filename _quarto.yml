@@ -20,6 +20,9 @@ book:
 
 bibliography: references.bib
 
+filters:
+  - filters/wave-pdf.lua
+
 # Format for the BOOK (used when rendering the whole project: `quarto render`)
 format:
   html:
