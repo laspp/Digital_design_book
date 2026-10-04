@@ -165,6 +165,22 @@ value the first line just wrote, collapsing two parallel updates into a
 sequential one — the swap silently fails, and nothing about the syntax
 warns you. This is why the pairing on the previous slide has no
 exceptions: `=` in combinational logic, `<=` in clocked logic, every time.
+
+Putting both block types together gives the smallest useful piece of a
+pipeline stage: the multiplexer from the previous section feeding a
+register. The `always_comb` block becomes the mux, the `always_ff` block
+becomes the flip-flop, and the only wire between them is `y` (@fig-mux2-reg).
+
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+  else     y = in0;
+end
+
+always_ff @(posedge clk) q <= y;
+```
+
+![Synthesized result of the code above, drawn by Yosys from the full module in `images/rtl/mux2_reg.sv`: the mux feeds the D input of an 8-bit register.](../images/rtl/mux2_reg.svg){#fig-mux2-reg width=80%}
 :::
 
 ## Reset styles
