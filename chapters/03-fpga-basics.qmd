@@ -305,7 +305,7 @@ signal, though each still has its own configuration bits for init value
 and set/reset behavior, echoing the per-flip-flop reconfigurability we
 discussed for the generic CLB.
 
-![SLICEL, simplified block diagram: four LUT6s feed the F7A/F7B/F8 combining muxes and the carry chain, each lane ending in an FF/Latch and an FF-only register sharing one clock and clock-enable (redrawn, not to scale, after AMD/Xilinx UG474, Fig. 2)](../images/slicel-block-diagram.svg)
+![SLICEL, simplified block diagram: four LUT6s feed the F7A/F7B/F8 combining muxes and the carry chain, each lane ending in an FF/Latch and an FF-only register sharing one clock and clock-enable (redrawn, not to scale, after AMD/Xilinx UG474, Fig. 2)](../images/blocks/slicel.svg)
 
 SLICEM slices add one more capability that SLICEL slices lack. A LUT's
 whole purpose, as we saw earlier, is to hold a fixed truth table in SRAM
