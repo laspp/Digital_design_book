@@ -12,7 +12,9 @@
 #
 # Requires: quarto (https://quarto.org/docs/get-started/)
 # Wave diagrams (images/waves/*.json) are rendered first: pip install wavedrom cairosvg schemdraw
-# and block diagrams (images/blocks/*.py)
+# and block diagrams (images/blocks/*.py), RTL schematics (images/rtl/*.sv:
+# pip install yowasp-yosys nodejs-wheel-binaries; npm install --prefix .tools netlistsvg)
+# and hand-drawn SVG -> PDF (images/*.svg) for the PDF build
 # For PDF book output: a LaTeX engine, e.g. `quarto install tinytex`
 
 set -euo pipefail
@@ -42,6 +44,8 @@ check_quarto() {
 render_waves() {
   python3 "$SCRIPT_DIR/render_waves.py"
   python3 "$SCRIPT_DIR/render_blocks.py"
+  python3 "$SCRIPT_DIR/render_rtl.py"
+  python3 "$SCRIPT_DIR/render_svgs.py"
 }
 
 render_slides() {

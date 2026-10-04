@@ -29,7 +29,7 @@ PREVIEW_TARGETS := $(addprefix preview-,$(CHAPTER_NAMES))
 SLIDES_ALIASES  := $(addprefix slides-,$(CHAPTER_NUMS))
 PREVIEW_ALIASES := $(addprefix preview-,$(CHAPTER_NUMS))
 
-.PHONY: help all waves blocks book-html book-pdf preview clean init-gh-pages \
+.PHONY: help all waves blocks rtl book-html book-pdf preview clean init-gh-pages \
         $(SLIDES_TARGETS) $(PREVIEW_TARGETS) $(SLIDES_ALIASES) $(PREVIEW_ALIASES)
 
 help:
@@ -41,6 +41,7 @@ help:
 	@echo "Other targets:"
 	@echo "  make waves           Render images/waves/*.json to SVG/PDF"
 	@echo "  make blocks          Render images/blocks/*.py to SVG/PDF"
+	@echo "  make rtl             Render images/rtl/*.sv to SVG/PDF schematics"
 	@echo "  make book-html       Render the whole book (HTML)"
 	@echo "  make book-pdf        Render the whole book (PDF)"
 	@echo "  make preview         Live-preview the whole book"
@@ -69,6 +70,9 @@ waves:
 
 blocks:
 	./scripts/render_blocks.py
+
+rtl:
+	./scripts/render_rtl.py
 
 book-html:
 	$(RENDER) book html

@@ -16,6 +16,14 @@ images/waves/*.pdf
 images/blocks/*.svg
 images/blocks/*.pdf
 
+# Generated RTL schematics (sources are images/rtl/*.sv) and SVG->PDF copies
+images/rtl/*.svg
+images/rtl/*.pdf
+images/*.pdf
+
+# Local node tooling (netlistsvg)
+.tools/
+
 # LaTeX build intermediates (from PDF rendering)
 *.aux
 *.fdb_latexmk
@@ -37,3 +45,5 @@ digital_design-main/
 **/*.quarto_ipynb
 
 __pycache__/
+
+.vscode/
