@@ -1,0 +1,8 @@
+{ "signal": [
+    { "name": "S",  "wave": "0..1..0." },
+    { "name": "D0", "wave": "0.1.0.1." },
+    { "name": "D1", "wave": "1.0.1.0." },
+    { "name": "Y",  "wave": "0.101..." }
+  ],
+  "head": { "text": "mux2: Y = S ? D1 : D0", "tock": 0 }
+}

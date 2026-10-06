@@ -1,0 +1,28 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "01010101"
+  },
+  {
+   "name": "a",
+   "wave": "0.1.0..."
+  },
+  {
+   "name": "b1 / b2",
+   "wave": "0..1.0.."
+  },
+  {
+   "name": "f1 (blocking)",
+   "wave": "0..1.0.."
+  },
+  {
+   "name": "f2 (non-blocking)",
+   "wave": "0....1.0"
+  }
+ ],
+ "head": {
+  "text": "always_ff: blocking vs. non-blocking",
+  "tock": 0
+ }
+}

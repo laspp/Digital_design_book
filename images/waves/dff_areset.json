@@ -1,0 +1,26 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p......."
+  },
+  {
+   "name": "reset",
+   "wave": "0.1..0..",
+   "phase": 0.5
+  },
+  {
+   "name": "d",
+   "wave": "1......."
+  },
+  {
+   "name": "q",
+   "wave": "x.10......1.....",
+   "period": 0.5
+  }
+ ],
+ "head": {
+  "text": "Asynchronous reset: clears immediately",
+  "tock": 0
+ }
+}

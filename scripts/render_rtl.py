@@ -2,7 +2,9 @@
 """Render SystemVerilog modules (images/rtl/*.sv) to SVG and PDF schematics.
 
 Pipeline: Yosys (read_verilog -sv; proc; opt; JSON netlist) -> netlistsvg
--> SVG -> PDF (cairosvg). The module drawn is the one named like the file.
+-> SVG -> PDF (cairosvg). The module drawn is the one named like the file;
+`include "x.sv" resolves against images/rtl/, so a top module can pull in the
+cells it instantiates; a `// yosys: flatten` comment draws them expanded.
 Outputs next to the source are generated and git-ignored; stale-only unless
 --force.
 
@@ -32,8 +34,10 @@ def render(src: Path, force: bool) -> bool:
         return False
     with tempfile.TemporaryDirectory() as tmp:
         netlist = Path(tmp) / "netlist.json"
-        script = (f"read_verilog -sv {src}; hierarchy -top {src.stem}; "
-                  f"proc; opt; write_json {netlist}")
+        # `// yosys: flatten` in the source expands instances into their contents
+        flatten = "flatten; " if "yosys: flatten" in src.read_text() else ""
+        script = (f"read_verilog -sv -I{RTL_DIR} {src}; hierarchy -top {src.stem}; "
+                  f"{flatten}proc; opt; write_json {netlist}")
         subprocess.run([str(YOSYS), "-q", "-p", script], check=True)
         subprocess.run([str(NODE), str(NETLISTSVG), str(netlist), "-o", str(svg)],
                        check=True)

@@ -1,0 +1,25 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p......."
+  },
+  {
+   "name": "reset",
+   "wave": "0.1..0..",
+   "phase": 0.5
+  },
+  {
+   "name": "d",
+   "wave": "1......."
+  },
+  {
+   "name": "q",
+   "wave": "x10..1.."
+  }
+ ],
+ "head": {
+  "text": "Synchronous reset: clears at the next edge",
+  "tock": 0
+ }
+}

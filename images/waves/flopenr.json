@@ -1,0 +1,42 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p......."
+  },
+  {
+   "name": "reset",
+   "wave": "1.0.....",
+   "phase": 0.5
+  },
+  {
+   "name": "en",
+   "wave": "0.1..0..",
+   "phase": 0.5
+  },
+  {
+   "name": "D",
+   "wave": "=.=.=.=.",
+   "data": [
+    "A",
+    "B",
+    "C",
+    "D"
+   ],
+   "phase": 0.5
+  },
+  {
+   "name": "Q",
+   "wave": "x==.=...",
+   "data": [
+    "0",
+    "B",
+    "C"
+   ]
+  }
+ ],
+ "head": {
+  "text": "flopenr: loads D only while en is high",
+  "tock": 0
+ }
+}

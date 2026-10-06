@@ -1,0 +1,46 @@
+{
+ "signal": [
+  {
+   "name": "Addr",
+   "wave": "=.=.=.=.=.",
+   "data": [
+    "0x0000_0040",
+    "0x1000_0010",
+    "0x2000_0004",
+    "0x2000_1000",
+    "0x3000_0000"
+   ]
+  },
+  {
+   "name": "SlaveSel[0]",
+   "wave": "1.0......."
+  },
+  {
+   "name": "SlaveSel[1]",
+   "wave": "0.1.0....."
+  },
+  {
+   "name": "SlaveSel[2]",
+   "wave": "0...1.0..."
+  },
+  {
+   "name": "SlaveSel[3]",
+   "wave": "0.....1.0."
+  },
+  {
+   "name": "SlaveSel[4]",
+   "wave": "0........."
+  },
+  {
+   "name": "DecErr",
+   "wave": "0.......1."
+  }
+ ],
+ "config": {
+  "hscale": 2
+ },
+ "head": {
+  "text": "addr_decoder: one-hot select or DecErr",
+  "tock": 0
+ }
+}

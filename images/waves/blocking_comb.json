@@ -1,0 +1,32 @@
+{
+ "signal": [
+  {
+   "name": "a",
+   "wave": "0...1..."
+  },
+  {
+   "name": "b",
+   "wave": "0.1.0.1."
+  },
+  {
+   "name": "c",
+   "wave": "01010101"
+  },
+  {
+   "name": "n1 / n2",
+   "wave": "0.1...0."
+  },
+  {
+   "name": "s1 (blocking)",
+   "wave": "01.010.1"
+  },
+  {
+   "name": "s2 (non-blocking)",
+   "wave": "010.101."
+  }
+ ],
+ "head": {
+  "text": "n = a ^ b;  s = c ^ n",
+  "tock": 0
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p......."
+  },
+  {
+   "name": "reset",
+   "wave": "1.0.....",
+   "phase": 0.5
+  },
+  {
+   "name": "count_next",
+   "wave": "x=======",
+   "data": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7"
+   ]
+  },
+  {
+   "name": "count",
+   "wave": "x=======",
+   "data": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6"
+   ]
+  }
+ ],
+ "head": {
+  "text": "counter4_next: count_next leads by one",
+  "tock": 0
+ }
+}

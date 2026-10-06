@@ -9,233 +9,157 @@ format:
 
 ## Goal for this week
 
-- Describe combinational logic with `always_comb`, and sequential logic with
-  `always_ff`, using the assignment operator each one requires
-- Recognize latch inference on sight, and write code that cannot produce one
-- Choose between synchronous and asynchronous reset
-- Build a design from smaller ones with module instances and parameters
-- Write a testbench that drives a design and checks its outputs
+- Tell the two styles of hardware description apart: behavioral and
+  structural
+- Describe sequential logic with `always_ff`: flip-flops, resets, registers
+  with an enable, and counters
+- Know what a latch is, and write code that cannot produce one by accident
+- Describe combinational logic with `always_comb`: multiplexers and decoders
+- Explain the difference between `=` and `<=`, and why each block uses one
+  of them
+- Assemble a design from smaller modules, and test it with a testbench
 
-## Two kinds of logic, two kinds of block
+## Two styles of design
 
 ::: {.content-visible when-format="revealjs"}
-| | Combinational | Sequential |
+| | Behavioral | Structural |
 |---|---|---|
-| Output depends on | current inputs | inputs **and** stored state |
-| Block | `always_comb` | `always_ff @(posedge clk)` |
-| Assignment | blocking `=` | non-blocking `<=` |
-| Hardware | gates, multiplexers | flip-flops |
+| Describes | **what** a block does | **how** it is built from other blocks |
+| Written with | `assign`, `always_*` | module **instances** |
+| Example | a register, a multiplexer | a pipeline stage |
 
-- `assign` is the one-line form of combinational logic
+- Real designs mix both: leaf cells are behavioral, the levels above them are
+  structural
+- Start with behavioral
 :::
 
 ::: {.content-visible unless-format="revealjs"}
-The previous chapter described combinational logic one line at a time with
-`assign`. That works for an adder or a small multiplexer, but it gets
-awkward the moment a function needs an `if` or a `case`. For those we use
-**procedural blocks**: a block of statements that describes how a set of
-outputs depends on a set of inputs.
+There are two ways to describe a piece of hardware in SystemVerilog, and a
+real design uses both.
 
-SystemVerilog has two procedural blocks for synthesizable hardware, and
-which one you pick is not a matter of taste. It is dictated by what you are
-building:
+In **behavioral** design we describe *what* a block does: its outputs as a
+function of its inputs and, for sequential logic, of its stored state. We
+write that with `assign` and with `always` blocks, and leave it to the
+synthesis tool to pick the gates and flip-flops. In **structural** design we
+describe *how* a block is composed of other blocks: we create instances of
+smaller modules and connect their ports with wires, much as one would wire
+chips on a board.
 
-| | Combinational | Sequential |
+| | Behavioral | Structural |
 |---|---|---|
-| Output depends on | current inputs only | inputs **and** stored state |
-| Block | `always_comb` | `always_ff @(posedge clk)` |
-| Assignment | blocking, `=` | non-blocking, `<=` |
-| Hardware | gates, multiplexers | flip-flops |
+| Describes | **what** a block does | **how** it is built from other blocks |
+| Written with | `assign`, `always_*` | module **instances** |
+| Example | a register, a multiplexer | a pipeline stage |
 
-The `_comb` and `_ff` in the names are a promise to the tool: if the code
-inside does not describe the kind of hardware its block name claims, the
-tool reports it. Older Verilog has a single `always @(...)` for both
-purposes, and a whole class of bugs came from getting it wrong without any
-warning.
+The two styles meet at the leaf cells. In the HIPV SoC that we use as a
+running example, the folder `rtl/generic` holds small, reusable cells
+(`flopenr`, `mux2`, `mux3`, `adder`) written in behavioral style, and the
+larger modules of the processor instantiate them structurally. This chapter
+begins with the behavioral style, because those leaf cells have to be
+written before they can be assembled, and ends with the structural style.
 :::
 
-## Combinational logic: `always_comb`
+## The `always` block
 
 ::: {.content-visible when-format="revealjs"}
-```systemverilog
-module inverter (
-    input  logic a,
-    output logic y
-);
-  always_comb begin
-    y = ~a;
-  end
-endmodule
-```
+| Block | Describes | Runs when |
+|---|---|---|
+| `always_comb` | combinational logic | any signal it **reads** changes |
+| `always_ff @(posedge clk)` | flip-flops | the clock edge |
+| `always_latch` | latches | any input changes (rarely used) |
 
-- Re-evaluates whenever **any signal it reads** changes
-- Statements run in order: use blocking `=`
+- Blocks run **concurrently**, not one after another
+- Statements **inside** a block run in order
 :::
 
 ::: {.content-visible unless-format="revealjs"}
-An `always_comb` block re-evaluates itself whenever any signal it reads
-changes. It is closer to a spreadsheet formula that recalculates on every
-input edit than to a function you call:
+The previous chapter described logic one line at a time with `assign`. That
+is enough for an adder, but awkward the moment a function needs an `if` or a
+`case`. For those we use an **`always` block**: a block of statements that
+describes how a set of outputs depends on a set of inputs.
 
-```systemverilog
-module inverter (
-    input  logic a,
-    output logic y
-);
-  always_comb begin
-    y = ~a;
-  end
-endmodule
-```
+SystemVerilog has three kinds of `always` block for hardware, and which one
+you use is dictated by what you are building:
 
-You do not write a sensitivity list: the tool works it out from the
-signals the block reads. Assignment inside it uses `=`, the **blocking**
-assignment, which reads as "this is what the output equals right now". Inside
-one block, blocking assignments take effect in the order they are written,
-so a later statement sees the result of an earlier one.
+| Block | Describes | Runs when |
+|---|---|---|
+| `always_comb` | combinational logic | any signal it **reads** changes |
+| `always_ff @(posedge clk)` | flip-flops | the clock edge |
+| `always_latch` | latches | any of its inputs changes |
+
+The names are a promise to the tool: if the code inside does not describe
+the kind of hardware the block name claims, the tool reports it. Older
+Verilog has a single `always @(...)` for all three purposes, and a whole
+class of bugs came from getting it wrong without any warning.
+
+Two facts about `always` blocks are worth keeping in mind from the start.
+First, every `always` block in a module is a separate piece of hardware that
+exists all the time, like an `assign`, so they all run *concurrently* and the
+order in which you write them does not matter. Second, the statements
+*inside* one block run in the order written, like a small program. A block
+is a description of hardware, not a function that gets called.
 :::
 
-## `if` and `case`
+## Sequential logic: describe the hardware you want
 
 ::: {.content-visible when-format="revealjs"}
-```systemverilog
-module mux4to1_case (
-    input  logic [1:0] sel,
-    input  logic [3:0] d,
-    output logic       y
-);
-  always_comb begin
-    case (sel)
-      2'b00:   y = d[0];
-      2'b01:   y = d[1];
-      2'b10:   y = d[2];
-      2'b11:   y = d[3];
-      default: y = 1'b0;
-    endcase
-  end
-endmodule
-```
+For every circuit in this chapter we follow the same four steps:
 
-- Always write a `default`
+1. The **hardware** we want
+2. Its **waveform**: what it should do over time
+3. The **code** that describes it
+4. A **walk through the waveform** to check the code
 :::
 
 ::: {.content-visible unless-format="revealjs"}
-A multiplexer with more than two inputs is clearer as a `case` statement
-than as a chain of `?:` operators:
+Hardware description is not programming, and the habit that separates the
+two is this: **decide on the hardware first, then write the code that
+describes it.** If you cannot sketch the flip-flops and gates you expect,
+you are not ready to write the `always` block, and the synthesis tool will
+build something, but not necessarily what you meant.
 
-```systemverilog
-module mux4to1_case (
-    input  logic [1:0] sel,
-    input  logic [3:0] d,
-    output logic       y
-);
-  always_comb begin
-    case (sel)
-      2'b00:   y = d[0];
-      2'b01:   y = d[1];
-      2'b10:   y = d[2];
-      2'b11:   y = d[3];
-      default: y = 1'b0;     // also covers sel containing X or Z
-    endcase
-  end
-endmodule
-```
+So for every circuit in this chapter we follow the same four steps. First,
+the hardware we want. Second, its **waveform**, which says what the circuit
+must do over time and is the most precise specification there is. Third, the
+code that describes it. Fourth, a walk through the waveform to check that the
+code matches it. Learning to read waveforms is half of the work: it is also
+how you will debug in simulation.
 
-The `case` compares `sel` against each listed value in turn and runs the
-matching branch. It describes the same multiplexer as the nested
-conditional operator in the previous chapter, only in a form that scales to
-eight or sixteen inputs without becoming unreadable. The `default` branch is
-the safety net, and the next section explains why it is not optional.
+A convention for all the diagrams in this chapter: the clock rises at the
+start of each numbered column, and input signals change in the *middle* of a
+column, after the clock has fallen. That way an input never changes at the
+same instant as a rising edge, and it is always clear which value the
+circuit sampled.
 :::
 
-## The latch trap
+## The D flip-flop
 
 ::: {.content-visible when-format="revealjs"}
 ```systemverilog
-always_comb begin
-  if (input_button) begin
-    status = 1'b1;
-    result = 1'b0;
-  end else if (done_signal) begin
-    status = 1'b0;
-  end
+always_ff @(posedge clk) begin
+  q <= d;
 end
 ```
-
-**Discussion question:** what is `result` when `done_signal` is high? And
-what are `status` and `result` when both inputs are low?
 :::
+
+![A D flip-flop: `q` takes the value of `d` at each rising clock edge.](../images/waves/dff.svg){#fig-dff}
 
 ::: {.content-visible unless-format="revealjs"}
-Here is a block that looks complete and is not:
+The flip-flop is the memory element of synchronous design. It has a data
+input `d`, a clock `clk` and an output `q`. At every rising edge of the clock
+it copies `d` to `q`, and between edges it holds that value no matter what
+`d` does (@fig-dff).
 
-```systemverilog
-always_comb begin
-  if (input_button) begin
-    status = 1'b1;
-    result = 1'b0;
-  end else if (done_signal) begin
-    status = 1'b0;
-  end
-end
-```
+Follow the waveform from left to right. In column 0, `q` is unknown (the
+hatched area): nothing has been stored yet. At the rising edge that starts
+column 1, `d` is 0, so `q` becomes 0. In the middle of column 1, `d` rises,
+and `q` does **not** react: the flip-flop is not looking. At the next rising
+edge, starting column 2, it samples `d = 1` and `q` rises. The same happens
+in reverse when `d` falls in the middle of column 3: `q` falls only at the
+edge that starts column 4. A flip-flop is a circuit that looks at its input
+at one instant per cycle.
 
-Ask what `result` equals when `done_signal` is high: no branch says. And
-what are `status` and `result` when both inputs are low? Again, no branch
-says. In a spreadsheet, an unhandled case would show a blank cell. In
-hardware, an output cannot go blank. If no branch assigns it, the only way
-to keep it at *some* value is to remember the previous one, so the
-synthesizer builds a **latch**: a level-sensitive memory element
-(@fig-latch). That is almost never what you want in a synchronous design.
-It adds a storage element you did not intend, it breaks timing analysis,
-and it is the most common bug `always_comb` produces.
-
-![What synthesis builds for an incomplete `if`: a latch whose enable is `sel`, so the output holds its old value whenever `sel` is 0.](../images/rtl/latch_bug.svg){#fig-latch width=70%}
-
-The rule is that every signal assigned in an `always_comb` block must be
-assigned on **every** path through it. The most reliable way to follow it is
-to give every output a default value at the top of the block, and let the
-branches override it:
-
-```systemverilog
-always_comb begin
-  status = 1'b0;               // defaults: every path assigns both outputs
-  result = 1'b0;
-  if (input_button)
-    status = 1'b1;
-  else if (done_signal)
-    status = 1'b0;
-end
-```
-
-With the defaults in place, a forgotten `else` is harmless. If you really
-do want a latch, SystemVerilog has a block for it, `always_latch`, which
-documents the intent. Tools also warn when `always_comb` would infer one,
-which is the reason to use it instead of the old `always @(*)`.
-:::
-
-## Sequential logic: `always_ff`
-
-::: {.content-visible when-format="revealjs"}
-```systemverilog
-module dff (
-    input  logic clk, d,
-    output logic q
-);
-  always_ff @(posedge clk) begin
-    q <= d;
-  end
-endmodule
-```
-
-- Runs **only** on the clock edge named in `@(...)`
-- Non-blocking `<=`: "schedule this update at the edge"
-:::
-
-::: {.content-visible unless-format="revealjs"}
-`always_ff` describes a block that updates only at a clock edge: a
-register, not a formula. The sensitivity list is not optional here. It names
-the event that triggers the block:
+The code is as short as the circuit:
 
 ```systemverilog
 module dff (
@@ -248,83 +172,55 @@ module dff (
 endmodule
 ```
 
-On every rising edge of `clk` the block runs and copies `d` into `q`. At any
-other moment nothing happens, and `q` holds its value: that holding is the
-memory. The operator is `<=`, the **non-blocking** assignment. It reads as
-"at this clock edge, schedule this update", rather than `=`'s "this is the
-value right now". `always_ff` tells the tool that this block must infer
-flip-flops, and it reports a warning if the code would produce anything
-else.
+The sensitivity list `@(posedge clk)` names the event that makes the block
+run, and the block runs *only* then. Between clock edges nothing happens and
+`q` keeps its value: that holding is the memory. The operator is `<=`, the
+non-blocking assignment, which we explain at the end of the chapter; for now,
+remember that it goes with `always_ff`.
 :::
 
-## Blocking vs. non-blocking
+## The latch
 
 ::: {.content-visible when-format="revealjs"}
 ```systemverilog
-always_ff @(posedge clk) begin
-  a <= b;
-  b <= a;     // swap: works
+always_latch begin
+  if (en) q <= d;
 end
 ```
 
-| | `=` blocking | `<=` non-blocking |
-|---|---|---|
-| Statements | one after another | all at once |
-| Use in | `always_comb` | `always_ff` |
-
-- No exceptions to this pairing
+- Level-sensitive: transparent while `en` is high
+- Almost always a **bug** in synchronous design
 :::
+
+![A latch: `q` follows `d` while `en` is high, and holds its value while `en` is low.](../images/waves/latch.svg){#fig-latch-wave}
 
 ::: {.content-visible unless-format="revealjs"}
-The difference between the two operators matters the moment two registers
-depend on each other, which is exactly the situation of every pipeline
-register. Consider two registers meant to swap values on the same clock
-edge:
+A **latch** is a memory element too, but it looks at its input for a whole
+*level*, not at one instant. While the enable `en` is high, the latch is
+*transparent*: `q` follows `d` continuously. When `en` falls, the latch
+closes and `q` holds the last value (@fig-latch-wave).
+
+In the waveform, `en` is high during columns 2 to 4. As soon as it rises,
+`q` takes the value of `d`, which is 1. When `d` falls at the start of column
+4, `q` falls with it, because the latch is still open. `en` falls at the start
+of column 5, and from then on `q` stays 0: when `d` rises again in column 6,
+the latch is closed and does not notice. Compare this with the flip-flop of
+the previous waveform, where `q` could only change at a clock edge.
 
 ```systemverilog
-always_ff @(posedge clk) begin
-  a <= b;
-  b <= a;
+always_latch begin
+  if (en) q <= d;
 end
 ```
 
-With non-blocking assignment, both right-hand sides are read using each
-register's value *before* this clock edge, and both updates take effect
-together. The swap works, which matches what "on every clock edge, in
-parallel" should mean. Replace `<=` with `=` and the second line reads the
-value the first line just wrote, collapsing two parallel updates into a
-sequential one: both registers end up holding `b`, and nothing about the
-syntax warns you.
-
-| | Blocking `=` | Non-blocking `<=` |
-|---|---|---|
-| Statements in a block | take effect one after another | all take effect together |
-| Reads the value of | the latest assignment | the value before the clock edge |
-| Use in | `always_comb` | `always_ff` |
-
-That is why the pairing has no exceptions: `=` in combinational logic, `<=`
-in clocked logic, every time. A group of non-blocking statements is
-evaluated concurrently, in the same sense that the `assign` statements in
-the previous chapter are.
-
-Putting both block types together gives the smallest useful piece of a
-pipeline stage: a multiplexer feeding a register. The `always_comb` block
-becomes the mux, the `always_ff` block becomes the flip-flop, and the only
-wire between them is `y` (@fig-mux2-reg).
-
-```systemverilog
-always_comb begin
-  if (sel) y = in1;
-  else     y = in0;
-end
-
-always_ff @(posedge clk) q <= y;
-```
-
-![Synthesized result of the code above, drawn by Yosys from the full module in `images/rtl/mux2_reg.sv`: the mux feeds the D input of an 8-bit register.](../images/rtl/mux2_reg.svg){#fig-mux2-reg width=80%}
+A latch has no clock edge, so a signal passing through it can ripple along
+for as long as `en` is high, which makes timing analysis difficult. In a
+synchronous design we want flip-flops everywhere, and we use a latch only on
+purpose. The reason to know it exists is that it is easy to build one
+*by accident*, and the section on combinational logic below shows how.
 :::
 
-## Reset styles
+## Adding a reset
 
 ::: {.content-visible when-format="revealjs"}
 ```systemverilog
@@ -344,43 +240,155 @@ end
 ```
 :::
 
+![Synchronous reset: `q` clears at the next rising edge after `reset` rises.](../images/waves/dff_reset.svg){#fig-dff-reset}
+
+![Asynchronous reset: `q` clears the moment `reset` rises, without waiting for a clock edge.](../images/waves/dff_areset.svg){#fig-dff-areset}
+
 ::: {.content-visible unless-format="revealjs"}
-A register that starts in an unknown state is a bug waiting to happen, so
-registers get a reset. There are two ways to write it, and both clear `q` to
-zero when `reset` is high. They differ in *when* the clear can happen.
+A flip-flop that powers up with an unknown value is a bug waiting to happen,
+so registers get a **reset** that forces a known value. There are two ways to
+write it, and both clear `q` when `reset` is high. They differ in *when* the
+clear takes effect.
+
+With a **synchronous** reset (@fig-dff-reset), `reset` is just another input
+that the flip-flop looks at on the clock edge. In the waveform `d` stays 1.
+`q` becomes 1 at the edge that starts column 1. `reset` rises in the middle
+of column 1 and `q` does not move; only at the edge starting column 2 does
+the flip-flop see `reset` high and clear. It stays cleared through the edges
+of columns 3 and 4 because `reset` is still high. `reset` falls in the
+middle of column 4, and at the edge starting column 5 the flip-flop loads
+`d` again.
 
 ```systemverilog
-// Synchronous reset: only looked at on a clock edge
 always_ff @(posedge clk) begin
   if (reset) q <= 1'b0;
   else       q <= d;
 end
+```
 
-// Asynchronous reset: acts the moment reset asserts
+With an **asynchronous** reset (@fig-dff-areset), the flip-flop reacts to
+`reset` itself, whatever the clock is doing. The same stimulus now clears `q`
+in the *middle* of column 1, the instant `reset` rises, not at the next
+edge. It stays 0 while `reset` is high, and after `reset` falls it waits for
+the next edge, at the start of column 5, to load `d`.
+
+```systemverilog
 always_ff @(posedge clk or posedge reset) begin
   if (reset) q <= 1'b0;
   else       q <= d;
 end
 ```
 
-A **synchronous** reset takes effect only at a clock edge. `reset` is just
-another input to the logic that decides the next value of `q`. In a generic
-design that is a little logic in front of the D input, although the
-flip-flops of an FPGA slice have a dedicated set/reset input that absorbs it
-(@fig-counter shows the flip-flop with its reset input). An **asynchronous** reset takes effect the
-moment `reset` asserts, regardless of the clock, which is why it appears in
-the sensitivity list next to `posedge clk`. It needs a flip-flop with a
-dedicated reset pin, and the moment it is released matters: if `reset`
-deasserts too close to a clock edge, the flip-flop can misbehave. We come
-back to that when we discuss synchronizers.
+This is why `reset` appears in the sensitivity list next to `posedge clk`:
+the block must also run when `reset` rises. An asynchronous reset needs a
+flip-flop with a dedicated reset pin, and its release matters: if `reset`
+falls too close to a clock edge the flip-flop can misbehave, a problem we
+return to when we discuss synchronizers. A synchronous reset needs a running
+clock, but is just logic in front of the D input (or a dedicated set/reset
+input on an FPGA flip-flop, like the one in the slice of the previous
+chapter).
 
-For now, the practical rule: pick one style, use it everywhere in a design,
-and know which one you picked.
+The HIPV SoC chooses one style for the whole design: its coding standard
+requires a **synchronous** reset throughout. That is the style we use from
+now on. Pick one style, use it everywhere, and know which one you picked.
 :::
 
-## Example: a counter
+## Registers and the enable signal
 
 ::: {.content-visible when-format="revealjs"}
+```systemverilog
+module flopenr #(parameter WIDTH = 8) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] D,
+  output logic [WIDTH-1:0] Q);
+
+  always_ff @(posedge clk)
+    if (reset) Q <= '0;
+    else if (en) Q <= D;
+endmodule
+```
+
+- From HIPV `rtl/generic/flopenr.sv`
+- `WIDTH` bits wide, synchronous reset, **enable**
+:::
+
+![`flopenr`: after the reset, `Q` loads `D` only at the edges where `en` is high.](../images/waves/flopenr.svg){#fig-flopenr}
+
+::: {.content-visible unless-format="revealjs"}
+A single flip-flop stores one bit. A **register** is a group of flip-flops
+that load together, and in a processor most registers also need an **enable**:
+a signal that says "load a new value at this edge", and otherwise "keep the
+old one". A pipeline register that must hold its contents while the stage
+ahead is busy is exactly that. This is the most-instantiated cell in HIPV:
+
+```systemverilog
+module flopenr #(parameter WIDTH = 8) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] D,
+  output logic [WIDTH-1:0] Q);
+
+  always_ff @(posedge clk)
+    if (reset) Q <= '0;
+    else if (en) Q <= D;
+
+endmodule
+```
+
+The module is the D flip-flop with a synchronous reset, plus one more
+condition. `WIDTH` is a parameter, so the same description serves for a
+1-bit flag and for the 32-bit program counter. The priority is spelled out by
+the `if`/`else if` chain: reset wins, then enable, and if neither is active
+there is no assignment at all, so the register keeps its value. That "no
+assignment means hold" is legal inside `always_ff`, since a flip-flop
+naturally remembers; it is the opposite of the rule for `always_comb`, where
+it would build a latch.
+
+@fig-flopenr shows the behavior. `reset` is high around the first edge, so
+at the start of column 1 `Q` loads 0. `D` carries the values A, B, C, D,
+changing mid-column. `en` is high for the edges starting columns 2, 3 and
+4. At column 2 the register loads B. At column 3 `D` is still B, so `Q`
+stays B. At column 4 `D` is C, so `Q` loads C. Then `en` falls in the
+middle of column 4, and from the edge at column 5 on the register ignores
+`D`, even though `D` keeps changing: `Q` holds C. @fig-flopenr-rtl is what
+the synthesis tool builds: one flip-flop cell with clock, data, enable and
+synchronous reset inputs, which is what an FPGA slice flip-flop provides
+directly (the clock-enable and set/reset inputs of the previous chapter).
+
+![The `flopenr` module (8-bit by default), drawn by Yosys from the real HIPV file. `$sdffe` is a flip-flop with **s**ynchronous reset and **e**nable.](../images/rtl/flopenr.svg){#fig-flopenr-rtl width=70%}
+:::
+
+## Counters: two ways to write one
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+// Way 1: one block
+always_ff @(posedge clk)
+  if (reset) count <= 4'b0000;
+  else       count <= count + 1;
+```
+
+```systemverilog
+// Way 2: next-state logic + register
+always_comb
+  count_next = count + 1;
+
+always_ff @(posedge clk)
+  if (reset) count <= 4'b0000;
+  else       count <= count_next;
+```
+
+- Same hardware, different structure of the **description**
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A counter is a register whose next value is its own current value plus one.
+Its waveform is the simplest of any sequential circuit: after the reset, the
+output goes up by one at every clock edge (@fig-counter-wave). There are two
+common ways to write it, and the best habit is to know both.
+
+**Way 1: everything in one `always_ff`.** The straightforward form says, at
+each edge, "if reset, clear; otherwise `count <= count + 1`":
+
 ```systemverilog
 module counter4 (
     input  logic       clk,
@@ -393,118 +401,420 @@ module counter4 (
   end
 endmodule
 ```
-:::
 
-::: {.content-visible unless-format="revealjs"}
-A 4-bit counter that counts on the rising clock edge, with a synchronous
-active-high reset, is a register whose next value is its own current value
-plus one:
+![Timing of `counter4`: after the reset, `count` increases by one at every rising edge.](../images/waves/counter.svg){#fig-counter-wave}
+
+At the edge starting column 1, `reset` is still high and `count` loads 0.
+From then on `reset` is low, and at each edge `count` takes its own value
+plus one: 1, 2, 3 and so on. When it reaches 15, the next `+ 1` wraps around
+to 0, because the result is truncated to 4 bits.
+
+**Way 2: next-state logic and a register.** The second form splits the
+description in two. A combinational block computes what the next value
+*would be*, `count_next`, and a plain register stores it:
 
 ```systemverilog
-module counter4 (
+module counter4_next (
     input  logic       clk,
     input  logic       reset,
     output logic [3:0] count
 );
+  logic [3:0] count_next;
+
+  always_comb begin
+    count_next = count + 1;
+  end
+
   always_ff @(posedge clk) begin
     if (reset) count <= 4'b0000;
-    else       count <= count + 1;
+    else       count <= count_next;
   end
 endmodule
 ```
 
-On every rising edge, if `reset` is high the counter returns to zero.
-Otherwise it increments. When it reaches `4'b1111`, the next `+ 1` wraps
-around to `4'b0000` because the result is truncated to 4 bits. The tool
-builds exactly what the text says (@fig-counter): a 4-bit adder, a flip-flop
-with a synchronous reset, and the feedback wire from the register back to
-the adder. The output `count` is the register itself, so it needs no extra
-`assign`.
+![Timing of `counter4_next`: `count_next` is always one ahead of `count`, and the register copies it at each edge.](../images/waves/counter_next.svg){#fig-counter-next-wave}
 
-![The `counter4` module, drawn by Yosys: the register output feeds both the output port and the adder, and `reset` drives the synchronous reset input.](../images/rtl/counter4.svg){#fig-counter}
+The waveform now has one more signal (@fig-counter-next-wave). `count_next` is
+combinational, so it changes as soon as `count` does, and is always one
+higher. In column 1, `count` is 0 and `count_next` is already 1, but the
+register ignores it at the edge starting column 1 because `reset` is high.
+At the edge starting column 2 the register copies the 1, and so on.
 
-@fig-counter-wave shows its behavior over time. The output is unknown until
-the first clock edge samples `reset` high, then it counts up by one on every
-edge.
+Both modules synthesize to exactly the same hardware: an adder, a register
+with a synchronous reset, and the feedback wire (@fig-counter-rtl).
 
-![Timing of `counter4`: `count` changes only just after a rising clock edge.](../images/waves/counter.svg){#fig-counter-wave}
+![Both counter descriptions give this circuit, drawn by Yosys: the register output feeds the output port and the adder, and `reset` drives the synchronous reset input.](../images/rtl/counter4.svg){#fig-counter-rtl}
+
+So why bother with the second form? Because it separates two questions:
+*what is the next value?* (combinational logic) and *when do we store it?*
+(the register). For a counter the answer to the first is trivial, and way 1 is
+perfectly fine. For anything bigger, such as a state machine or a pipeline
+stage, the next-state logic can be dozens of lines of `if` and `case`, and
+keeping it out of the clocked block makes it far easier to read and to
+check. The HIPV SoC uses this idea in its 64-bit timer counter, `cntr`,
+which computes `plus_one = count + 1` with an `assign` and feeds it to a
+register cell with an enable and a clear, instead of writing the increment
+inside the clocked block.
 :::
 
-## Common mistakes
+## Combinational logic
 
 ::: {.content-visible when-format="revealjs"}
-1. `assign` inside a procedural block
-2. Several blocks driving the same signal
-3. An unassigned path in `always_comb`: a latch
-
-Every one of them compiles in some tools and breaks in others.
+- Output depends on the **current inputs only**: no clock, no memory
+- `always_comb` re-evaluates whenever any signal it reads changes
+- Blocking assignment, `=`
+- Every output assigned on **every** path
 :::
 
 ::: {.content-visible unless-format="revealjs"}
-Three mistakes account for most of the broken designs in a first course.
+We now do the same for combinational circuits. The method is identical:
+hardware, waveform, code, walk through. The difference is in the waveform:
+there is no clock, because a combinational output depends only on the
+current inputs, so it changes as soon as an input does.
 
-**1. An `assign` inside a block.** `assign` is a module-level statement. It
-does not belong inside `always_comb`, where plain `=` is used:
-
-```systemverilog
-// Wrong
-always_comb begin
-  assign c = a & b;
-end
-
-// Right
-always_comb begin
-  c = a & b;
-end
-```
-
-**2. More than one driver for a signal.** Every signal must be written by
-exactly one `always_ff`, one `always_comb`, or one `assign`, never a mix:
-
-```systemverilog
-// Wrong: c has three drivers
-always_ff @(posedge clk) c <= {x, 1'b0};
-always_comb              c = x;
-assign                   c = in1 + in2;
-```
-
-Hardware cannot have three sources driving one wire. The tools reject this
-for `logic`, and for a `wire` it would produce an `X` like the two-driver
-example in the previous chapter.
-
-**3. A path that does not assign an output.** This is the latch trap from
-earlier in the chapter: every output assigned on every path, and defaults
-at the top of the block to make sure of it.
+The block for it is `always_comb`. It re-evaluates whenever any signal it
+reads changes. It is closer to a spreadsheet formula that recalculates on
+every input edit than to a function you call. You write no sensitivity list,
+since the tool works it out from the signals the block reads. The
+assignment inside is the blocking `=`, which reads as "this is what the
+output equals right now". There is no state to remember, which gives one
+rule that matters more than any other: **every output must be assigned on
+every path through the block**.
 :::
 
-## Structural modeling: module instances
+## The multiplexer
 
 ::: {.content-visible when-format="revealjs"}
 ```systemverilog
-module mux2to1 (
-    input  logic a, b, sel,
-    output logic y
-);
-  assign y = sel ? b : a;
+// HIPV mux2.sv, with assign
+assign Y = S ? D1 : D0;
+```
+
+```systemverilog
+// the same, in always_comb
+always_comb begin
+  if (S) Y = D1;
+  else   Y = D0;
+end
+```
+:::
+
+![A 2-to-1 multiplexer: `Y` follows `D0` while `S` is 0 and `D1` while `S` is 1, with no clock.](../images/waves/mux2.svg){#fig-mux2-wave}
+
+::: {.content-visible unless-format="revealjs"}
+A multiplexer selects one of several inputs. The 2-to-1 version is the first
+cell in `rtl/generic`, and HIPV writes it as a continuous assignment:
+
+```systemverilog
+module mux2 #(parameter WIDTH = 8) (
+  input  logic [WIDTH-1:0] D0, D1,
+  input  logic             S,
+  output logic [WIDTH-1:0] Y);
+
+  assign Y = S ? D1 : D0;
+
 endmodule
 ```
 
+@fig-mux2-wave shows what it does. There is no clock: `Y` equals `D0` while
+`S` is 0 and `D1` while `S` is 1, and it changes the moment the selected input
+or the select changes. At the start of column 2 `D0` rises, and since `S` is
+0, so does `Y`. At the start of column 3 `S` rises, `Y` switches over to `D1`,
+which is 0, and falls. At column 4 `D1` rises, `Y` follows. At column 6 `S`
+falls and `Y` returns to `D0`, which is 1.
+
+The same multiplexer in an `always_comb` block reads like this:
+
 ```systemverilog
-mux2to1 mux_low (
-    .a(d[0]), .b(d[1]), .sel(sel[0]), .y(y0)
-);
+always_comb begin
+  if (S) Y = D1;
+  else   Y = D0;
+end
 ```
 
-- *module name*, *instance name*, *port connections*
+Both give the same circuit. The `assign` form is shorter for one line of
+logic; the `always_comb` form is better when there are several outputs or
+several conditions. For a multiplexer with more than two inputs, the
+`case` statement is clearer than a chain of `?:` operators. HIPV's 3-to-1
+multiplexer, written with a chain of conditional operators in the repository,
+looks like this as an `always_comb` with `case`:
+
+```systemverilog
+module mux3 #(parameter WIDTH = 8) (
+  input  logic [WIDTH-1:0] D0, D1, D2,
+  input  logic [1:0]       S,
+  output logic [WIDTH-1:0] Y);
+
+  always_comb begin
+    case (S)
+      2'b01:   Y = D1;
+      2'b10:   Y = D2;
+      default: Y = D0;    // 2'b00, and 2'b11 falls back to D0
+    endcase
+  end
+endmodule
+```
+
+The `case` compares `S` against each listed value and runs the matching
+branch. The **`default`** branch is not optional: it makes sure `Y` is
+assigned for *every* value of `S`, including the one the designer never
+intended to use (`2'b11`), and values containing X or Z in simulation. The
+synthesized circuit (@fig-mux3-rtl) is two comparators and two 2-to-1
+multiplexers in series.
+
+![The `mux3` cell as drawn by Yosys from the HIPV file: `S == 2'b10` selects `D2`, otherwise `S == 2'b01` selects `D1`, otherwise `D0`.](../images/rtl/mux3.svg){#fig-mux3-rtl width=75%}
+:::
+
+## The decoder
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_comb begin
+  SlaveSel = '0;                                    // default
+  if (Addr[31:16] == 16'h0000)  SlaveSel[0] = 1'b1; // IMEM
+  if (Addr[31:16] == 16'h1000)  SlaveSel[1] = 1'b1; // DMEM
+  if (Addr[31:12] == 20'h20000) SlaveSel[2] = 1'b1; // UART
+  ...
+end
+assign DecErr = ~|SlaveSel;
+```
+
+- **Default first**, then override: no latch possible
+:::
+
+![An address decoder: one `SlaveSel` bit goes high for each mapped region, and `DecErr` goes high for an unmapped address.](../images/waves/decoder.svg){#fig-decoder-wave}
+
+::: {.content-visible unless-format="revealjs"}
+A **decoder** turns an encoded value into a set of separate control signals,
+and it is everywhere in a processor: the instruction decoder turns an opcode
+into control signals, and the bus decoder turns an address into "which device
+is being accessed". The second one is a clean example. The HIPV crossbar has
+five slaves (instruction memory, data memory, UART, timer and GPIO), each
+mapped to a region of the address space, and the decoder produces a
+**one-hot** select, one bit per slave, plus an error flag for an address that
+belongs to no slave. Here it is with the address map written out:
+
+```systemverilog
+module addr_decoder (
+    input  logic [31:0] Addr,
+    output logic [4:0]  SlaveSel,
+    output logic        DecErr
+);
+  always_comb begin
+    SlaveSel = '0;                                     // default: nothing selected
+    if (Addr[31:16] == 16'h0000)  SlaveSel[0] = 1'b1;  // instruction memory, 64 KiB
+    if (Addr[31:16] == 16'h1000)  SlaveSel[1] = 1'b1;  // data memory, 64 KiB
+    if (Addr[31:12] == 20'h20000) SlaveSel[2] = 1'b1;  // UART, 4 KiB
+    if (Addr[31:12] == 20'h20001) SlaveSel[3] = 1'b1;  // timer, 4 KiB
+    if (Addr[31:12] == 20'h20002) SlaveSel[4] = 1'b1;  // GPIO, 4 KiB
+  end
+
+  assign DecErr = ~|SlaveSel;
+endmodule
+```
+
+Read the waveform first (@fig-decoder-wave). Five addresses arrive one after
+another, two columns each. The first, `0x0000_0040`, lies in the
+instruction-memory region, so `SlaveSel[0]` goes high. The next addresses hit
+data memory, the UART and the timer in turn, and each raises exactly one
+select. The last, `0x3000_0000`, matches no region: every select stays low, so
+`DecErr` rises. Only one select is ever high, because the regions do not
+overlap.
+
+Now the code. The first statement in the block is the important one:
+`SlaveSel = '0` assigns the default, *every bit low*, before anything else.
+Each `if` then overrides one bit. Because every bit of `SlaveSel` has a value
+on every path, whatever the address, the block cannot build a latch, and none
+of the `if`s needs an `else`. This **default first, then override** pattern
+is the safest way to write `always_comb`, and you will see it throughout
+HIPV. The last line uses the reduction operator from the previous chapter:
+`~|SlaveSel` is true when no select bit is set.
+
+(The real `obi_decoder` in the HIPV repository is the same block, with the
+base addresses and sizes taken from a shared package, so that adding a slave
+changes one file.)
+:::
+
+## Avoiding latches
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_comb begin
+  if (sel) y = in1;     // no else: what is y when sel = 0?
+end
+```
+
+- No assignment on some path: the output must **remember**
+- Synthesis builds a **latch**
+- Fix: a default value at the top, or an `else` / `default` branch
 :::
 
 ::: {.content-visible unless-format="revealjs"}
-So far we described a module by what it *does*, which is called behavioral
-modeling. **Structural modeling** describes a module by how it is *composed*
-of simpler modules. Each copy of a smaller module is an **instance**, and it
-has a unique name.
+The decoder showed the right way. Here is the wrong way:
 
-Here a 4:1 multiplexer is assembled from three copies of a 2:1 multiplexer:
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+end
+```
+
+When `sel` is 0, no branch assigns `y`. In a spreadsheet an unhandled case
+would show a blank cell, but in hardware an output cannot go blank. If no
+branch assigns it, the only way to keep it at *some* value is to remember the
+previous one, so the tool builds a **latch**, the element from earlier in this
+chapter (@fig-latch-rtl). It adds a storage element you did not intend, it
+complicates timing analysis, and it is the most common bug in
+`always_comb`. Tools warn about it, which is the reason to use `always_comb`
+instead of the old `always @(*)`.
+
+![What synthesis builds for an incomplete `if`: a latch whose enable is `sel`, so `y` holds its old value whenever `sel` is 0.](../images/rtl/latch_bug.svg){#fig-latch-rtl width=70%}
+
+There are three ways to follow the rule. Give every output a **default** at
+the top of the block, as the decoder does. Or write an `else` on every `if`.
+Or give every `case` a `default` branch, as in `mux3`. Sequential blocks are
+different: inside `always_ff`, a missing assignment simply means "keep the
+value", which is what a flip-flop does anyway.
+:::
+
+## Blocking vs. non-blocking assignment
+
+::: {.content-visible when-format="revealjs"}
+| | `=` blocking | `<=` non-blocking |
+|---|---|---|
+| Takes effect | immediately | at the end of the time step |
+| Next statement sees | the **new** value | the **old** value |
+| Use in | `always_comb` | `always_ff` |
+
+- The rule has no exceptions
+:::
+
+::: {.content-visible unless-format="revealjs"}
+We have used two assignment operators in an `always` block, and the pairing
+has been the same every time: `=` in `always_comb`, and `<=` in `always_ff`.
+Now we can see why.
+
+A **blocking** assignment, `=`, takes effect immediately: the next statement
+in the block sees the new value. A **non-blocking** assignment, `<=`, only
+*schedules* the update, which lands at the end of the current time step: the
+next statement still sees the old value. The difference only shows when
+there is *interdependency*, when a later statement reads something an
+earlier one wrote.
+
+### In combinational logic
+
+Take three inputs and the function `s = c ^ (a ^ b)`, written with an
+intermediate signal, once with each operator:
+
+```systemverilog
+module xor_gate (
+  input  logic a, b, c,
+  output logic s1, s2
+);
+  logic n1, n2;
+
+  // case 1: blocking
+  always_comb begin
+    n1 = a ^ b;
+    s1 = c ^ n1;
+  end
+
+  // case 2: non-blocking
+  always_comb begin
+    n2 <= a ^ b;
+    s2 <= c ^ n2;
+  end
+endmodule
+```
+
+(Some tools refuse non-blocking assignments inside `always_comb`
+altogether; the example is written this way only to show what would happen.)
+
+![The two XOR descriptions: `s1` always matches `c ^ n1`, while `s2` is computed from the previous value of `n2`.](../images/waves/blocking_comb.svg){#fig-blocking-comb}
+
+@fig-blocking-comb shows the result for the same inputs. In case 1, `n1`
+updates immediately, and the next line uses the new `n1`, so `s1` is always
+`c ^ n1`. In case 2, `n2` is only *scheduled* to change, so `s2 <= c ^ n2`
+reads the **previous** `n2`. Compare the last two rows: `n` changes at the
+start of columns 2 and 6, and at exactly those two points `s2` differs from
+`s1`, because it still uses the old `n`. Case 1 models a combinational
+circuit; case 2
+does not, because its output depends on a stale value. Synthesis tools often
+ignore the distinction in combinational blocks and build the right gates
+anyway, which makes it worse: the simulation shows one behavior and the
+hardware has another, a *simulation/synthesis mismatch*, the kind of bug that
+is hardest to find.
+
+### In sequential logic
+
+The same experiment on two registers in a chain:
+
+```systemverilog
+module chain (
+  input  logic clk, a,
+  output logic f1, f2
+);
+  logic b1, b2;
+
+  // case 1: blocking
+  always_ff @(posedge clk) begin
+    b1 = a;
+    f1 = b1;
+  end
+
+  // case 2: non-blocking
+  always_ff @(posedge clk) begin
+    b2 <= a;
+    f2 <= b2;
+  end
+endmodule
+```
+
+![Two registers in a chain: with blocking assignment `f1` follows `b1` in the same cycle, with non-blocking assignment `f2` lags by one more clock.](../images/waves/blocking_seq.svg){#fig-blocking-seq}
+
+In @fig-blocking-seq the clock is drawn with two columns per period, so it
+rises at the start of columns 1, 3, 5 and 7. The input `a` is high during
+columns 2 and 3, so the edge at the start of column 3 is the one that sees it.
+In case 1, `b1 = a` happens first, and `f1 = b1` then reads the *new* `b1`, so
+`f1` gets the value of `a` in the same cycle: both change at the edge starting
+column 3, and the second register adds nothing. In case 2, `b2 <= a` and
+`f2 <= b2` are both evaluated before either update lands, so `f2` takes the
+value `b2` had *before* this edge. `b2` rises at column 3, but `f2` only at
+the next edge, at column 5, and it falls one edge after `b2` does, at column
+7. That is a two-stage chain, which is what two registers in a row should be.
+This is the behavior every pipeline relies on, and it is why the swap
+`a <= b; b <= a;` works with `<=` and silently fails with `=`.
+
+### The rule
+
+| | Blocking `=` | Non-blocking `<=` |
+|---|---|---|
+| Update takes effect | immediately | at the end of the time step |
+| The next statement reads | the new value | the old value |
+| Use in | `always_comb` | `always_ff` |
+
+`=` for combinational logic, `<=` for clocked logic, every time. Do not mix
+the two in one block.
+:::
+
+## Structural design: module instances
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+flopenr #(32) pcreg (
+    .clk(clk), .reset(reset), .en(PCEnF),
+    .D(PCNextF), .Q(PCF)
+);
+```
+
+- *module name*, `#(parameters)`, *instance name*, *port connections*
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Behavioral modeling describes what a block *does*. **Structural** modeling
+describes a block by how it is *composed* of simpler modules. Each copy of a
+smaller module is an **instance**, and it has a unique name. Here is the
+smallest useful example, a 4:1 multiplexer assembled from three copies of a
+2:1 multiplexer:
 
 ```systemverilog
 module mux2to1 (
@@ -530,86 +840,70 @@ endmodule
 An instantiation has three parts. First comes the **module name**
 (`mux2to1`), then the **instance name** you choose (`mux_final`), then in
 parentheses the **port connections**. The notation `.a(y0)` reads "the
-module's port `a` is connected to my signal `y0`". These connections by
-name make the code easy to read and safe to reorder. There is also a
-positional form, `mux2to1 mux_final (y0, y1, sel[1], y);`, which is shorter
-and fails silently if someone later reorders the ports, so we avoid it.
-
-@fig-mux4-struct shows the result. Unlike the earlier schematics, the tool
-leaves the three instances as boxes instead of expanding them into gates,
-which is exactly how the hierarchy appears in your code.
+module's port `a` is connected to my signal `y0`". These connections by name
+make the code easy to read and safe to reorder. There is also a positional
+form, `mux2to1 mux_final (y0, y1, sel[1], y);`, which is shorter and fails
+silently if someone later reorders the ports, so we avoid it. @fig-mux4-struct
+shows the result: the tool leaves the three instances as boxes, exactly as the
+hierarchy appears in the code.
 
 ![The structurally built `mux4to1_struct`: two instances select within a pair, and a third selects between the two results.](../images/rtl/mux4to1_struct.svg){#fig-mux4-struct width=80%}
-:::
 
-## Parameters
+### Parameters
 
-::: {.content-visible when-format="revealjs"}
+A **parameter** makes a module configurable, which is how one description
+serves every width. We have been using this all along: `flopenr` declares
+`parameter WIDTH = 8`, and each instance picks its own. The override goes
+between the module name and the instance name, after a `#`:
+
 ```systemverilog
-module counter #(
-    parameter WIDTH = 8
-) (
-    input  logic             clk, reset,
-    output logic [WIDTH-1:0] count
+flopenr #(32) pcreg (...);          // a 32-bit instance, by position
+flopenr #(.WIDTH(32)) pcreg (...);  // the same, by name
+```
+
+The by-name form is safer when a module has several parameters. A
+`localparam` is a constant inside a module that, unlike a `parameter`, cannot
+be overridden from outside, which makes it the right choice for derived
+constants.
+
+### A real example: the program counter of HIPV
+
+HIPV's fetch unit is almost entirely structural. Its program-counter loop is
+built from three of the leaf cells we wrote above. The code is the actual
+instantiation, reduced to this loop:
+
+```systemverilog
+module pc_unit (
+    input  logic        clk, reset,
+    input  logic        PCEnF,
+    input  logic        PCSrcE,
+    input  logic [31:0] PCTargetE,
+    output logic [31:0] PCF
 );
-  always_ff @(posedge clk) begin
-    if (reset) count <= '0;
-    else       count <= count + 1;
-  end
+  logic [31:0] PCNextF, PCPlus4F;
+
+  // next PC selection: sequential or redirect from Execute
+  mux2 #(32) pcmux (
+      .D0(PCPlus4F), .D1(PCTargetE), .S(PCSrcE), .Y(PCNextF));
+
+  // PC register
+  flopenr #(32) pcreg (
+      .clk(clk), .reset(reset), .en(PCEnF), .D(PCNextF), .Q(PCF));
+
+  // sequential PC
+  adder #(32) pcadd4 (
+      .A(PCF), .B(32'd4), .Y(PCPlus4F));
 endmodule
 ```
 
-```systemverilog
-counter #(.WIDTH(16)) counter_inst (.clk(clk), .reset(reset), .count(count));
-```
-:::
+Everything inside the parentheses is a wire name, and nothing here describes
+any behavior: it only says which cell goes where. The register
+holds the PC, the adder computes `PC + 4`, and the multiplexer chooses
+between that and a branch target (@fig-pc-unit). Note how the signals form a
+loop through the register, which is the only place where the loop is broken
+by a clock.
 
-::: {.content-visible unless-format="revealjs"}
-All the modules so far had fixed widths. A **parameter** makes a module
-configurable: the same description works for any width, and each instance
-picks its own.
-
-```systemverilog
-module counter #(
-    parameter WIDTH = 8              // default if an instance omits it
-) (
-    input  logic             clk,
-    input  logic             reset,
-    output logic [WIDTH-1:0] count
-);
-  always_ff @(posedge clk) begin
-    if (reset) count <= '0;
-    else       count <= count + 1;
-  end
-endmodule
-```
-
-The parameter list sits between the module name and the port list, after a
-`#`. An instance overrides it the same way, by name:
-
-```systemverilog
-module top (
-    input  logic        clk,
-    input  logic        reset,
-    output logic [15:0] count
-);
-  counter #(.WIDTH(16)) counter_inst (
-      .clk(clk),
-      .reset(reset),
-      .count(count)
-  );
-endmodule
-```
-
-The literal `'0` in the reset branch means "all zeros, whatever the width",
-which is what lets one description serve every `WIDTH`. A `localparam` is
-a constant inside a module that, unlike a `parameter`, cannot be
-overridden from outside, which makes it the right tool for derived constants:
-
-```systemverilog
-localparam CNT_WIDTH = 16;
-counter #(.WIDTH(CNT_WIDTH)) counter_inst (.clk(clk), .reset(reset), .count(count));
-```
+![The PC loop of HIPV, drawn by Yosys with the three cells expanded into their hardware: the `$sdffe` register, the `+4` adder, and the next-PC multiplexer.](../images/rtl/pc_unit.svg){#fig-pc-unit}
 :::
 
 ## Testbenches
@@ -689,7 +983,7 @@ module tb_counter;
   logic       reset = 1;
   logic [3:0] count;
 
-  counter #(.WIDTH(4)) dut (.clk(clk), .reset(reset), .count(count));
+  counter4 dut (.clk(clk), .reset(reset), .count(count));
 
   always #5 clk = ~clk;              // clock generator
 
@@ -708,7 +1002,8 @@ endmodule
 
 ::: {.content-visible unless-format="revealjs"}
 A registered design only changes on a clock edge, so the testbench has to
-supply that clock; nothing else in the simulation will.
+supply that clock; nothing else in the simulation will. Here it is for the
+counter of this chapter:
 
 ```systemverilog
 module tb_counter;
@@ -716,7 +1011,7 @@ module tb_counter;
   logic       reset = 1;
   logic [3:0] count;
 
-  counter #(.WIDTH(4)) dut (.clk(clk), .reset(reset), .count(count));
+  counter4 dut (.clk(clk), .reset(reset), .count(count));
 
   always #5 clk = ~clk;              // clock generator: period of 10 units
 
@@ -738,23 +1033,23 @@ which is why the clock generator lives in its own block.
 
 The stimulus holds `reset` high for the first clock edge (at time 5), then
 releases it at time 12, between edges, so that no input changes exactly
-when the clock rises. After the remaining ten rising edges the counter holds
-10, which `$display` prints. The key difference from the combinational
-testbench is the waiting. A combinational output is valid almost
-immediately after its inputs change, but a register updates only once per
-clock edge, so a sequential testbench must always budget enough simulated
-time, or wait for a specific number of `@(posedge clk)` events, before
-checking the outputs.
+when the clock rises, the same convention as in our waveforms. After the
+remaining ten rising edges the counter holds 10, which `$display` prints. The
+key difference from the combinational testbench is the waiting. A
+combinational output is valid almost immediately after its inputs change, but
+a register updates only once per clock edge, so a sequential testbench must
+always budget enough simulated time, or wait for a specific number of
+`@(posedge clk)` events, before checking the outputs.
 
-`$finish` matters even more here. The clock generator never terminates on
-its own, so without an explicit `$finish` the simulation would run forever.
+`$finish` matters even more here. The clock generator never terminates on its
+own, so without an explicit `$finish` the simulation would run forever.
 :::
 
 ## Running a simulation
 
 ::: {.content-visible when-format="revealjs"}
 ```bash
-iverilog -g2012 -o sim_counter counter.sv tb_counter.sv
+iverilog -g2012 -o sim_counter counter4.sv tb_counter.sv
 vvp sim_counter
 ```
 
@@ -767,7 +1062,7 @@ Icarus Verilog, you compile the design together with its testbench and run
 the result:
 
 ```bash
-iverilog -g2012 -o sim_counter counter.sv tb_counter.sv
+iverilog -g2012 -o sim_counter counter4.sv tb_counter.sv
 vvp sim_counter
 ```
 
@@ -780,27 +1075,30 @@ $dumpfile("tb_counter.vcd");
 $dumpvars(0, tb_counter);
 ```
 
-Checking results by eye in a waveform does not scale beyond a handful of
-signals. A testbench that compares outputs against expected values, as ours
-does with `$error`, can be run again after every change and report a clear
-pass or fail. Later in the course we move this idea to a Python framework,
-cocotb, which makes writing such checks much easier.
+The waveforms you get are the same kind as the ones drawn in this chapter,
+and reading them is the same skill. Checking results by eye does not scale
+beyond a handful of signals, though. A testbench that compares outputs
+against expected values, as ours does with `$error`, can be run again after
+every change and report a clear pass or fail. Later in the course we move
+this idea to a Python framework, cocotb, which makes writing such checks much
+easier.
 :::
 
 ## From design to the pipeline
 
 ::: {.content-visible when-format="revealjs"}
-- `always_comb` and `always_ff`: the two blocks every design is built from
-- Instances and parameters: how small blocks become a system
+- `always_ff` with `<=`: every register
+- `always_comb` with `=`: every multiplexer, decoder, ALU
+- Instances and parameters: how cells become stages, and stages a processor
 - Next: these constructs, applied to a real five-stage pipeline
 :::
 
 ::: {.content-visible unless-format="revealjs"}
 Everything introduced here is the working vocabulary of the rest of the
-course. `always_ff` with non-blocking assignment and a reset is how every
-pipeline register is built. `always_comb` with defaults at the top is how
-the ALU and the decoder avoid latch inference. Module instances and
-parameters are how those pieces are assembled into stages and stages into
-a processor. The pipeline chapters introduce no new syntax: they put these
-constructs to work on a larger example.
+course. `always_ff` with non-blocking assignment and a synchronous reset is
+how every pipeline register is built, through `flopenr` and its siblings.
+`always_comb` with a default at the top is how the ALU and the decoders avoid
+latch inference. Instances and parameters are how those cells are assembled
+into stages, and stages into a processor. The pipeline chapters introduce no
+new syntax: they put these constructs to work on a larger example.
 :::

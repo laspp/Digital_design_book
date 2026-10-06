@@ -1,0 +1,7 @@
+{ "signal": [
+    { "name": "clk", "wave": "p......." },
+    { "name": "d",   "wave": "0.1.0..1", "phase": 0.5 },
+    { "name": "q",   "wave": "x01.0..1" }
+  ],
+  "head": { "text": "D flip-flop: q takes the value of d at each rising edge", "tock": 0 }
+}
