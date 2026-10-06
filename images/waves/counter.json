@@ -1,0 +1,7 @@
+{ "signal": [
+    { "name": "clk",   "wave": "p......." },
+    { "name": "reset", "wave": "10......" },
+    { "name": "count", "wave": "x=======", "data": ["0","1","2","3","4","5","6"] }
+  ],
+  "head": { "text": "counter4 with synchronous reset", "tock": 0 }
+}

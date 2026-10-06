@@ -711,7 +711,7 @@ onto the dedicated carry logic of an FPGA.
 
 ::: {.content-visible when-format="revealjs"}
 - Everything so far was **combinational**, written with `assign`
-- Still to come: procedural blocks, `always_comb` for larger
+- Next chapter: procedural blocks, `always_comb` for larger
   combinational descriptions and `always_ff` for state
 :::
 
@@ -719,6 +719,7 @@ onto the dedicated carry logic of an FPGA.
 Everything we wrote in this chapter is combinational: outputs depend only
 on the current inputs, and nothing remembers anything. That was enough to
 describe multiplexers and adders, but a processor also needs state. That
-calls for procedural blocks: `always_comb` for larger combinational
-descriptions, and `always_ff` for registers that update on a clock edge.
+calls for procedural blocks, which the next chapter introduces: `always_comb`
+for larger combinational descriptions, and `always_ff` for registers that
+update on a clock edge.
 :::

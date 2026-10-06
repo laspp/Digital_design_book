@@ -1,0 +1,806 @@
+---
+title: "Designing with SystemVerilog"
+format:
+  revealjs:
+    slide-level: 2
+---
+
+# Designing with SystemVerilog {#sec-sv-design .unnumbered}
+
+## Goal for this week
+
+- Describe combinational logic with `always_comb`, and sequential logic with
+  `always_ff`, using the assignment operator each one requires
+- Recognize latch inference on sight, and write code that cannot produce one
+- Choose between synchronous and asynchronous reset
+- Build a design from smaller ones with module instances and parameters
+- Write a testbench that drives a design and checks its outputs
+
+## Two kinds of logic, two kinds of block
+
+::: {.content-visible when-format="revealjs"}
+| | Combinational | Sequential |
+|---|---|---|
+| Output depends on | current inputs | inputs **and** stored state |
+| Block | `always_comb` | `always_ff @(posedge clk)` |
+| Assignment | blocking `=` | non-blocking `<=` |
+| Hardware | gates, multiplexers | flip-flops |
+
+- `assign` is the one-line form of combinational logic
+:::
+
+::: {.content-visible unless-format="revealjs"}
+The previous chapter described combinational logic one line at a time with
+`assign`. That works for an adder or a small multiplexer, but it gets
+awkward the moment a function needs an `if` or a `case`. For those we use
+**procedural blocks**: a block of statements that describes how a set of
+outputs depends on a set of inputs.
+
+SystemVerilog has two procedural blocks for synthesizable hardware, and
+which one you pick is not a matter of taste. It is dictated by what you are
+building:
+
+| | Combinational | Sequential |
+|---|---|---|
+| Output depends on | current inputs only | inputs **and** stored state |
+| Block | `always_comb` | `always_ff @(posedge clk)` |
+| Assignment | blocking, `=` | non-blocking, `<=` |
+| Hardware | gates, multiplexers | flip-flops |
+
+The `_comb` and `_ff` in the names are a promise to the tool: if the code
+inside does not describe the kind of hardware its block name claims, the
+tool reports it. Older Verilog has a single `always @(...)` for both
+purposes, and a whole class of bugs came from getting it wrong without any
+warning.
+:::
+
+## Combinational logic: `always_comb`
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module inverter (
+    input  logic a,
+    output logic y
+);
+  always_comb begin
+    y = ~a;
+  end
+endmodule
+```
+
+- Re-evaluates whenever **any signal it reads** changes
+- Statements run in order: use blocking `=`
+:::
+
+::: {.content-visible unless-format="revealjs"}
+An `always_comb` block re-evaluates itself whenever any signal it reads
+changes. It is closer to a spreadsheet formula that recalculates on every
+input edit than to a function you call:
+
+```systemverilog
+module inverter (
+    input  logic a,
+    output logic y
+);
+  always_comb begin
+    y = ~a;
+  end
+endmodule
+```
+
+You do not write a sensitivity list: the tool works it out from the
+signals the block reads. Assignment inside it uses `=`, the **blocking**
+assignment, which reads as "this is what the output equals right now". Inside
+one block, blocking assignments take effect in the order they are written,
+so a later statement sees the result of an earlier one.
+:::
+
+## `if` and `case`
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module mux4to1_case (
+    input  logic [1:0] sel,
+    input  logic [3:0] d,
+    output logic       y
+);
+  always_comb begin
+    case (sel)
+      2'b00:   y = d[0];
+      2'b01:   y = d[1];
+      2'b10:   y = d[2];
+      2'b11:   y = d[3];
+      default: y = 1'b0;
+    endcase
+  end
+endmodule
+```
+
+- Always write a `default`
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A multiplexer with more than two inputs is clearer as a `case` statement
+than as a chain of `?:` operators:
+
+```systemverilog
+module mux4to1_case (
+    input  logic [1:0] sel,
+    input  logic [3:0] d,
+    output logic       y
+);
+  always_comb begin
+    case (sel)
+      2'b00:   y = d[0];
+      2'b01:   y = d[1];
+      2'b10:   y = d[2];
+      2'b11:   y = d[3];
+      default: y = 1'b0;     // also covers sel containing X or Z
+    endcase
+  end
+endmodule
+```
+
+The `case` compares `sel` against each listed value in turn and runs the
+matching branch. It describes the same multiplexer as the nested
+conditional operator in the previous chapter, only in a form that scales to
+eight or sixteen inputs without becoming unreadable. The `default` branch is
+the safety net, and the next section explains why it is not optional.
+:::
+
+## The latch trap
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_comb begin
+  if (input_button) begin
+    status = 1'b1;
+    result = 1'b0;
+  end else if (done_signal) begin
+    status = 1'b0;
+  end
+end
+```
+
+**Discussion question:** what is `result` when `done_signal` is high? And
+what are `status` and `result` when both inputs are low?
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Here is a block that looks complete and is not:
+
+```systemverilog
+always_comb begin
+  if (input_button) begin
+    status = 1'b1;
+    result = 1'b0;
+  end else if (done_signal) begin
+    status = 1'b0;
+  end
+end
+```
+
+Ask what `result` equals when `done_signal` is high: no branch says. And
+what are `status` and `result` when both inputs are low? Again, no branch
+says. In a spreadsheet, an unhandled case would show a blank cell. In
+hardware, an output cannot go blank. If no branch assigns it, the only way
+to keep it at *some* value is to remember the previous one, so the
+synthesizer builds a **latch**: a level-sensitive memory element
+(@fig-latch). That is almost never what you want in a synchronous design.
+It adds a storage element you did not intend, it breaks timing analysis,
+and it is the most common bug `always_comb` produces.
+
+![What synthesis builds for an incomplete `if`: a latch whose enable is `sel`, so the output holds its old value whenever `sel` is 0.](../images/rtl/latch_bug.svg){#fig-latch width=70%}
+
+The rule is that every signal assigned in an `always_comb` block must be
+assigned on **every** path through it. The most reliable way to follow it is
+to give every output a default value at the top of the block, and let the
+branches override it:
+
+```systemverilog
+always_comb begin
+  status = 1'b0;               // defaults: every path assigns both outputs
+  result = 1'b0;
+  if (input_button)
+    status = 1'b1;
+  else if (done_signal)
+    status = 1'b0;
+end
+```
+
+With the defaults in place, a forgotten `else` is harmless. If you really
+do want a latch, SystemVerilog has a block for it, `always_latch`, which
+documents the intent. Tools also warn when `always_comb` would infer one,
+which is the reason to use it instead of the old `always @(*)`.
+:::
+
+## Sequential logic: `always_ff`
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module dff (
+    input  logic clk, d,
+    output logic q
+);
+  always_ff @(posedge clk) begin
+    q <= d;
+  end
+endmodule
+```
+
+- Runs **only** on the clock edge named in `@(...)`
+- Non-blocking `<=`: "schedule this update at the edge"
+:::
+
+::: {.content-visible unless-format="revealjs"}
+`always_ff` describes a block that updates only at a clock edge: a
+register, not a formula. The sensitivity list is not optional here. It names
+the event that triggers the block:
+
+```systemverilog
+module dff (
+    input  logic clk, d,
+    output logic q
+);
+  always_ff @(posedge clk) begin
+    q <= d;
+  end
+endmodule
+```
+
+On every rising edge of `clk` the block runs and copies `d` into `q`. At any
+other moment nothing happens, and `q` holds its value: that holding is the
+memory. The operator is `<=`, the **non-blocking** assignment. It reads as
+"at this clock edge, schedule this update", rather than `=`'s "this is the
+value right now". `always_ff` tells the tool that this block must infer
+flip-flops, and it reports a warning if the code would produce anything
+else.
+:::
+
+## Blocking vs. non-blocking
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+always_ff @(posedge clk) begin
+  a <= b;
+  b <= a;     // swap: works
+end
+```
+
+| | `=` blocking | `<=` non-blocking |
+|---|---|---|
+| Statements | one after another | all at once |
+| Use in | `always_comb` | `always_ff` |
+
+- No exceptions to this pairing
+:::
+
+::: {.content-visible unless-format="revealjs"}
+The difference between the two operators matters the moment two registers
+depend on each other, which is exactly the situation of every pipeline
+register. Consider two registers meant to swap values on the same clock
+edge:
+
+```systemverilog
+always_ff @(posedge clk) begin
+  a <= b;
+  b <= a;
+end
+```
+
+With non-blocking assignment, both right-hand sides are read using each
+register's value *before* this clock edge, and both updates take effect
+together. The swap works, which matches what "on every clock edge, in
+parallel" should mean. Replace `<=` with `=` and the second line reads the
+value the first line just wrote, collapsing two parallel updates into a
+sequential one: both registers end up holding `b`, and nothing about the
+syntax warns you.
+
+| | Blocking `=` | Non-blocking `<=` |
+|---|---|---|
+| Statements in a block | take effect one after another | all take effect together |
+| Reads the value of | the latest assignment | the value before the clock edge |
+| Use in | `always_comb` | `always_ff` |
+
+That is why the pairing has no exceptions: `=` in combinational logic, `<=`
+in clocked logic, every time. A group of non-blocking statements is
+evaluated concurrently, in the same sense that the `assign` statements in
+the previous chapter are.
+
+Putting both block types together gives the smallest useful piece of a
+pipeline stage: a multiplexer feeding a register. The `always_comb` block
+becomes the mux, the `always_ff` block becomes the flip-flop, and the only
+wire between them is `y` (@fig-mux2-reg).
+
+```systemverilog
+always_comb begin
+  if (sel) y = in1;
+  else     y = in0;
+end
+
+always_ff @(posedge clk) q <= y;
+```
+
+![Synthesized result of the code above, drawn by Yosys from the full module in `images/rtl/mux2_reg.sv`: the mux feeds the D input of an 8-bit register.](../images/rtl/mux2_reg.svg){#fig-mux2-reg width=80%}
+:::
+
+## Reset styles
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+// Synchronous reset
+always_ff @(posedge clk) begin
+  if (reset) q <= 1'b0;
+  else       q <= d;
+end
+```
+
+```systemverilog
+// Asynchronous reset
+always_ff @(posedge clk or posedge reset) begin
+  if (reset) q <= 1'b0;
+  else       q <= d;
+end
+```
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A register that starts in an unknown state is a bug waiting to happen, so
+registers get a reset. There are two ways to write it, and both clear `q` to
+zero when `reset` is high. They differ in *when* the clear can happen.
+
+```systemverilog
+// Synchronous reset: only looked at on a clock edge
+always_ff @(posedge clk) begin
+  if (reset) q <= 1'b0;
+  else       q <= d;
+end
+
+// Asynchronous reset: acts the moment reset asserts
+always_ff @(posedge clk or posedge reset) begin
+  if (reset) q <= 1'b0;
+  else       q <= d;
+end
+```
+
+A **synchronous** reset takes effect only at a clock edge. `reset` is just
+another input to the logic that decides the next value of `q`. In a generic
+design that is a little logic in front of the D input, although the
+flip-flops of an FPGA slice have a dedicated set/reset input that absorbs it
+(@fig-counter shows the flip-flop with its reset input). An **asynchronous** reset takes effect the
+moment `reset` asserts, regardless of the clock, which is why it appears in
+the sensitivity list next to `posedge clk`. It needs a flip-flop with a
+dedicated reset pin, and the moment it is released matters: if `reset`
+deasserts too close to a clock edge, the flip-flop can misbehave. We come
+back to that when we discuss synchronizers.
+
+For now, the practical rule: pick one style, use it everywhere in a design,
+and know which one you picked.
+:::
+
+## Example: a counter
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module counter4 (
+    input  logic       clk,
+    input  logic       reset,
+    output logic [3:0] count
+);
+  always_ff @(posedge clk) begin
+    if (reset) count <= 4'b0000;
+    else       count <= count + 1;
+  end
+endmodule
+```
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A 4-bit counter that counts on the rising clock edge, with a synchronous
+active-high reset, is a register whose next value is its own current value
+plus one:
+
+```systemverilog
+module counter4 (
+    input  logic       clk,
+    input  logic       reset,
+    output logic [3:0] count
+);
+  always_ff @(posedge clk) begin
+    if (reset) count <= 4'b0000;
+    else       count <= count + 1;
+  end
+endmodule
+```
+
+On every rising edge, if `reset` is high the counter returns to zero.
+Otherwise it increments. When it reaches `4'b1111`, the next `+ 1` wraps
+around to `4'b0000` because the result is truncated to 4 bits. The tool
+builds exactly what the text says (@fig-counter): a 4-bit adder, a flip-flop
+with a synchronous reset, and the feedback wire from the register back to
+the adder. The output `count` is the register itself, so it needs no extra
+`assign`.
+
+![The `counter4` module, drawn by Yosys: the register output feeds both the output port and the adder, and `reset` drives the synchronous reset input.](../images/rtl/counter4.svg){#fig-counter}
+
+@fig-counter-wave shows its behavior over time. The output is unknown until
+the first clock edge samples `reset` high, then it counts up by one on every
+edge.
+
+![Timing of `counter4`: `count` changes only just after a rising clock edge.](../images/waves/counter.svg){#fig-counter-wave}
+:::
+
+## Common mistakes
+
+::: {.content-visible when-format="revealjs"}
+1. `assign` inside a procedural block
+2. Several blocks driving the same signal
+3. An unassigned path in `always_comb`: a latch
+
+Every one of them compiles in some tools and breaks in others.
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Three mistakes account for most of the broken designs in a first course.
+
+**1. An `assign` inside a block.** `assign` is a module-level statement. It
+does not belong inside `always_comb`, where plain `=` is used:
+
+```systemverilog
+// Wrong
+always_comb begin
+  assign c = a & b;
+end
+
+// Right
+always_comb begin
+  c = a & b;
+end
+```
+
+**2. More than one driver for a signal.** Every signal must be written by
+exactly one `always_ff`, one `always_comb`, or one `assign`, never a mix:
+
+```systemverilog
+// Wrong: c has three drivers
+always_ff @(posedge clk) c <= {x, 1'b0};
+always_comb              c = x;
+assign                   c = in1 + in2;
+```
+
+Hardware cannot have three sources driving one wire. The tools reject this
+for `logic`, and for a `wire` it would produce an `X` like the two-driver
+example in the previous chapter.
+
+**3. A path that does not assign an output.** This is the latch trap from
+earlier in the chapter: every output assigned on every path, and defaults
+at the top of the block to make sure of it.
+:::
+
+## Structural modeling: module instances
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module mux2to1 (
+    input  logic a, b, sel,
+    output logic y
+);
+  assign y = sel ? b : a;
+endmodule
+```
+
+```systemverilog
+mux2to1 mux_low (
+    .a(d[0]), .b(d[1]), .sel(sel[0]), .y(y0)
+);
+```
+
+- *module name*, *instance name*, *port connections*
+:::
+
+::: {.content-visible unless-format="revealjs"}
+So far we described a module by what it *does*, which is called behavioral
+modeling. **Structural modeling** describes a module by how it is *composed*
+of simpler modules. Each copy of a smaller module is an **instance**, and it
+has a unique name.
+
+Here a 4:1 multiplexer is assembled from three copies of a 2:1 multiplexer:
+
+```systemverilog
+module mux2to1 (
+    input  logic a, b, sel,
+    output logic y
+);
+  assign y = sel ? b : a;
+endmodule
+
+module mux4to1_struct (
+    input  logic [3:0] d,
+    input  logic [1:0] sel,
+    output logic       y
+);
+  logic y0, y1;                 // wires between the instances
+
+  mux2to1 mux_low   (.a(d[0]), .b(d[1]), .sel(sel[0]), .y(y0));
+  mux2to1 mux_high  (.a(d[2]), .b(d[3]), .sel(sel[0]), .y(y1));
+  mux2to1 mux_final (.a(y0),   .b(y1),   .sel(sel[1]), .y(y));
+endmodule
+```
+
+An instantiation has three parts. First comes the **module name**
+(`mux2to1`), then the **instance name** you choose (`mux_final`), then in
+parentheses the **port connections**. The notation `.a(y0)` reads "the
+module's port `a` is connected to my signal `y0`". These connections by
+name make the code easy to read and safe to reorder. There is also a
+positional form, `mux2to1 mux_final (y0, y1, sel[1], y);`, which is shorter
+and fails silently if someone later reorders the ports, so we avoid it.
+
+@fig-mux4-struct shows the result. Unlike the earlier schematics, the tool
+leaves the three instances as boxes instead of expanding them into gates,
+which is exactly how the hierarchy appears in your code.
+
+![The structurally built `mux4to1_struct`: two instances select within a pair, and a third selects between the two results.](../images/rtl/mux4to1_struct.svg){#fig-mux4-struct width=80%}
+:::
+
+## Parameters
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module counter #(
+    parameter WIDTH = 8
+) (
+    input  logic             clk, reset,
+    output logic [WIDTH-1:0] count
+);
+  always_ff @(posedge clk) begin
+    if (reset) count <= '0;
+    else       count <= count + 1;
+  end
+endmodule
+```
+
+```systemverilog
+counter #(.WIDTH(16)) counter_inst (.clk(clk), .reset(reset), .count(count));
+```
+:::
+
+::: {.content-visible unless-format="revealjs"}
+All the modules so far had fixed widths. A **parameter** makes a module
+configurable: the same description works for any width, and each instance
+picks its own.
+
+```systemverilog
+module counter #(
+    parameter WIDTH = 8              // default if an instance omits it
+) (
+    input  logic             clk,
+    input  logic             reset,
+    output logic [WIDTH-1:0] count
+);
+  always_ff @(posedge clk) begin
+    if (reset) count <= '0;
+    else       count <= count + 1;
+  end
+endmodule
+```
+
+The parameter list sits between the module name and the port list, after a
+`#`. An instance overrides it the same way, by name:
+
+```systemverilog
+module top (
+    input  logic        clk,
+    input  logic        reset,
+    output logic [15:0] count
+);
+  counter #(.WIDTH(16)) counter_inst (
+      .clk(clk),
+      .reset(reset),
+      .count(count)
+  );
+endmodule
+```
+
+The literal `'0` in the reset branch means "all zeros, whatever the width",
+which is what lets one description serve every `WIDTH`. A `localparam` is
+a constant inside a module that, unlike a `parameter`, cannot be
+overridden from outside, which makes it the right tool for derived constants:
+
+```systemverilog
+localparam CNT_WIDTH = 16;
+counter #(.WIDTH(CNT_WIDTH)) counter_inst (.clk(clk), .reset(reset), .count(count));
+```
+:::
+
+## Testbenches
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module tb_mux4to1;
+  logic [3:0] d;
+  logic [1:0] sel;
+  logic       y;
+
+  mux4to1_struct dut (.d(d), .sel(sel), .y(y));
+
+  initial begin
+    d = 4'b1010;
+    for (int i = 0; i < 4; i++) begin
+      sel = i[1:0];
+      #10;
+      if (y !== d[sel]) $error("sel=%b: y=%b", sel, y);
+    end
+    $finish;
+  end
+endmodule
+```
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A **testbench** is a module that tests another module, the *device under
+test* (DUT). It applies inputs to the DUT and, ideally, checks that the
+outputs are right. Its inputs and the expected outputs are the *test
+vectors*. A testbench has no ports of its own: it sits at the top of the
+simulation, so everything it needs is declared inside as plain `logic`
+signals and wired to the DUT by name, like any other instance.
+
+```systemverilog
+module tb_mux4to1;
+  logic [3:0] d;
+  logic [1:0] sel;
+  logic       y;
+
+  mux4to1_struct dut (.d(d), .sel(sel), .y(y));
+
+  initial begin
+    d = 4'b1010;
+    for (int i = 0; i < 4; i++) begin
+      sel = i[1:0];
+      #10;
+      $display("d=%b sel=%b y=%b", d, sel, y);
+      if (y !== d[sel]) $error("sel=%b: expected %b, got %b", sel, d[sel], y);
+    end
+    $finish;
+  end
+endmodule
+```
+
+Everything happens in the `initial` block, which starts at time zero and
+runs once. It holds `d` fixed and sweeps `sel` through all four values. After
+each change it waits `#10` time units, `$display` prints the inputs and the
+output, and the `if` checks `y` against the bit of `d` that `sel` selects.
+The `#10` delay is not needed by the circuit, since a combinational output
+settles almost instantly. It gives each test case its own slice of
+simulation time, so the printed lines and the waveform stay readable. The
+comparison uses `!==`, which also catches an `X` on the output where `!=`
+would stay silent. `$finish` ends the simulation.
+
+These statements (`initial`, `#10`, `$display`, `$finish`) exist only in
+simulation. A synthesizer has no hardware for "wait 10 time units", which is
+the line between the code you simulate and the code you synthesize.
+:::
+
+## Testbench for a sequential design
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+module tb_counter;
+  logic       clk = 0;
+  logic       reset = 1;
+  logic [3:0] count;
+
+  counter #(.WIDTH(4)) dut (.clk(clk), .reset(reset), .count(count));
+
+  always #5 clk = ~clk;              // clock generator
+
+  initial begin
+    #12 reset = 0;
+    #100;
+    $display("count=%0d", count);
+    $finish;
+  end
+endmodule
+```
+
+- The testbench must **supply the clock**
+- `$finish` is essential: the clock never stops
+:::
+
+::: {.content-visible unless-format="revealjs"}
+A registered design only changes on a clock edge, so the testbench has to
+supply that clock; nothing else in the simulation will.
+
+```systemverilog
+module tb_counter;
+  logic       clk = 0;
+  logic       reset = 1;
+  logic [3:0] count;
+
+  counter #(.WIDTH(4)) dut (.clk(clk), .reset(reset), .count(count));
+
+  always #5 clk = ~clk;              // clock generator: period of 10 units
+
+  initial begin
+    #12 reset = 0;                   // release reset between clock edges
+    #100;
+    $display("count=%0d", count);
+    $finish;
+  end
+endmodule
+```
+
+The separate `always #5 clk = ~clk;` has no sensitivity list and no guard,
+so it keeps re-executing for the whole simulation and flips `clk` every 5
+time units. That gives a free-running clock with a period of 10. It runs
+concurrently with the `initial` block below it: every `initial` and
+`always` block in a module starts at time zero and proceeds independently,
+which is why the clock generator lives in its own block.
+
+The stimulus holds `reset` high for the first clock edge (at time 5), then
+releases it at time 12, between edges, so that no input changes exactly
+when the clock rises. After the remaining ten rising edges the counter holds
+10, which `$display` prints. The key difference from the combinational
+testbench is the waiting. A combinational output is valid almost
+immediately after its inputs change, but a register updates only once per
+clock edge, so a sequential testbench must always budget enough simulated
+time, or wait for a specific number of `@(posedge clk)` events, before
+checking the outputs.
+
+`$finish` matters even more here. The clock generator never terminates on
+its own, so without an explicit `$finish` the simulation would run forever.
+:::
+
+## Running a simulation
+
+::: {.content-visible when-format="revealjs"}
+```bash
+iverilog -g2012 -o sim_counter counter.sv tb_counter.sv
+vvp sim_counter
+```
+
+- Add `$dumpfile` / `$dumpvars` to write a waveform for GTKWave
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Any SystemVerilog simulator can run these testbenches. With the open-source
+Icarus Verilog, you compile the design together with its testbench and run
+the result:
+
+```bash
+iverilog -g2012 -o sim_counter counter.sv tb_counter.sv
+vvp sim_counter
+```
+
+The `-g2012` option selects the SystemVerilog language level. To look at
+waveforms instead of printed lines, add two statements at the start of the
+`initial` block, and open the resulting file in GTKWave:
+
+```systemverilog
+$dumpfile("tb_counter.vcd");
+$dumpvars(0, tb_counter);
+```
+
+Checking results by eye in a waveform does not scale beyond a handful of
+signals. A testbench that compares outputs against expected values, as ours
+does with `$error`, can be run again after every change and report a clear
+pass or fail. Later in the course we move this idea to a Python framework,
+cocotb, which makes writing such checks much easier.
+:::
+
+## From design to the pipeline
+
+::: {.content-visible when-format="revealjs"}
+- `always_comb` and `always_ff`: the two blocks every design is built from
+- Instances and parameters: how small blocks become a system
+- Next: these constructs, applied to a real five-stage pipeline
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Everything introduced here is the working vocabulary of the rest of the
+course. `always_ff` with non-blocking assignment and a reset is how every
+pipeline register is built. `always_comb` with defaults at the top is how
+the ALU and the decoder avoid latch inference. Module instances and
+parameters are how those pieces are assembled into stages and stages into
+a processor. The pipeline chapters introduce no new syntax: they put these
+constructs to work on a larger example.
+:::
