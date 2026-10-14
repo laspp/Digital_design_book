@@ -24,6 +24,9 @@ images/*.pdf
 # Local node tooling (netlistsvg)
 .tools/
 
+# Local Python venv for the diagram-generation scripts (see INSTALL.md)
+.venv/
+
 # LaTeX build intermediates (from PDF rendering)
 *.aux
 *.fdb_latexmk
@@ -47,3 +50,4 @@ digital_design-main/
 __pycache__/
 
 .vscode/
+/.luarc.json

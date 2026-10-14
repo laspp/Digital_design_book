@@ -8,6 +8,9 @@ slide decks and book chapters from it.
 1. Install Quarto: <https://quarto.org/docs/get-started/>
 2. (For PDF export of the book) install TinyTeX: `quarto install tinytex`
 
+See [INSTALL.md](INSTALL.md) for the full environment setup, including the
+toolchain needed to regenerate the project's diagrams.
+
 ## Structure
 
 ```

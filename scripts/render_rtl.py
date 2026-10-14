@@ -32,7 +32,9 @@ def render(src: Path, force: bool) -> bool:
     if not force and svg.exists() and pdf.exists() \
             and min(svg.stat().st_mtime, pdf.stat().st_mtime) >= src.stat().st_mtime:
         return False
-    with tempfile.TemporaryDirectory() as tmp:
+    # dir=ROOT: yowasp-yosys runs sandboxed (WASM/wasmtime) and can only see
+    # paths under the process's working directory, not the system /tmp.
+    with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
         netlist = Path(tmp) / "netlist.json"
         # `// yosys: flatten` in the source expands instances into their contents
         flatten = "flatten; " if "yosys: flatten" in src.read_text() else ""

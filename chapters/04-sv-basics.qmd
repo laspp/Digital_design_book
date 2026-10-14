@@ -404,7 +404,7 @@ reason, swapping the two lines changes nothing.
 
 ::: {.content-visible when-format="revealjs"}
 ```systemverilog
-wire c;
+logic c;
 assign c = a;
 assign c = b;
 ```
@@ -412,7 +412,6 @@ assign c = b;
 - C: the last assignment wins
 - Hardware: **two outputs connected to one wire**
 - If `a != b` the net is **`X`**
-- With `logic`, the tool rejects the code outright
 - Avoid at all costs
 :::
 
@@ -420,7 +419,7 @@ assign c = b;
 The second example is the one that breaks C intuition completely:
 
 ```systemverilog
-wire c;
+logic c;
 assign c = a;
 assign c = b;
 ```
