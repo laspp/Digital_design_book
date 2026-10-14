@@ -29,7 +29,7 @@ PREVIEW_TARGETS := $(addprefix preview-,$(CHAPTER_NAMES))
 SLIDES_ALIASES  := $(addprefix slides-,$(CHAPTER_NUMS))
 PREVIEW_ALIASES := $(addprefix preview-,$(CHAPTER_NUMS))
 
-.PHONY: help all waves blocks rtl book-html book-pdf preview clean init-gh-pages \
+.PHONY: help all waves blocks rtl book-html book-pdf preview clean publish init-gh-pages \
         $(SLIDES_TARGETS) $(PREVIEW_TARGETS) $(SLIDES_ALIASES) $(PREVIEW_ALIASES)
 
 help:
@@ -47,6 +47,8 @@ help:
 	@echo "  make preview         Live-preview the whole book"
 	@echo "  make all             Render slides for every chapter + the book (HTML)"
 	@echo "  make clean           Remove rendered output"
+	@echo "  make publish         Render the book and publish it to GitHub Pages"
+	@echo "                       (quarto publish gh-pages)"
 	@echo "  make init-gh-pages   One-time: create the empty gh-pages branch"
 	@echo "                       that publish.yml needs to exist before it"
 	@echo "                       can publish"
@@ -89,6 +91,11 @@ all:
 clean:
 	rm -rf _book .quarto
 	rm -rf $(CHAPTERS_DIR)/*.html $(CHAPTERS_DIR)/*_files
+
+# Render the book (HTML + PDF) and publish it to the gh-pages branch with
+# `quarto publish`. Needs the gh-pages branch to exist (see init-gh-pages).
+publish:
+	$(RENDER) publish
 
 # One-time setup: publish.yml (GitHub Actions) can only update an existing
 # gh-pages branch, not create one. Run this once per repo before the first

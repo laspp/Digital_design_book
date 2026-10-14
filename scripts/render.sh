@@ -8,6 +8,7 @@
 #   ./scripts/render.sh preview <path-to-chapter.qmd>  Live-preview one chapter as slides
 #   ./scripts/render.sh book <html|pdf>                Render the whole book
 #   ./scripts/render.sh book-preview                   Live-preview the whole book
+#   ./scripts/render.sh publish                        Render the book (html + pdf) and publish it to gh-pages
 #   ./scripts/render.sh all                            Render slides for every chapter + the book (html)
 #
 # Requires: quarto (https://quarto.org/docs/get-started/)
@@ -29,6 +30,7 @@ usage() {
   echo "  $0 preview <path-to-chapter.qmd>  Live-preview one chapter as slides"
   echo "  $0 book <html|pdf>                Render the whole book"
   echo "  $0 book-preview                   Live-preview the whole book"
+  echo "  $0 publish                        Render the book and publish it to gh-pages"
   echo "  $0 all                            Render slides for every chapter + the book (html)"
   exit 1
 }
@@ -87,6 +89,11 @@ preview_book() {
   (cd "$PROJECT_ROOT" && quarto preview)
 }
 
+publish_book() {
+  echo "Publishing book to gh-pages from: $PROJECT_ROOT"
+  (cd "$PROJECT_ROOT" && quarto publish gh-pages --no-prompt)
+}
+
 render_all() {
   echo "Rendering slides for every chapter in $CHAPTERS_DIR ..."
   for chapter in "$CHAPTERS_DIR"/*.qmd; do
@@ -121,6 +128,10 @@ main() {
     book-preview)
       [[ $# -eq 1 ]] || usage
       preview_book
+      ;;
+    publish)
+      [[ $# -eq 1 ]] || usage
+      publish_book
       ;;
     all)
       render_all

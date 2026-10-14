@@ -221,7 +221,7 @@ block of the FPGA chapter. A synthesizer never creates an `X` or a
 ## Data types: nets and variables
 
 ::: {.content-visible when-format="revealjs"}
-- **Net** (`wire`): a physical connection
+- **Net** (`wire`,`logic`): a physical connection
     - holds no value of its own
     - takes the resolved value of whatever drives it
     - driven by `assign` or by a module output
@@ -235,14 +235,14 @@ block of the FPGA chapter. A synthesizer never creates an `X` or a
 SystemVerilog has two kinds of signals, and the difference between them is
 what the whole language is built around.
 
-A **net**, declared with `wire`, models a physical connection between
+A **net**, declared with `wire` or `logic`, models a physical connection between
 things. It stores nothing: its value at any moment is whatever its drivers
 are producing right now. If several things drive it, the net resolves
 their values, which is how a tri-state bus works. A **variable** is a
 signal that *remembers*. It holds the last value assigned to it, and keeps
 it until the next assignment.
 
-| | Net (`wire`) | Variable (`logic`, `int`, …) |
+| | Net (`wire`,`logic`) | Variable (`logic`, `int`, …) |
 |---|---|---|
 | Models | a connection | a stored value |
 | Holds a value | no, resolved from its drivers | yes, the last one assigned |
