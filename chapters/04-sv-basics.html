@@ -437,7 +437,7 @@ Figure&nbsp;4.1: The <code>and_or</code> module, drawn by Yosys directly from th
 <section id="data-types-nets-and-variables" class="level2" data-number="4.7">
 <h2 data-number="4.7" class="anchored" data-anchor-id="data-types-nets-and-variables"><span class="header-section-number">4.7</span> Data types: nets and variables</h2>
 <p>SystemVerilog has two kinds of signals, and the difference between them is what the whole language is built around.</p>
-<p>A <strong>net</strong>, declared with <code>wire</code>, models a physical connection between things. It stores nothing: its value at any moment is whatever its drivers are producing right now. If several things drive it, the net resolves their values, which is how a tri-state bus works. A <strong>variable</strong> is a signal that <em>remembers</em>. It holds the last value assigned to it, and keeps it until the next assignment.</p>
+<p>A <strong>net</strong>, declared with <code>wire</code> or <code>logic</code>, models a physical connection between things. It stores nothing: its value at any moment is whatever its drivers are producing right now. If several things drive it, the net resolves their values, which is how a tri-state bus works. A <strong>variable</strong> is a signal that <em>remembers</em>. It holds the last value assigned to it, and keeps it until the next assignment.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -447,7 +447,7 @@ Figure&nbsp;4.1: The <code>and_or</code> module, drawn by Yosys directly from th
 <thead>
 <tr class="header">
 <th></th>
-<th>Net (<code>wire</code>)</th>
+<th>Net (<code>wire</code>,<code>logic</code>)</th>
 <th>Variable (<code>logic</code>, <code>int</code>, …)</th>
 </tr>
 </thead>
