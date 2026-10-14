@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>5&nbsp; Designing with SystemVerilog – Designing a RISC-V SoC</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/06-pipeline-structure.html" rel="next">
+<link href="../chapters/04-sv-basics.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/05-sv-design.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-sv-design" id="toc-sec-sv-design" class="nav-link active" data-scroll-target="#sec-sv-design">Designing with SystemVerilog</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">5.1</span> Goal for this week</a></li>
+  <li><a href="#two-styles-of-design" id="toc-two-styles-of-design" class="nav-link" data-scroll-target="#two-styles-of-design"><span class="header-section-number">5.2</span> Two styles of design</a></li>
+  <li><a href="#the-always-block" id="toc-the-always-block" class="nav-link" data-scroll-target="#the-always-block"><span class="header-section-number">5.3</span> The <code>always</code> block</a></li>
+  <li><a href="#sequential-logic-describe-the-hardware-you-want" id="toc-sequential-logic-describe-the-hardware-you-want" class="nav-link" data-scroll-target="#sequential-logic-describe-the-hardware-you-want"><span class="header-section-number">5.4</span> Sequential logic: describe the hardware you want</a></li>
+  <li><a href="#the-d-flip-flop" id="toc-the-d-flip-flop" class="nav-link" data-scroll-target="#the-d-flip-flop"><span class="header-section-number">5.5</span> The D flip-flop</a></li>
+  <li><a href="#the-latch" id="toc-the-latch" class="nav-link" data-scroll-target="#the-latch"><span class="header-section-number">5.6</span> The latch</a></li>
+  <li><a href="#adding-a-reset" id="toc-adding-a-reset" class="nav-link" data-scroll-target="#adding-a-reset"><span class="header-section-number">5.7</span> Adding a reset</a></li>
+  <li><a href="#registers-and-the-enable-signal" id="toc-registers-and-the-enable-signal" class="nav-link" data-scroll-target="#registers-and-the-enable-signal"><span class="header-section-number">5.8</span> Registers and the enable signal</a></li>
+  <li><a href="#counters-two-ways-to-write-one" id="toc-counters-two-ways-to-write-one" class="nav-link" data-scroll-target="#counters-two-ways-to-write-one"><span class="header-section-number">5.9</span> Counters: two ways to write one</a></li>
+  <li><a href="#combinational-logic" id="toc-combinational-logic" class="nav-link" data-scroll-target="#combinational-logic"><span class="header-section-number">5.10</span> Combinational logic</a></li>
+  <li><a href="#the-multiplexer" id="toc-the-multiplexer" class="nav-link" data-scroll-target="#the-multiplexer"><span class="header-section-number">5.11</span> The multiplexer</a></li>
+  <li><a href="#the-decoder" id="toc-the-decoder" class="nav-link" data-scroll-target="#the-decoder"><span class="header-section-number">5.12</span> The decoder</a></li>
+  <li><a href="#avoiding-latches" id="toc-avoiding-latches" class="nav-link" data-scroll-target="#avoiding-latches"><span class="header-section-number">5.13</span> Avoiding latches</a></li>
+  <li><a href="#blocking-vs.-non-blocking-assignment" id="toc-blocking-vs.-non-blocking-assignment" class="nav-link" data-scroll-target="#blocking-vs.-non-blocking-assignment"><span class="header-section-number">5.14</span> Blocking vs.&nbsp;non-blocking assignment</a>
+  <ul class="collapse">
+  <li><a href="#in-combinational-logic" id="toc-in-combinational-logic" class="nav-link" data-scroll-target="#in-combinational-logic"><span class="header-section-number">5.14.1</span> In combinational logic</a></li>
+  <li><a href="#in-sequential-logic" id="toc-in-sequential-logic" class="nav-link" data-scroll-target="#in-sequential-logic"><span class="header-section-number">5.14.2</span> In sequential logic</a></li>
+  <li><a href="#the-rule" id="toc-the-rule" class="nav-link" data-scroll-target="#the-rule"><span class="header-section-number">5.14.3</span> The rule</a></li>
+  </ul></li>
+  <li><a href="#structural-design-module-instances" id="toc-structural-design-module-instances" class="nav-link" data-scroll-target="#structural-design-module-instances"><span class="header-section-number">5.15</span> Structural design: module instances</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters"><span class="header-section-number">5.15.1</span> Parameters</a></li>
+  <li><a href="#a-real-example-the-program-counter-of-hipv" id="toc-a-real-example-the-program-counter-of-hipv" class="nav-link" data-scroll-target="#a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.15.2</span> A real example: the program counter of HIPV</a></li>
+  </ul></li>
+  <li><a href="#testbenches" id="toc-testbenches" class="nav-link" data-scroll-target="#testbenches"><span class="header-section-number">5.16</span> Testbenches</a></li>
+  <li><a href="#testbench-for-a-sequential-design" id="toc-testbench-for-a-sequential-design" class="nav-link" data-scroll-target="#testbench-for-a-sequential-design"><span class="header-section-number">5.17</span> Testbench for a sequential design</a></li>
+  <li><a href="#running-a-simulation" id="toc-running-a-simulation" class="nav-link" data-scroll-target="#running-a-simulation"><span class="header-section-number">5.18</span> Running a simulation</a></li>
+  <li><a href="#from-design-to-the-pipeline" id="toc-from-design-to-the-pipeline" class="nav-link" data-scroll-target="#from-design-to-the-pipeline"><span class="header-section-number">5.19</span> From design to the pipeline</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-sv-design" class="level1 unnumbered">
+<h1 class="unnumbered">Designing with SystemVerilog</h1>
+<section id="goal-for-this-week" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">5.1</span> Goal for this week</h2>
+<ul>
+<li>Tell the two styles of hardware description apart: behavioral and structural</li>
+<li>Describe sequential logic with <code>always_ff</code>: flip-flops, resets, registers with an enable, and counters</li>
+<li>Know what a latch is, and write code that cannot produce one by accident</li>
+<li>Describe combinational logic with <code>always_comb</code>: multiplexers and decoders</li>
+<li>Explain the difference between <code>=</code> and <code>&lt;=</code>, and why each block uses one of them</li>
+<li>Assemble a design from smaller modules, and test it with a testbench</li>
+</ul>
+</section>
+<section id="two-styles-of-design" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="two-styles-of-design"><span class="header-section-number">5.2</span> Two styles of design</h2>
+<p>There are two ways to describe a piece of hardware in SystemVerilog, and a real design uses both.</p>
+<p>In <strong>behavioral</strong> design we describe <em>what</em> a block does: its outputs as a function of its inputs and, for sequential logic, of its stored state. We write that with <code>assign</code> and with <code>always</code> blocks, and leave it to the synthesis tool to pick the gates and flip-flops. In <strong>structural</strong> design we describe <em>how</em> a block is composed of other blocks: we create instances of smaller modules and connect their ports with wires, much as one would wire chips on a board.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Behavioral</th>
+<th>Structural</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Describes</td>
+<td><strong>what</strong> a block does</td>
+<td><strong>how</strong> it is built from other blocks</td>
+</tr>
+<tr class="even">
+<td>Written with</td>
+<td><code>assign</code>, <code>always_*</code></td>
+<td>module <strong>instances</strong></td>
+</tr>
+<tr class="odd">
+<td>Example</td>
+<td>a register, a multiplexer</td>
+<td>a pipeline stage</td>
+</tr>
+</tbody>
+</table>
+<p>The two styles meet at the leaf cells. In the HIPV SoC that we use as a running example, the folder <code>rtl/generic</code> holds small, reusable cells (<code>flopenr</code>, <code>mux2</code>, <code>mux3</code>, <code>adder</code>) written in behavioral style, and the larger modules of the processor instantiate them structurally. This chapter begins with the behavioral style, because those leaf cells have to be written before they can be assembled, and ends with the structural style.</p>
+</section>
+<section id="the-always-block" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="the-always-block"><span class="header-section-number">5.3</span> The <code>always</code> block</h2>
+<p>The previous chapter described logic one line at a time with <code>assign</code>. That is enough for an adder, but awkward the moment a function needs an <code>if</code> or a <code>case</code>. For those we use an <strong><code>always</code> block</strong>: a block of statements that describes how a set of outputs depends on a set of inputs.</p>
+<p>SystemVerilog has three kinds of <code>always</code> block for hardware, and which one you use is dictated by what you are building:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Block</th>
+<th>Describes</th>
+<th>Runs when</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>always_comb</code></td>
+<td>combinational logic</td>
+<td>any signal it <strong>reads</strong> changes</td>
+</tr>
+<tr class="even">
+<td><code>always_ff @(posedge clk)</code></td>
+<td>flip-flops</td>
+<td>the clock edge</td>
+</tr>
+<tr class="odd">
+<td><code>always_latch</code></td>
+<td>latches</td>
+<td>any of its inputs changes</td>
+</tr>
+</tbody>
+</table>
+<p>The names are a promise to the tool: if the code inside does not describe the kind of hardware the block name claims, the tool reports it. Older Verilog has a single <code>always @(...)</code> for all three purposes, and a whole class of bugs came from getting it wrong without any warning.</p>
+<p>Two facts about <code>always</code> blocks are worth keeping in mind from the start. First, every <code>always</code> block in a module is a separate piece of hardware that exists all the time, like an <code>assign</code>, so they all run <em>concurrently</em> and the order in which you write them does not matter. Second, the statements <em>inside</em> one block run in the order written, like a small program. A block is a description of hardware, not a function that gets called.</p>
+</section>
+<section id="sequential-logic-describe-the-hardware-you-want" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="sequential-logic-describe-the-hardware-you-want"><span class="header-section-number">5.4</span> Sequential logic: describe the hardware you want</h2>
+<p>Hardware description is not programming, and the habit that separates the two is this: <strong>decide on the hardware first, then write the code that describes it.</strong> If you cannot sketch the flip-flops and gates you expect, you are not ready to write the <code>always</code> block, and the synthesis tool will build something, but not necessarily what you meant.</p>
+<p>So for every circuit in this chapter we follow the same four steps. First, the hardware we want. Second, its <strong>waveform</strong>, which says what the circuit must do over time and is the most precise specification there is. Third, the code that describes it. Fourth, a walk through the waveform to check that the code matches it. Learning to read waveforms is half of the work: it is also how you will debug in simulation.</p>
+<p>A convention for all the diagrams in this chapter: the clock rises at the start of each numbered column, and input signals change in the <em>middle</em> of a column, after the clock has fallen. That way an input never changes at the same instant as a rising edge, and it is always clear which value the circuit sampled.</p>
+</section>
+<section id="the-d-flip-flop" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="the-d-flip-flop"><span class="header-section-number">5.5</span> The D flip-flop</h2>
+<div id="fig-dff" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/dff.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: A D flip-flop: <code>q</code> takes the value of <code>d</code> at each rising clock edge.
+</figcaption>
+</figure>
+</div>
+<p>The flip-flop is the memory element of synchronous design. It has a data input <code>d</code>, a clock <code>clk</code> and an output <code>q</code>. At every rising edge of the clock it copies <code>d</code> to <code>q</code>, and between edges it holds that value no matter what <code>d</code> does (<a href="#fig-dff" class="quarto-xref">Figure&nbsp;<span>5.1</span></a>).</p>
+<p>Follow the waveform from left to right. In column 0, <code>q</code> is unknown (the hatched area): nothing has been stored yet. At the rising edge that starts column 1, <code>d</code> is 0, so <code>q</code> becomes 0. In the middle of column 1, <code>d</code> rises, and <code>q</code> does <strong>not</strong> react: the flip-flop is not looking. At the next rising edge, starting column 2, it samples <code>d = 1</code> and <code>q</code> rises. The same happens in reverse when <code>d</code> falls in the middle of column 3: <code>q</code> falls only at the edge that starts column 4. A flip-flop is a circuit that looks at its input at one instant per cycle.</p>
+<p>The code is as short as the circuit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> dff (</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> clk, d,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> q</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    q &lt;= d;</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The sensitivity list <code>@(posedge clk)</code> names the event that makes the block run, and the block runs <em>only</em> then. Between clock edges nothing happens and <code>q</code> keeps its value: that holding is the memory. The operator is <code>&lt;=</code>, the non-blocking assignment, which we explain at the end of the chapter; for now, remember that it goes with <code>always_ff</code>.</p>
+</section>
+<section id="the-latch" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="the-latch"><span class="header-section-number">5.6</span> The latch</h2>
+<div id="fig-latch-wave" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-latch-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/latch.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-latch-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.2: A latch: <code>q</code> follows <code>d</code> while <code>en</code> is high, and holds its value while <code>en</code> is low.
+</figcaption>
+</figure>
+</div>
+<p>A <strong>latch</strong> is a memory element too, but it looks at its input for a whole <em>level</em>, not at one instant. While the enable <code>en</code> is high, the latch is <em>transparent</em>: <code>q</code> follows <code>d</code> continuously. When <code>en</code> falls, the latch closes and <code>q</code> holds the last value (<a href="#fig-latch-wave" class="quarto-xref">Figure&nbsp;<span>5.2</span></a>).</p>
+<p>In the waveform, <code>en</code> is high during columns 2 to 4. As soon as it rises, <code>q</code> takes the value of <code>d</code>, which is 1. When <code>d</code> falls at the start of column 4, <code>q</code> falls with it, because the latch is still open. <code>en</code> falls at the start of column 5, and from then on <code>q</code> stays 0: when <code>d</code> rises again in column 6, the latch is closed and does not notice. Compare this with the flip-flop of the previous waveform, where <code>q</code> could only change at a clock edge.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_latch</span> <span class="kw">begin</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (en) q &lt;= d;</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A latch has no clock edge, so a signal passing through it can ripple along for as long as <code>en</code> is high, which makes timing analysis difficult. In a synchronous design we want flip-flops everywhere, and we use a latch only on purpose. The reason to know it exists is that it is easy to build one <em>by accident</em>, and the section on combinational logic below shows how.</p>
+</section>
+<section id="adding-a-reset" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="adding-a-reset"><span class="header-section-number">5.7</span> Adding a reset</h2>
+<div id="fig-dff-reset" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dff-reset-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/dff_reset.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dff-reset-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.3: Synchronous reset: <code>q</code> clears at the next rising edge after <code>reset</code> rises.
+</figcaption>
+</figure>
+</div>
+<div id="fig-dff-areset" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-dff-areset-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/dff_areset.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dff-areset-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.4: Asynchronous reset: <code>q</code> clears the moment <code>reset</code> rises, without waiting for a clock edge.
+</figcaption>
+</figure>
+</div>
+<p>A flip-flop that powers up with an unknown value is a bug waiting to happen, so registers get a <strong>reset</strong> that forces a known value. There are two ways to write it, and both clear <code>q</code> when <code>reset</code> is high. They differ in <em>when</em> the clear takes effect.</p>
+<p>With a <strong>synchronous</strong> reset (<a href="#fig-dff-reset" class="quarto-xref">Figure&nbsp;<span>5.3</span></a>), <code>reset</code> is just another input that the flip-flop looks at on the clock edge. In the waveform <code>d</code> stays 1. <code>q</code> becomes 1 at the edge that starts column 1. <code>reset</code> rises in the middle of column 1 and <code>q</code> does not move; only at the edge starting column 2 does the flip-flop see <code>reset</code> high and clear. It stays cleared through the edges of columns 3 and 4 because <code>reset</code> is still high. <code>reset</code> falls in the middle of column 4, and at the edge starting column 5 the flip-flop loads <code>d</code> again.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (reset) q &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">else</span>       q &lt;= d;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With an <strong>asynchronous</strong> reset (<a href="#fig-dff-areset" class="quarto-xref">Figure&nbsp;<span>5.4</span></a>), the flip-flop reacts to <code>reset</code> itself, whatever the clock is doing. The same stimulus now clears <code>q</code> in the <em>middle</em> of column 1, the instant <code>reset</code> rises, not at the next edge. It stays 0 while <code>reset</code> is high, and after <code>reset</code> falls it waits for the next edge, at the start of column 5, to load <code>d</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk <span class="kw">or</span> <span class="kw">posedge</span> reset) <span class="kw">begin</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (reset) q &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">else</span>       q &lt;= d;</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is why <code>reset</code> appears in the sensitivity list next to <code>posedge clk</code>: the block must also run when <code>reset</code> rises. An asynchronous reset needs a flip-flop with a dedicated reset pin, and its release matters: if <code>reset</code> falls too close to a clock edge the flip-flop can misbehave, a problem we return to when we discuss synchronizers. A synchronous reset needs a running clock, but is just logic in front of the D input (or a dedicated set/reset input on an FPGA flip-flop, like the one in the slice of the previous chapter).</p>
+<p>The HIPV SoC chooses one style for the whole design: its coding standard requires a <strong>synchronous</strong> reset throughout. That is the style we use from now on. Pick one style, use it everywhere, and know which one you picked.</p>
+</section>
+<section id="registers-and-the-enable-signal" class="level2" data-number="5.8">
+<h2 data-number="5.8" class="anchored" data-anchor-id="registers-and-the-enable-signal"><span class="header-section-number">5.8</span> Registers and the enable signal</h2>
+<div id="fig-flopenr" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-flopenr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/flopenr.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-flopenr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.5: <code>flopenr</code>: after the reset, <code>Q</code> loads <code>D</code> only at the edges where <code>en</code> is high.
+</figcaption>
+</figure>
+</div>
+<p>A single flip-flop stores one bit. A <strong>register</strong> is a group of flip-flops that load together, and in a processor most registers also need an <strong>enable</strong>: a signal that says “load a new value at this edge”, and otherwise “keep the old one”. A pipeline register that must hold its contents while the stage ahead is busy is exactly that. This is the most-instantiated cell in HIPV:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> flopenr #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span>             clk, reset, en,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Q);</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) Q &lt;= '<span class="dv">0</span>;</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (en) Q &lt;= D;</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The module is the D flip-flop with a synchronous reset, plus one more condition. <code>WIDTH</code> is a parameter, so the same description serves for a 1-bit flag and for the 32-bit program counter. The priority is spelled out by the <code>if</code>/<code>else if</code> chain: reset wins, then enable, and if neither is active there is no assignment at all, so the register keeps its value. That “no assignment means hold” is legal inside <code>always_ff</code>, since a flip-flop naturally remembers; it is the opposite of the rule for <code>always_comb</code>, where it would build a latch.</p>
+<p><a href="#fig-flopenr" class="quarto-xref">Figure&nbsp;<span>5.5</span></a> shows the behavior. <code>reset</code> is high around the first edge, so at the start of column 1 <code>Q</code> loads 0. <code>D</code> carries the values A, B, C, D, changing mid-column. <code>en</code> is high for the edges starting columns 2, 3 and 4. At column 2 the register loads B. At column 3 <code>D</code> is still B, so <code>Q</code> stays B. At column 4 <code>D</code> is C, so <code>Q</code> loads C. Then <code>en</code> falls in the middle of column 4, and from the edge at column 5 on the register ignores <code>D</code>, even though <code>D</code> keeps changing: <code>Q</code> holds C. <a href="#fig-flopenr-rtl" class="quarto-xref">Figure&nbsp;<span>5.6</span></a> is what the synthesis tool builds: one flip-flop cell with clock, data, enable and synchronous reset inputs, which is what an FPGA slice flip-flop provides directly (the clock-enable and set/reset inputs of the previous chapter).</p>
+<div id="fig-flopenr-rtl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-flopenr-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/flopenr.svg" class="img-fluid figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-flopenr-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.6: The <code>flopenr</code> module (8-bit by default), drawn by Yosys from the real HIPV file. <code>$sdffe</code> is a flip-flop with <strong>s</strong>ynchronous reset and <strong>e</strong>nable.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="counters-two-ways-to-write-one" class="level2" data-number="5.9">
+<h2 data-number="5.9" class="anchored" data-anchor-id="counters-two-ways-to-write-one"><span class="header-section-number">5.9</span> Counters: two ways to write one</h2>
+<p>A counter is a register whose next value is its own current value plus one. Its waveform is the simplest of any sequential circuit: after the reset, the output goes up by one at every clock edge (<a href="#fig-counter-wave" class="quarto-xref">Figure&nbsp;<span>5.7</span></a>). There are two common ways to write it, and the best habit is to know both.</p>
+<p><strong>Way 1: everything in one <code>always_ff</code>.</strong> The straightforward form says, at each edge, “if reset, clear; otherwise <code>count &lt;= count + 1</code>”:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> counter4 (</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>       clk,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>       reset,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) count &lt;= <span class="bn">4'b0000</span>;</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span>       count &lt;= count + <span class="dv">1</span>;</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-counter-wave" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-counter-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/counter.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-counter-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.7: Timing of <code>counter4</code>: after the reset, <code>count</code> increases by one at every rising edge.
+</figcaption>
+</figure>
+</div>
+<p>At the edge starting column 1, <code>reset</code> is still high and <code>count</code> loads 0. From then on <code>reset</code> is low, and at each edge <code>count</code> takes its own value plus one: 1, 2, 3 and so on. When it reaches 15, the next <code>+ 1</code> wraps around to 0, because the result is truncated to 4 bits.</p>
+<p><strong>Way 2: next-state logic and a register.</strong> The second form splits the description in two. A combinational block computes what the next value <em>would be</em>, <code>count_next</code>, and a plain register stores it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> counter4_next (</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>       clk,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>       reset,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count_next;</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    count_next = count + <span class="dv">1</span>;</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) count &lt;= <span class="bn">4'b0000</span>;</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span>       count &lt;= count_next;</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-counter-next-wave" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-counter-next-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/counter_next.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-counter-next-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.8: Timing of <code>counter4_next</code>: <code>count_next</code> is always one ahead of <code>count</code>, and the register copies it at each edge.
+</figcaption>
+</figure>
+</div>
+<p>The waveform now has one more signal (<a href="#fig-counter-next-wave" class="quarto-xref">Figure&nbsp;<span>5.8</span></a>). <code>count_next</code> is combinational, so it changes as soon as <code>count</code> does, and is always one higher. In column 1, <code>count</code> is 0 and <code>count_next</code> is already 1, but the register ignores it at the edge starting column 1 because <code>reset</code> is high. At the edge starting column 2 the register copies the 1, and so on.</p>
+<p>Both modules synthesize to exactly the same hardware: an adder, a register with a synchronous reset, and the feedback wire (<a href="#fig-counter-rtl" class="quarto-xref">Figure&nbsp;<span>5.9</span></a>).</p>
+<div id="fig-counter-rtl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-counter-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/counter4.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-counter-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.9: Both counter descriptions give this circuit, drawn by Yosys: the register output feeds the output port and the adder, and <code>reset</code> drives the synchronous reset input.
+</figcaption>
+</figure>
+</div>
+<p>So why bother with the second form? Because it separates two questions: <em>what is the next value?</em> (combinational logic) and <em>when do we store it?</em> (the register). For a counter the answer to the first is trivial, and way 1 is perfectly fine. For anything bigger, such as a state machine or a pipeline stage, the next-state logic can be dozens of lines of <code>if</code> and <code>case</code>, and keeping it out of the clocked block makes it far easier to read and to check. The HIPV SoC uses this idea in its 64-bit timer counter, <code>cntr</code>, which computes <code>plus_one = count + 1</code> with an <code>assign</code> and feeds it to a register cell with an enable and a clear, instead of writing the increment inside the clocked block.</p>
+</section>
+<section id="combinational-logic" class="level2" data-number="5.10">
+<h2 data-number="5.10" class="anchored" data-anchor-id="combinational-logic"><span class="header-section-number">5.10</span> Combinational logic</h2>
+<p>We now do the same for combinational circuits. The method is identical: hardware, waveform, code, walk through. The difference is in the waveform: there is no clock, because a combinational output depends only on the current inputs, so it changes as soon as an input does.</p>
+<p>The block for it is <code>always_comb</code>. It re-evaluates whenever any signal it reads changes. It is closer to a spreadsheet formula that recalculates on every input edit than to a function you call. You write no sensitivity list, since the tool works it out from the signals the block reads. The assignment inside is the blocking <code>=</code>, which reads as “this is what the output equals right now”. There is no state to remember, which gives one rule that matters more than any other: <strong>every output must be assigned on every path through the block</strong>.</p>
+</section>
+<section id="the-multiplexer" class="level2" data-number="5.11">
+<h2 data-number="5.11" class="anchored" data-anchor-id="the-multiplexer"><span class="header-section-number">5.11</span> The multiplexer</h2>
+<div id="fig-mux2-wave" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mux2-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/mux2.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mux2-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.10: A 2-to-1 multiplexer: <code>Y</code> follows <code>D0</code> while <code>S</code> is 0 and <code>D1</code> while <code>S</code> is 1, with no clock.
+</figcaption>
+</figure>
+</div>
+<p>A multiplexer selects one of several inputs. The 2-to-1 version is the first cell in <code>rtl/generic</code>, and HIPV writes it as a continuous assignment:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux2 #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D0, D1,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span>             S,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Y = S ? D1 : D0;</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><a href="#fig-mux2-wave" class="quarto-xref">Figure&nbsp;<span>5.10</span></a> shows what it does. There is no clock: <code>Y</code> equals <code>D0</code> while <code>S</code> is 0 and <code>D1</code> while <code>S</code> is 1, and it changes the moment the selected input or the select changes. At the start of column 2 <code>D0</code> rises, and since <code>S</code> is 0, so does <code>Y</code>. At the start of column 3 <code>S</code> rises, <code>Y</code> switches over to <code>D1</code>, which is 0, and falls. At column 4 <code>D1</code> rises, <code>Y</code> follows. At column 6 <code>S</code> falls and <code>Y</code> returns to <code>D0</code>, which is 1.</p>
+<p>The same multiplexer in an <code>always_comb</code> block reads like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (S) Y = D1;</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">else</span>   Y = D0;</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Both give the same circuit. The <code>assign</code> form is shorter for one line of logic; the <code>always_comb</code> form is better when there are several outputs or several conditions. For a multiplexer with more than two inputs, the <code>case</code> statement is clearer than a chain of <code>?:</code> operators. HIPV’s 3-to-1 multiplexer, written with a chain of conditional operators in the repository, looks like this as an <code>always_comb</code> with <code>case</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux3 #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D0, D1, D2,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]       S,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (S)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b01</span>:   Y = D1;</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b10</span>:   Y = D2;</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: Y = D0;    <span class="co">// 2'b00, and 2'b11 falls back to D0</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>case</code> compares <code>S</code> against each listed value and runs the matching branch. The <strong><code>default</code></strong> branch is not optional: it makes sure <code>Y</code> is assigned for <em>every</em> value of <code>S</code>, including the one the designer never intended to use (<code>2'b11</code>), and values containing X or Z in simulation. The synthesized circuit (<a href="#fig-mux3-rtl" class="quarto-xref">Figure&nbsp;<span>5.11</span></a>) is two comparators and two 2-to-1 multiplexers in series.</p>
+<div id="fig-mux3-rtl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mux3-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/mux3.svg" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mux3-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.11: The <code>mux3</code> cell as drawn by Yosys from the HIPV file: <code>S == 2'b10</code> selects <code>D2</code>, otherwise <code>S == 2'b01</code> selects <code>D1</code>, otherwise <code>D0</code>.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-decoder" class="level2" data-number="5.12">
+<h2 data-number="5.12" class="anchored" data-anchor-id="the-decoder"><span class="header-section-number">5.12</span> The decoder</h2>
+<div id="fig-decoder-wave" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-decoder-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/decoder.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-decoder-wave-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.12: An address decoder: one <code>SlaveSel</code> bit goes high for each mapped region, and <code>DecErr</code> goes high for an unmapped address.
+</figcaption>
+</figure>
+</div>
+<p>A <strong>decoder</strong> turns an encoded value into a set of separate control signals, and it is everywhere in a processor: the instruction decoder turns an opcode into control signals, and the bus decoder turns an address into “which device is being accessed”. The second one is a clean example. The HIPV crossbar has five slaves (instruction memory, data memory, UART, timer and GPIO), each mapped to a region of the address space, and the decoder produces a <strong>one-hot</strong> select, one bit per slave, plus an error flag for an address that belongs to no slave. Here it is with the address map written out:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> addr_decoder (</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] Addr,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  SlaveSel,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>        DecErr</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    SlaveSel = '<span class="dv">0</span>;                                     <span class="co">// default: nothing selected</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (Addr[<span class="dv">31</span>:<span class="dv">16</span>] == <span class="bn">16'h0000</span>)  SlaveSel[<span class="dv">0</span>] = <span class="bn">1'b1</span>;  <span class="co">// instruction memory, 64 KiB</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (Addr[<span class="dv">31</span>:<span class="dv">16</span>] == <span class="bn">16'h1000</span>)  SlaveSel[<span class="dv">1</span>] = <span class="bn">1'b1</span>;  <span class="co">// data memory, 64 KiB</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (Addr[<span class="dv">31</span>:<span class="dv">12</span>] == <span class="bn">20'h20000</span>) SlaveSel[<span class="dv">2</span>] = <span class="bn">1'b1</span>;  <span class="co">// UART, 4 KiB</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (Addr[<span class="dv">31</span>:<span class="dv">12</span>] == <span class="bn">20'h20001</span>) SlaveSel[<span class="dv">3</span>] = <span class="bn">1'b1</span>;  <span class="co">// timer, 4 KiB</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (Addr[<span class="dv">31</span>:<span class="dv">12</span>] == <span class="bn">20'h20002</span>) SlaveSel[<span class="dv">4</span>] = <span class="bn">1'b1</span>;  <span class="co">// GPIO, 4 KiB</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> DecErr = ~|SlaveSel;</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Read the waveform first (<a href="#fig-decoder-wave" class="quarto-xref">Figure&nbsp;<span>5.12</span></a>). Five addresses arrive one after another, two columns each. The first, <code>0x0000_0040</code>, lies in the instruction-memory region, so <code>SlaveSel[0]</code> goes high. The next addresses hit data memory, the UART and the timer in turn, and each raises exactly one select. The last, <code>0x3000_0000</code>, matches no region: every select stays low, so <code>DecErr</code> rises. Only one select is ever high, because the regions do not overlap.</p>
+<p>Now the code. The first statement in the block is the important one: <code>SlaveSel = '0</code> assigns the default, <em>every bit low</em>, before anything else. Each <code>if</code> then overrides one bit. Because every bit of <code>SlaveSel</code> has a value on every path, whatever the address, the block cannot build a latch, and none of the <code>if</code>s needs an <code>else</code>. This <strong>default first, then override</strong> pattern is the safest way to write <code>always_comb</code>, and you will see it throughout HIPV. The last line uses the reduction operator from the previous chapter: <code>~|SlaveSel</code> is true when no select bit is set.</p>
+<p>(The real <code>obi_decoder</code> in the HIPV repository is the same block, with the base addresses and sizes taken from a shared package, so that adding a slave changes one file.)</p>
+</section>
+<section id="avoiding-latches" class="level2" data-number="5.13">
+<h2 data-number="5.13" class="anchored" data-anchor-id="avoiding-latches"><span class="header-section-number">5.13</span> Avoiding latches</h2>
+<p>The decoder showed the right way. Here is the wrong way:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (sel) y = in1;</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>When <code>sel</code> is 0, no branch assigns <code>y</code>. In a spreadsheet an unhandled case would show a blank cell, but in hardware an output cannot go blank. If no branch assigns it, the only way to keep it at <em>some</em> value is to remember the previous one, so the tool builds a <strong>latch</strong>, the element from earlier in this chapter (<a href="#fig-latch-rtl" class="quarto-xref">Figure&nbsp;<span>5.13</span></a>). It adds a storage element you did not intend, it complicates timing analysis, and it is the most common bug in <code>always_comb</code>. Tools warn about it, which is the reason to use <code>always_comb</code> instead of the old <code>always @(*)</code>.</p>
+<div id="fig-latch-rtl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-latch-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/latch_bug.svg" class="img-fluid figure-img" style="width:70.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-latch-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.13: What synthesis builds for an incomplete <code>if</code>: a latch whose enable is <code>sel</code>, so <code>y</code> holds its old value whenever <code>sel</code> is 0.
+</figcaption>
+</figure>
+</div>
+<p>There are three ways to follow the rule. Give every output a <strong>default</strong> at the top of the block, as the decoder does. Or write an <code>else</code> on every <code>if</code>. Or give every <code>case</code> a <code>default</code> branch, as in <code>mux3</code>. Sequential blocks are different: inside <code>always_ff</code>, a missing assignment simply means “keep the value”, which is what a flip-flop does anyway.</p>
+</section>
+<section id="blocking-vs.-non-blocking-assignment" class="level2" data-number="5.14">
+<h2 data-number="5.14" class="anchored" data-anchor-id="blocking-vs.-non-blocking-assignment"><span class="header-section-number">5.14</span> Blocking vs.&nbsp;non-blocking assignment</h2>
+<p>We have used two assignment operators in an <code>always</code> block, and the pairing has been the same every time: <code>=</code> in <code>always_comb</code>, and <code>&lt;=</code> in <code>always_ff</code>. Now we can see why.</p>
+<p>A <strong>blocking</strong> assignment, <code>=</code>, takes effect immediately: the next statement in the block sees the new value. A <strong>non-blocking</strong> assignment, <code>&lt;=</code>, only <em>schedules</em> the update, which lands at the end of the current time step: the next statement still sees the old value. The difference only shows when there is <em>interdependency</em>, when a later statement reads something an earlier one wrote.</p>
+<section id="in-combinational-logic" class="level3" data-number="5.14.1">
+<h3 data-number="5.14.1" class="anchored" data-anchor-id="in-combinational-logic"><span class="header-section-number">5.14.1</span> In combinational logic</h3>
+<p>Take three inputs and the function <code>s = c ^ (a ^ b)</code>, written with an intermediate signal, once with each operator:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> xor_gate (</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> a, b, c,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> s1, s2</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> n1, n2;</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// case 1: blocking</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    n1 = a ^ b;</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    s1 = c ^ n1;</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">// case 2: non-blocking</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    n2 &lt;= a ^ b;</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    s2 &lt;= c ^ n2;</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>(Some tools refuse non-blocking assignments inside <code>always_comb</code> altogether; the example is written this way only to show what would happen.)</p>
+<div id="fig-blocking-comb" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-blocking-comb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/blocking_comb.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-blocking-comb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.14: The two XOR descriptions: <code>s1</code> always matches <code>c ^ n1</code>, while <code>s2</code> is computed from the previous value of <code>n2</code>.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-blocking-comb" class="quarto-xref">Figure&nbsp;<span>5.14</span></a> shows the result for the same inputs. In case 1, <code>n1</code> updates immediately, and the next line uses the new <code>n1</code>, so <code>s1</code> is always <code>c ^ n1</code>. In case 2, <code>n2</code> is only <em>scheduled</em> to change, so <code>s2 &lt;= c ^ n2</code> reads the <strong>previous</strong> <code>n2</code>. Compare the last two rows: <code>n</code> changes at the start of columns 2 and 6, and at exactly those two points <code>s2</code> differs from <code>s1</code>, because it still uses the old <code>n</code>. Case 1 models a combinational circuit; case 2 does not, because its output depends on a stale value. Synthesis tools often ignore the distinction in combinational blocks and build the right gates anyway, which makes it worse: the simulation shows one behavior and the hardware has another, a <em>simulation/synthesis mismatch</em>, the kind of bug that is hardest to find.</p>
+</section>
+<section id="in-sequential-logic" class="level3" data-number="5.14.2">
+<h3 data-number="5.14.2" class="anchored" data-anchor-id="in-sequential-logic"><span class="header-section-number">5.14.2</span> In sequential logic</h3>
+<p>The same experiment on two registers in a chain:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> chain (</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> clk, a,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> f1, f2</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> b1, b2;</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// case 1: blocking</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    b1 = a;</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    f1 = b1;</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">// case 2: non-blocking</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk) <span class="kw">begin</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    b2 &lt;= a;</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    f2 &lt;= b2;</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-blocking-seq" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-blocking-seq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/blocking_seq.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-blocking-seq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.15: Two registers in a chain: with blocking assignment <code>f1</code> follows <code>b1</code> in the same cycle, with non-blocking assignment <code>f2</code> lags by one more clock.
+</figcaption>
+</figure>
+</div>
+<p>In <a href="#fig-blocking-seq" class="quarto-xref">Figure&nbsp;<span>5.15</span></a> the clock is drawn with two columns per period, so it rises at the start of columns 1, 3, 5 and 7. The input <code>a</code> is high during columns 2 and 3, so the edge at the start of column 3 is the one that sees it. In case 1, <code>b1 = a</code> happens first, and <code>f1 = b1</code> then reads the <em>new</em> <code>b1</code>, so <code>f1</code> gets the value of <code>a</code> in the same cycle: both change at the edge starting column 3, and the second register adds nothing. In case 2, <code>b2 &lt;= a</code> and <code>f2 &lt;= b2</code> are both evaluated before either update lands, so <code>f2</code> takes the value <code>b2</code> had <em>before</em> this edge. <code>b2</code> rises at column 3, but <code>f2</code> only at the next edge, at column 5, and it falls one edge after <code>b2</code> does, at column 7. That is a two-stage chain, which is what two registers in a row should be. This is the behavior every pipeline relies on, and it is why the swap <code>a &lt;= b; b &lt;= a;</code> works with <code>&lt;=</code> and silently fails with <code>=</code>.</p>
+</section>
+<section id="the-rule" class="level3" data-number="5.14.3">
+<h3 data-number="5.14.3" class="anchored" data-anchor-id="the-rule"><span class="header-section-number">5.14.3</span> The rule</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>Blocking <code>=</code></th>
+<th>Non-blocking <code>&lt;=</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Update takes effect</td>
+<td>immediately</td>
+<td>at the end of the time step</td>
+</tr>
+<tr class="even">
+<td>The next statement reads</td>
+<td>the new value</td>
+<td>the old value</td>
+</tr>
+<tr class="odd">
+<td>Use in</td>
+<td><code>always_comb</code></td>
+<td><code>always_ff</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>=</code> for combinational logic, <code>&lt;=</code> for clocked logic, every time. Do not mix the two in one block.</p>
+</section>
+</section>
+<section id="structural-design-module-instances" class="level2" data-number="5.15">
+<h2 data-number="5.15" class="anchored" data-anchor-id="structural-design-module-instances"><span class="header-section-number">5.15</span> Structural design: module instances</h2>
+<p>Behavioral modeling describes what a block <em>does</em>. <strong>Structural</strong> modeling describes a block by how it is <em>composed</em> of simpler modules. Each copy of a smaller module is an <strong>instance</strong>, and it has a unique name. Here is the smallest useful example, a 4:1 multiplexer assembled from three copies of a 2:1 multiplexer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux2to1 (</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> a, b, sel,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> y</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> y = sel ? b : a;</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux4to1_struct (</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>       y</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> y0, y1;                 <span class="co">// wires between the instances</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_low   <span class="dt">(.a</span>(d[<span class="dv">0</span>]),<span class="dt"> .b</span>(d[<span class="dv">1</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y0));</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_high  <span class="dt">(.a</span>(d[<span class="dv">2</span>]),<span class="dt"> .b</span>(d[<span class="dv">3</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y1));</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_final <span class="dt">(.a</span>(y0),   .b(y1),   .sel(sel[<span class="dv">1</span>]),<span class="dt"> .y</span>(y));</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An instantiation has three parts. First comes the <strong>module name</strong> (<code>mux2to1</code>), then the <strong>instance name</strong> you choose (<code>mux_final</code>), then in parentheses the <strong>port connections</strong>. The notation <code>.a(y0)</code> reads “the module’s port <code>a</code> is connected to my signal <code>y0</code>”. These connections by name make the code easy to read and safe to reorder. There is also a positional form, <code>mux2to1 mux_final (y0, y1, sel[1], y);</code>, which is shorter and fails silently if someone later reorders the ports, so we avoid it. <a href="#fig-mux4-struct" class="quarto-xref">Figure&nbsp;<span>5.16</span></a> shows the result: the tool leaves the three instances as boxes, exactly as the hierarchy appears in the code.</p>
+<div id="fig-mux4-struct" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mux4-struct-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/mux4to1_struct.svg" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mux4-struct-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.16: The structurally built <code>mux4to1_struct</code>: two instances select within a pair, and a third selects between the two results.
+</figcaption>
+</figure>
+</div>
+<section id="parameters" class="level3" data-number="5.15.1">
+<h3 data-number="5.15.1" class="anchored" data-anchor-id="parameters"><span class="header-section-number">5.15.1</span> Parameters</h3>
+<p>A <strong>parameter</strong> makes a module configurable, which is how one description serves every width. We have been using this all along: <code>flopenr</code> declares <code>parameter WIDTH = 8</code>, and each instance picks its own. The override goes between the module name and the instance name, after a <code>#</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>flopenr #(<span class="dv">32</span>) pcreg (...);          <span class="co">// a 32-bit instance, by position</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>flopenr #<span class="dt">(.WIDTH</span>(<span class="dv">32</span>)) pcreg (...);  <span class="co">// the same, by name</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The by-name form is safer when a module has several parameters. A <code>localparam</code> is a constant inside a module that, unlike a <code>parameter</code>, cannot be overridden from outside, which makes it the right choice for derived constants.</p>
+</section>
+<section id="a-real-example-the-program-counter-of-hipv" class="level3" data-number="5.15.2">
+<h3 data-number="5.15.2" class="anchored" data-anchor-id="a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.15.2</span> A real example: the program counter of HIPV</h3>
+<p>HIPV’s fetch unit is almost entirely structural. Its program-counter loop is built from three of the leaf cells we wrote above. The code is the actual instantiation, reduced to this loop:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> pc_unit (</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCEnF,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCSrcE,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCTargetE,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCF</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCNextF, PCPlus4F;</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next PC selection: sequential or redirect from Execute</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) pcmux (</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>      .D0(PCPlus4F),<span class="dt"> .D1</span>(PCTargetE),<span class="dt"> .S</span>(PCSrcE),<span class="dt"> .Y</span>(PCNextF));</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// PC register</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg (</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>      .clk(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(PCEnF),<span class="dt"> .D</span>(PCNextF),<span class="dt"> .Q</span>(PCF));</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sequential PC</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  adder #(<span class="dv">32</span>) pcadd4 (</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>      .A(PCF),<span class="dt"> .B</span>(<span class="bn">32'd4</span>),<span class="dt"> .Y</span>(PCPlus4F));</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Everything inside the parentheses is a wire name, and nothing here describes any behavior: it only says which cell goes where. The register holds the PC, the adder computes <code>PC + 4</code>, and the multiplexer chooses between that and a branch target (<a href="#fig-pc-unit" class="quarto-xref">Figure&nbsp;<span>5.17</span></a>). Note how the signals form a loop through the register, which is the only place where the loop is broken by a clock.</p>
+<div id="fig-pc-unit" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pc-unit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/pc_unit.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pc-unit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.17: The PC loop of HIPV, drawn by Yosys with the three cells expanded into their hardware: the <code>$sdffe</code> register, the <code>+4</code> adder, and the next-PC multiplexer.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="testbenches" class="level2" data-number="5.16">
+<h2 data-number="5.16" class="anchored" data-anchor-id="testbenches"><span class="header-section-number">5.16</span> Testbenches</h2>
+<p>A <strong>testbench</strong> is a module that tests another module, the <em>device under test</em> (DUT). It applies inputs to the DUT and, ideally, checks that the outputs are right. Its inputs and the expected outputs are the <em>test vectors</em>. A testbench has no ports of its own: it sits at the top of the simulation, so everything it needs is declared inside as plain <code>logic</code> signals and wired to the DUT by name, like any other instance.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_mux4to1;</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d;</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel;</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       y;</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  mux4to1_struct dut <span class="dt">(.d</span>(d),<span class="dt"> .sel</span>(sel),<span class="dt"> .y</span>(y));</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    d = <span class="bn">4'b1010</span>;</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">4</span>; i++) <span class="kw">begin</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      sel = i[<span class="dv">1</span>:<span class="dv">0</span>];</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>      <span class="bn">#10</span>;</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">$display</span>(<span class="st">"d=%b sel=%b y=%b"</span>, d, sel, y);</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> (y !== d[sel]) <span class="kw">$error</span>(<span class="st">"sel=%b: expected %b, got %b"</span>, sel, d[sel], y);</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Everything happens in the <code>initial</code> block, which starts at time zero and runs once. It holds <code>d</code> fixed and sweeps <code>sel</code> through all four values. After each change it waits <code>#10</code> time units, <code>$display</code> prints the inputs and the output, and the <code>if</code> checks <code>y</code> against the bit of <code>d</code> that <code>sel</code> selects. The <code>#10</code> delay is not needed by the circuit, since a combinational output settles almost instantly. It gives each test case its own slice of simulation time, so the printed lines and the waveform stay readable. The comparison uses <code>!==</code>, which also catches an <code>X</code> on the output where <code>!=</code> would stay silent. <code>$finish</code> ends the simulation.</p>
+<p>These statements (<code>initial</code>, <code>#10</code>, <code>$display</code>, <code>$finish</code>) exist only in simulation. A synthesizer has no hardware for “wait 10 time units”, which is the line between the code you simulate and the code you synthesize.</p>
+</section>
+<section id="testbench-for-a-sequential-design" class="level2" data-number="5.17">
+<h2 data-number="5.17" class="anchored" data-anchor-id="testbench-for-a-sequential-design"><span class="header-section-number">5.17</span> Testbench for a sequential design</h2>
+<p>A registered design only changes on a clock edge, so the testbench has to supply that clock; nothing else in the simulation will. Here it is for the counter of this chapter:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_counter;</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       clk = <span class="dv">0</span>;</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       reset = <span class="dv">1</span>;</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count;</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  counter4 dut <span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .count</span>(count));</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always</span> <span class="bn">#5</span> clk = ~clk;              <span class="co">// clock generator: period of 10 units</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#12</span> reset = <span class="dv">0</span>;                   <span class="co">// release reset between clock edges</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#100</span>;</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$display</span>(<span class="st">"count=%0d"</span>, count);</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The separate <code>always #5 clk = ~clk;</code> has no sensitivity list and no guard, so it keeps re-executing for the whole simulation and flips <code>clk</code> every 5 time units. That gives a free-running clock with a period of 10. It runs concurrently with the <code>initial</code> block below it: every <code>initial</code> and <code>always</code> block in a module starts at time zero and proceeds independently, which is why the clock generator lives in its own block.</p>
+<p>The stimulus holds <code>reset</code> high for the first clock edge (at time 5), then releases it at time 12, between edges, so that no input changes exactly when the clock rises, the same convention as in our waveforms. After the remaining ten rising edges the counter holds 10, which <code>$display</code> prints. The key difference from the combinational testbench is the waiting. A combinational output is valid almost immediately after its inputs change, but a register updates only once per clock edge, so a sequential testbench must always budget enough simulated time, or wait for a specific number of <code>@(posedge clk)</code> events, before checking the outputs.</p>
+<p><code>$finish</code> matters even more here. The clock generator never terminates on its own, so without an explicit <code>$finish</code> the simulation would run forever.</p>
+</section>
+<section id="running-a-simulation" class="level2" data-number="5.18">
+<h2 data-number="5.18" class="anchored" data-anchor-id="running-a-simulation"><span class="header-section-number">5.18</span> Running a simulation</h2>
+<p>Any SystemVerilog simulator can run these testbenches. With the open-source Icarus Verilog, you compile the design together with its testbench and run the result:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">iverilog</span> <span class="at">-g2012</span> <span class="at">-o</span> sim_counter counter4.sv tb_counter.sv</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">vvp</span> sim_counter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>-g2012</code> option selects the SystemVerilog language level. To look at waveforms instead of printed lines, add two statements at the start of the <code>initial</code> block, and open the resulting file in GTKWave:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpfile</span>(<span class="st">"tb_counter.vcd"</span>);</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpvars</span>(<span class="dv">0</span>, tb_counter);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The waveforms you get are the same kind as the ones drawn in this chapter, and reading them is the same skill. Checking results by eye does not scale beyond a handful of signals, though. A testbench that compares outputs against expected values, as ours does with <code>$error</code>, can be run again after every change and report a clear pass or fail. Later in the course we move this idea to a Python framework, cocotb, which makes writing such checks much easier.</p>
+</section>
+<section id="from-design-to-the-pipeline" class="level2" data-number="5.19">
+<h2 data-number="5.19" class="anchored" data-anchor-id="from-design-to-the-pipeline"><span class="header-section-number">5.19</span> From design to the pipeline</h2>
+<p>Everything introduced here is the working vocabulary of the rest of the course. <code>always_ff</code> with non-blocking assignment and a synchronous reset is how every pipeline register is built, through <code>flopenr</code> and its siblings. <code>always_comb</code> with a default at the top is how the ALU and the decoders avoid latch inference. Instances and parameters are how those cells are assembled into stages, and stages into a processor. The pipeline chapters introduce no new syntax: they put these constructs to work on a larger example.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/04-sv-basics.html" class="pagination-link" aria-label="SystemVerilog Basics">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/06-pipeline-structure.html" class="pagination-link" aria-label="Five-Stage Pipeline — Structure">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

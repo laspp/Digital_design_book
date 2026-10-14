@@ -182,171 +182,491 @@
   {
     "objectID": "chapters/04-sv-basics.html",
     "href": "chapters/04-sv-basics.html",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
+    "title": "4  SystemVerilog Basics",
     "section": "",
     "text": "SystemVerilog basics",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
     "objectID": "chapters/04-sv-basics.html#goal-for-this-week",
     "href": "chapters/04-sv-basics.html#goal-for-this-week",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
+    "title": "4  SystemVerilog Basics",
     "section": "4.1 Goal for this week",
-    "text": "4.1 Goal for this week\n\nLearn to read SystemVerilog by knowing exactly where the C-like syntax stops being a reliable guide\nSeparate combinational logic (always_comb) from sequential logic (always_ff), and the assignment operator each one requires\nRecognize latch inference and reset styles on sight, before they show up as bugs in your own pipeline stages",
+    "text": "4.1 Goal for this week\n\nExplain what a hardware description language is, and why we describe digital systems in text instead of drawing every gate\nPlace SystemVerilog in the Verilog family, and know which subset of it this course uses\nRead and write a module: ports, directions, internal signals\nTell nets from variables, and know the four values a signal can hold\nWrite numeric constants with an explicit size and base\nDescribe combinational logic with assign and the SystemVerilog operators, and avoid the classic mistakes: & vs. &&, and two drivers on one net",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#it-looks-like-c.-it-isnt.",
-    "href": "chapters/04-sv-basics.html#it-looks-like-c.-it-isnt.",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.2 It looks like C. It isn’t.",
-    "text": "4.2 It looks like C. It isn’t.\nThe snippet above is syntactically close enough to C that it is tempting to read it top to bottom, one statement after another. That reading is wrong, and it is the single most important thing to unlearn this week. A module is not a function that runs once and returns — it is a piece of hardware that exists for as long as the circuit is powered. y1 and y2 are not computed “first” and “second”; they are two separate wires, each continuously driven by its own gate, both existing simultaneously and forever. There is no call stack, no return value, and no “after” — only signals that settle to a value whenever their inputs change.\nEvery construct in this chapter is a variation on this same fact: SV syntax borrows C’s punctuation, but describes structure and behavior in time, not a sequence of steps.",
+    "objectID": "chapters/04-sv-basics.html#why-describe-hardware-in-text",
+    "href": "chapters/04-sv-basics.html#why-describe-hardware-in-text",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.2 Why describe hardware in text",
+    "text": "4.2 Why describe hardware in text\nThe previous chapters described digital circuits bottom-up: transistors, gates, and the standard and programmable devices built from them, up to the FPGA. Nobody designs a processor by placing those pieces one at a time. A modern SoC has millions of gates, and a schematic of that size is neither writable nor reviewable. Instead we describe the system in text, in a hardware description language (HDL), and let tools do the placing.\nThe key idea is abstraction: an HDL lets us specify how a system operates without getting consumed prematurely by how it is implemented. The same description can be used in two very different ways. A simulator runs it as a model, so we can check behavior long before any chip exists. A synthesizer turns it into a netlist of real gates, or into the LUTs and flip-flops of the FPGA from the previous chapter. The rest of this course is about writing descriptions that are good for both.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#signals-vs.-variables",
-    "href": "chapters/04-sv-basics.html#signals-vs.-variables",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.3 Signals vs. variables",
-    "text": "4.3 Signals vs. variables\nA CS variable holds a value because you assigned it one; nothing drives it otherwise. A logic signal in SV is closer to a wire with memory — it holds whatever it was last driven to, by whichever assign or always block is responsible for it, and it is an error (caught by simulation, not always by synthesis) for more than one such block to drive it.\ntypedef enum logic [1:0] {IDLE, RUN, DONE} state_t;\n\ntypedef struct packed {\n  logic       valid;\n  logic [7:0] data;\n} packet_t;\ntypedef enum gives a set of named constants a single type, instead of scattering magic numbers through the code. typedef struct packed bundles related signals into one name that can travel through a module’s ports or a pipeline register as a single unit — you will see exactly this pattern in pipeline_pkg.sv next chapter, where control signals are grouped this way instead of being passed as individual wires.",
+    "objectID": "chapters/04-sv-basics.html#what-an-hdl-is-used-for",
+    "href": "chapters/04-sv-basics.html#what-an-hdl-is-used-for",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.3 What an HDL is used for",
+    "text": "4.3 What an HDL is used for\nA single HDL covers a wide range of jobs. At the top, we can write a high-level behavioral model that says what a block computes, with no hardware structure at all. One level down is register-transfer level (RTL): the design is a set of registers, and the combinational logic that moves data between them on each clock edge. This is the level at which this course, and almost all digital design, is done. Below it, the output of synthesis is a gate-level netlist, which can itself be written in the same language, and which can be annotated with timing information for timing simulation. Finally, the same language is used to write testbenches that verify the design.\nNot everything an HDL can express can be turned into hardware. A simulator will happily run a testbench that waits 10 ns and prints a message, but a synthesizer has no gate for “wait 10 ns”. Only a subset of the language is synthesizable, and writing in that subset is the first skill of this course.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#combinational-logic-always_comb",
-    "href": "chapters/04-sv-basics.html#combinational-logic-always_comb",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.4 Combinational logic: always_comb",
-    "text": "4.4 Combinational logic: always_comb\nAn always_comb block re-evaluates itself immediately whenever any signal it reads changes — closer to a spreadsheet formula that recalculates on every input edit than to a function you call. Assignment inside it uses = (blocking), read as “this is what the output equals right now,” not “do this step, then the next.”\nThe example above is an incomplete 2-to-1-style decoder: two of the four sel cases are unhandled. In a spreadsheet, an unhandled case would just show a blank cell. In hardware, y cannot go blank — if no branch assigns it, the only way to keep y at some value is to remember the previous one. Synthesis does exactly that: it infers a latch. This is almost never what you want in a synchronous design, and it is the most common bugr always_comb produces. The fix is always the same: every signal assigned in an always_comb block must be assigned on every path through it — in practice, an else or a default branch on every if/case.",
+    "objectID": "chapters/04-sv-basics.html#from-verilog-to-systemverilog",
+    "href": "chapters/04-sv-basics.html#from-verilog-to-systemverilog",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.4 From Verilog to SystemVerilog",
+    "text": "4.4 From Verilog to SystemVerilog\nVerilog was introduced in 1984 with a dual purpose: to model digital systems, and to describe the testbenches that check those models. As we saw, synthesis supports only a subset of what the language can express. Verilog was standardized several times, and the last Verilog standard is the one that SystemVerilog builds on:\n\n\n\n\n\n\n\n\nStandard\nYear\nNickname\n\n\n\n\nIEEE 1364-1995\n1995\nVerilog-1995\n\n\nIEEE 1364-2001\n2001\nVerilog-2001\n\n\nIEEE 1364.1-2002\n2002\nVerilog RTL Synthesis (patch for the synthesizable subset)\n\n\nIEEE 1364-2005\n2005\nVerilog-2005, the last Verilog standard\n\n\nIEEE 1800-2005\n2005\nSystemVerilog-2005, extensions of Verilog-2005\n\n\nIEEE 1800-2009, -2012, -2017, -2023\n\nSystemVerilog, each extending the previous one\n\n\n\nToo many new features had accumulated to keep calling the result Verilog, so a new language was defined. SystemVerilog extends Verilog in two directions: it improves hardware modeling (for example logic, always_comb, always_ff, enumerations and packed structures, all of which we use), and it adds verification features such as assertions, object-oriented programming, and constrained random stimulus.\nEach SystemVerilog standard is an extension of the previous one, so backward compatibility is preserved. A synthesizer for SystemVerilog-2005 understands plain Verilog, but a tool that only supports Verilog-2001 will report an error on the first SystemVerilog construct it meets.\nWe will cover only a small, synthesizable part of the language. There are two reasons. The language is far too large for one course. And once you can prototype with the basic constructs, new ones are easy to pick up when you need them.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#sequential-logic-always_ff",
-    "href": "chapters/04-sv-basics.html#sequential-logic-always_ff",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.5 Sequential logic: always_ff",
-    "text": "4.5 Sequential logic: always_ff\nalways_ff describes a block that updates only at a clock edge — a register, not a formula. It uses &lt;= (non-blocking assignment), which reads as “at this clock edge, schedule this update,” rather than =’s “this is the value right now.” The distinction matters the moment two always_ff blocks depend on each other, which is exactly the situation every pipeline register is in.\nConsider two registers meant to swap values on the same clock edge:\nalways_ff @(posedge clk) begin\n  a &lt;= b;\n  b &lt;= a;\nend\nWith non-blocking assignment, both right-hand sides are read using each register’s value before this clock edge, and both updates take effect together — the swap works, matching what “on every clock edge, in parallel” should mean. Replace &lt;= with = and the second line reads the value the first line just wrote, collapsing two parallel updates into a sequential one — the swap silently fails, and nothing about the syntax warns you. This is why the pairing on the previous slide has no exceptions: = in combinational logic, &lt;= in clocked logic, every time.",
+    "objectID": "chapters/04-sv-basics.html#anatomy-of-a-module",
+    "href": "chapters/04-sv-basics.html#anatomy-of-a-module",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.5 Anatomy of a module",
+    "text": "4.5 Anatomy of a module\nEvery piece of hardware in SystemVerilog lives inside a module. The keywords module and endmodule mark the beginning and the end of the description, and a module can instantiate other modules inside it, which is how hierarchical designs are built.\nmodule and_or (\n    input  logic a, b, c,\n    output logic y\n);\n  logic t;                 // internal signal\n  assign t = a & b;\n  assign y = t | c;\nendmodule\nThe module name is followed by a port list in parentheses. Each port has a direction, a type, and a name. Several ports of the same direction and type can share one declaration, as a, b, c do above. After the semicolon comes the module body: declarations of internal signals such as t, and the statements that describe behavior, here two continuous assignments. Figure 4.1 shows what a synthesis tool builds from this module.\n\n\n\n\n\n\n\nDirection\nMeaning\n\n\n\n\ninput\nData flows into the module through this port\n\n\noutput\nData flows out of the module through this port\n\n\ninout\nBidirectional: data can flow both ways (used for tri-state pins)\n\n\n\n\n\n\n\n\n\nFigure 4.1: The and_or module, drawn by Yosys directly from the source above.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#reset-styles",
-    "href": "chapters/04-sv-basics.html#reset-styles",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.6 Reset styles",
-    "text": "4.6 Reset styles\nBoth styles produce a register that clears q to zero on reset; they differ in when the clear can happen. A synchronous reset only takes effect at a clock edge — rst is just another input to the same logic that decides the next value of q. An asynchronous reset takes effect the moment rst asserts, independent of the clock, which is why it appears in the sensitivity list alongside posedge clk.\nThe DFF you will build next chapter as a pipeline register uses exactly this pattern — it is worth being able to tell the two styles apart on sight, since the choice affects how quickly a stalled or flushed pipeline stage can be forced back to a known state.",
+    "objectID": "chapters/04-sv-basics.html#values-0-1-x-and-z",
+    "href": "chapters/04-sv-basics.html#values-0-1-x-and-z",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.6 Values: 0, 1, X and Z",
+    "text": "4.6 Values: 0, 1, X and Z\nA wire in a real circuit is at a high or a low voltage, so you might expect two values, 0 and 1. SystemVerilog uses four, because the simulator also has to represent situations that a real circuit can get into:\n\n\n\n\n\n\n\nValue\nMeaning\n\n\n\n\n0\nlogic low, false\n\n\n1\nlogic high, true\n\n\nX\nunknown: an uninitialized register, or a net that two sources drive to different values\n\n\nZ\nhigh impedance: nothing is driving the signal (an unconnected input, or a tri-state buffer that is turned off)\n\n\n\nYou will meet X in simulation when something is wrong, and it is one of the most useful debugging signals you have: it spreads through logic that depends on it, so an X on an output points back to an uninitialized or double-driven source. Z appears with tri-state buffers, like the I/O block of the FPGA chapter. A synthesizer never creates an X or a Z; they exist only in the simulation model.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/04-sv-basics.html#from-syntax-to-the-pipeline",
-    "href": "chapters/04-sv-basics.html#from-syntax-to-the-pipeline",
-    "title": "4  SystemVerilog — Syntax and Synthesizable Coding Style",
-    "section": "4.7 From syntax to the pipeline",
-    "text": "4.7 From syntax to the pipeline\nEvery construct introduced in this chapter reappears immediately in the next one. typedef enum and typedef struct packed are how pipeline_pkg.sv groups control signals; always_ff with the non-blocking assignment and reset style you just saw is how if_id_reg and the other pipeline registers are built; always_comb with the blocking assignment and complete-branch discipline is how the ALU and decoder avoid the latch-inference trap. Nothing in the pipeline chapter introduces new syntax — it only puts this chapter’s syntax to work on a larger example.",
+    "objectID": "chapters/04-sv-basics.html#data-types-nets-and-variables",
+    "href": "chapters/04-sv-basics.html#data-types-nets-and-variables",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.7 Data types: nets and variables",
+    "text": "4.7 Data types: nets and variables\nSystemVerilog has two kinds of signals, and the difference between them is what the whole language is built around.\nA net, declared with wire, models a physical connection between things. It stores nothing: its value at any moment is whatever its drivers are producing right now. If several things drive it, the net resolves their values, which is how a tri-state bus works. A variable is a signal that remembers. It holds the last value assigned to it, and keeps it until the next assignment.\n\n\n\n\n\n\n\n\n\nNet (wire)\nVariable (logic, int, …)\n\n\n\n\nModels\na connection\na stored value\n\n\nHolds a value\nno, resolved from its drivers\nyes, the last one assigned\n\n\nDriven by\nassign, module outputs\nassign (once), or procedural blocks\n\n\nMultiple drivers\nallowed, resolved\nan error\n\n\n\nIn plain Verilog you had to choose between wire and reg depending on how you assigned the signal, and reg was widely mistaken for “a register” when it is nothing of the kind. SystemVerilog fixes this with logic: a four-state data type that can be driven by a continuous assignment, by a procedural block, or by a module output. Its one rule is that it may have only one driver, and the tools check it. For a signal that legitimately has several drivers, such as a tri-state bus, use wire.\nbit is the two-state counterpart of logic: it can only hold 0 and 1, so it can hide an unknown value in simulation by silently turning it into a 0. For that reason this course uses logic for signals.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog — Syntax and Synthesizable Coding Style</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
   },
   {
-    "objectID": "chapters/05-pipeline-structure.html",
-    "href": "chapters/05-pipeline-structure.html",
-    "title": "5  Five-Stage Pipeline — Structure",
+    "objectID": "chapters/04-sv-basics.html#vectors-and-integer-types",
+    "href": "chapters/04-sv-basics.html#vectors-and-integer-types",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.8 Vectors and integer types",
+    "text": "4.8 Vectors and integer types\nA signal declared with a range in square brackets is a vector: logic [7:0] data is an 8-bit signal whose most significant bit is data[7]. You can select a single bit, data[3], or a contiguous slice, data[7:4]. Vectors are unsigned unless declared otherwise.\nThe types we use most are summarized below. The integer types come from C, and are mainly useful for loop counters and constants. Signals that become wires and registers in hardware should be logic vectors, which make the width explicit.\n\n\n\n\n\n\n\n\n\nType\nBits\nSigned\nStates\n\n\n\n\nlogic [n-1:0]\nn\nno\n4 (0, 1, X, Z)\n\n\nbit [n-1:0]\nn\nno\n2 (0, 1)\n\n\nbyte\n8\nyes\n2\n\n\nshortint\n16\nyes\n2\n\n\nint\n32\nyes\n2\n\n\nlongint\n64\nyes\n2\n\n\ninteger\n32\nyes\n4 (legacy from Verilog)\n\n\nreal\n64, floating point\nn/a\nsimulation only: not synthesizable",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#writing-constants",
+    "href": "chapters/04-sv-basics.html#writing-constants",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.9 Writing constants",
+    "text": "4.9 Writing constants\nA SystemVerilog constant carries its own width, written as &lt;size&gt;'&lt;base&gt;&lt;value&gt;, where &lt;size&gt; is the number of bits and &lt;base&gt; is b, o, d or h for binary, octal, decimal and hexadecimal. The four constants below all have the value ten, but different widths:\nlogic [3:0] binary_num  = 4'b1010;  // 4-bit binary 1010\nlogic [5:0] octal_num   = 6'o12;    // 6-bit octal 12\nlogic [7:0] decimal_num = 8'd10;    // 8-bit decimal 10\nlogic [7:0] hex_num     = 8'hA;     // 8-bit hexadecimal A\nUnderscores are ignored and are there for readability, so 8'b1010_1010 is easier to read than 8'b10101010. The characters x and z are allowed in a constant: 4'b10xz.\nAlways write the size. A bare number such as 10 is a 32-bit signed decimal, and silently mixing it with narrower signals is a common source of width mismatches. If the value is bigger than the stated size, the extra upper bits are discarded: 4'd20 is 4'b0100. To fill every bit of a signal of any width with the same value, use the unsized forms '0 and '1.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#continuous-assignment",
+    "href": "chapters/04-sv-basics.html#continuous-assignment",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.10 Continuous assignment",
+    "text": "4.10 Continuous assignment\nThe assign keyword connects a value to a signal continuously:\nassign out = a & b;   // out always equals a AND b\nWhenever a or b changes, out changes with it. A continuous assignment is not a step in a program. It is a gate that exists as long as the circuit is powered, and it models combinational logic.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#not-like-assignment-in-c",
+    "href": "chapters/04-sv-basics.html#not-like-assignment-in-c",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.11 Not like assignment in C",
+    "text": "4.11 Not like assignment in C\nA programming language would read the next two lines top to bottom:\nassign b = a;\nassign c = b;\nFirst copy a into b, then copy b into c. In hardware both lines exist at the same time as two connections, and b is just the wire between them. A synthesis tool removes it and infers assign c = a. For the same reason, swapping the two lines changes nothing.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#two-drivers-on-one-net",
+    "href": "chapters/04-sv-basics.html#two-drivers-on-one-net",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.12 Two drivers on one net",
+    "text": "4.12 Two drivers on one net\nThe second example is the one that breaks C intuition completely:\nwire c;\nassign c = a;\nassign c = b;\nIn a programming language the second line would overwrite the first, and c would end up with the value of b. In hardware, both lines are always active, so the net c is driven by two sources at once. When a and b agree, nothing is wrong. When they differ, one source pulls the wire high while the other pulls it low, and the simulator reports an unknown value X (Figure 4.2). In a real circuit, this is a short circuit between two gate outputs.\n\n\n\n\n\n\nFigure 4.2: A net driven by a and by b: whenever they disagree, c is X.\n\n\n\nIf c were declared as logic, the tool would reject the second assignment at compile time, because a logic signal may have only one driver. That is the reason to prefer logic: it turns a silent X in simulation into an error you see immediately. This situation must be avoided in every design that is not a deliberate tri-state bus.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#operators-at-a-glance",
+    "href": "chapters/04-sv-basics.html#operators-at-a-glance",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.13 Operators at a glance",
+    "text": "4.13 Operators at a glance\nSystemVerilog has a rich set of operators, most of them familiar from C. The best way to keep them straight is to group them by what they return, because the most common mistakes come from expecting one width and getting another.\n\n\n\n\n\n\n\n\nFamily\nOperators\nResult\n\n\n\n\nArithmetic\n+ - * / %\na number, sized by the surrounding expression\n\n\nBitwise\n& \\| ^ ~\nsame width as the operands, computed bit by bit\n\n\nReduction\n& \\| ^ ~& ~\\| ~^\n1 bit\n\n\nLogical\n&& \\|\\| !\n1 bit (true or false)\n\n\nRelational\n== != &lt; &lt;= &gt; &gt;=\n1 bit\n\n\nShift\n&lt;&lt; &gt;&gt; &lt;&lt;&lt; &gt;&gt;&gt;\nwidth of the left operand\n\n\nConditional\n? :\nwidth of the chosen branch\n\n\nConcatenation, replication\n{a, b}, {n{a}}\nsum of the parts\n\n\n\nThe sections below take them in turn. Hardware cost matters here: each operator becomes real logic, so a + b is an adder and a * b is a multiplier, and a division by a non-constant is expensive enough that you should hesitate before writing it.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#bitwise-vs.-logical",
+    "href": "chapters/04-sv-basics.html#bitwise-vs.-logical",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.14 Bitwise vs. logical",
+    "text": "4.14 Bitwise vs. logical\nThe bitwise operators &, |, ^ and ~ work on each bit position separately, and the result is as wide as the operands. The logical operators &&, || and ! treat each whole operand as a single truth value (zero is false, anything else is true) and return one bit.\nlogic [3:0] a = 4'b1010;\nlogic [3:0] b = 4'b0101;\n\nassign x = a & b;     // 4'b0000: no bit position has a 1 in both\nassign y = a && b;    // 1'b1: a is non-zero, and so is b\nBoth lines look like “a AND b”, and they give opposite answers. For single-bit signals the two are interchangeable, which is why mixing them up usually goes unnoticed until the signals become vectors. Use & and | for data, and && and || only in conditions.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#reduction-relational-and-shift-operators",
+    "href": "chapters/04-sv-basics.html#reduction-relational-and-shift-operators",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.15 Reduction, relational and shift operators",
+    "text": "4.15 Reduction, relational and shift operators\nA reduction operator is a bitwise operator written with a single operand. It combines all the bits of a vector into one:\nlogic [5:0] a = 6'b101010;\nlogic c, d, e;\n\nassign c = &a;   // AND of all bits: 0\nassign d = |a;   // OR of all bits: 1\nassign e = ^a;   // XOR of all bits: 1, the parity of a\nReduction operators are a compact way to write a wide gate: &a is a six-input AND, and ^a is a parity tree.\nThe relational operators == != &lt; &lt;= &gt; &gt;= compare two values and return one bit. == gives X if either operand has an X or Z bit. There is also a case-equality operator, ===, that compares X and Z literally, but it exists only for simulation and is not synthesizable. The shift operators move the bits of a vector: &lt;&lt; and &gt;&gt; shift in zeros, and &lt;&lt;&lt; and &gt;&gt;&gt; are the arithmetic versions, which keep the sign bit of a signed operand when shifting right.\nOperator precedence mostly follows C, but you should not rely on remembering it. Add parentheses.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#conditional-operator-concatenation-and-replication",
+    "href": "chapters/04-sv-basics.html#conditional-operator-concatenation-and-replication",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.16 Conditional operator, concatenation and replication",
+    "text": "4.16 Conditional operator, concatenation and replication\nThe conditional operator cond ? x : y selects between two values. In hardware it is a multiplexer: both x and y exist, and cond chooses which one reaches the output. It can be nested, which is how we build larger multiplexers below.\nThe concatenation operator {} joins bits, vectors or expressions into one longer vector. The replication operator {n{...}} repeats a value n times:\nlogic [3:0] a = 4'b1010;\nlogic [3:0] b = 4'b0101;\nlogic [7:0] c;\nlogic [1:0] d = 2'b11;\nlogic [5:0] e;\n\nassign c = {a, b};     // 8'b10100101\nassign e = {3{d}};     // 6'b111111\nConcatenation is also valid on the left of an assignment, which we use below to capture the carry of an adder.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#example-4-bit-41-multiplexer",
+    "href": "chapters/04-sv-basics.html#example-4-bit-41-multiplexer",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.17 Example: 4-bit 4:1 multiplexer",
+    "text": "4.17 Example: 4-bit 4:1 multiplexer\nA 4-bit, 4-input multiplexer passes one of four 4-bit inputs to the output, chosen by a 2-bit select signal. Built from nested conditional operators:\nmodule mux4to1 (\n    input  logic [3:0] in0, in1, in2, in3,   // four 4-bit data inputs\n    input  logic [1:0] sel,                  // 2-bit select\n    output logic [3:0] out                   // 4-bit output\n);\n  assign out = (sel == 2'b00) ? in0 :\n               (sel == 2'b01) ? in1 :\n               (sel == 2'b10) ? in2 :\n                                in3;\nendmodule\nEach ?: tests one value of sel and, if it does not match, hands the decision to the next. The last branch, in3, is the default that is taken when no earlier condition is true, so there is always a value for out. The synthesized result is in Figure 4.3.\n\n\n\n\n\n\nFigure 4.3: The mux4to1 module as drawn by Yosys.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#example-4-bit-adder",
+    "href": "chapters/04-sv-basics.html#example-4-bit-adder",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.18 Example: 4-bit adder",
+    "text": "4.18 Example: 4-bit adder\nThe adder adds two 4-bit numbers and produces a 4-bit sum and a carry-out bit. We build it exactly as on paper: a half adder for the least significant bit, then a full adder for each following bit, with an internal carry wire c1, c2, c3 passed from one stage to the next.\nmodule adder4bit (\n    input  logic [3:0] a, b,\n    output logic [3:0] sum,\n    output logic       carry_out\n);\n  logic c1, c2, c3;                       // carries between stages\n\n  // Half adder: least significant bit\n  assign sum[0] = a[0] ^ b[0];\n  assign c1     = a[0] & b[0];\n\n  // Full adders\n  assign sum[1] = a[1] ^ b[1] ^ c1;\n  assign c2     = (a[1] & b[1]) | (c1 & (a[1] ^ b[1]));\n\n  assign sum[2] = a[2] ^ b[2] ^ c2;\n  assign c3     = (a[2] & b[2]) | (c2 & (a[2] ^ b[2]));\n\n  assign sum[3]    = a[3] ^ b[3] ^ c3;\n  assign carry_out = (a[3] & b[3]) | (c3 & (a[3] ^ b[3]));\nendmodule\nWriting out the gate equations is useful once, to see what an adder is. In practice we let the tool do it. The + operator, with a concatenation on the left to catch the carry, describes the same adder in one line:\nassign {carry_out, sum} = a + b;\nThe 5-bit result of a + b is split across the 1-bit carry_out and the 4-bit sum. Figure 4.4 shows the hand-built carry chain, and Figure 4.5 the single adder block that a synthesis tool is free to map onto the dedicated carry logic of an FPGA.\n\n\n\n\n\n\nFigure 4.4: The gate-level adder4bit: a half adder followed by three full adders, with the carry rippling from bit to bit.\n\n\n\n\n\n\n\n\n\nFigure 4.5: The same adder written with the + operator.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/04-sv-basics.html#from-modules-to-behavior",
+    "href": "chapters/04-sv-basics.html#from-modules-to-behavior",
+    "title": "4  SystemVerilog Basics",
+    "section": "4.19 From modules to behavior",
+    "text": "4.19 From modules to behavior\nEverything we wrote in this chapter is combinational: outputs depend only on the current inputs, and nothing remembers anything. That was enough to describe multiplexers and adders, but a processor also needs state. That calls for procedural blocks, which the next chapter introduces: always_comb for larger combinational descriptions, and always_ff for registers that update on a clock edge.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html",
+    "href": "chapters/05-sv-design.html",
+    "title": "5  Designing with SystemVerilog",
+    "section": "",
+    "text": "Designing with SystemVerilog",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#goal-for-this-week",
+    "href": "chapters/05-sv-design.html#goal-for-this-week",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.1 Goal for this week",
+    "text": "5.1 Goal for this week\n\nTell the two styles of hardware description apart: behavioral and structural\nDescribe sequential logic with always_ff: flip-flops, resets, registers with an enable, and counters\nKnow what a latch is, and write code that cannot produce one by accident\nDescribe combinational logic with always_comb: multiplexers and decoders\nExplain the difference between = and &lt;=, and why each block uses one of them\nAssemble a design from smaller modules, and test it with a testbench",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#two-styles-of-design",
+    "href": "chapters/05-sv-design.html#two-styles-of-design",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.2 Two styles of design",
+    "text": "5.2 Two styles of design\nThere are two ways to describe a piece of hardware in SystemVerilog, and a real design uses both.\nIn behavioral design we describe what a block does: its outputs as a function of its inputs and, for sequential logic, of its stored state. We write that with assign and with always blocks, and leave it to the synthesis tool to pick the gates and flip-flops. In structural design we describe how a block is composed of other blocks: we create instances of smaller modules and connect their ports with wires, much as one would wire chips on a board.\n\n\n\n\n\n\n\n\n\nBehavioral\nStructural\n\n\n\n\nDescribes\nwhat a block does\nhow it is built from other blocks\n\n\nWritten with\nassign, always_*\nmodule instances\n\n\nExample\na register, a multiplexer\na pipeline stage\n\n\n\nThe two styles meet at the leaf cells. In the HIPV SoC that we use as a running example, the folder rtl/generic holds small, reusable cells (flopenr, mux2, mux3, adder) written in behavioral style, and the larger modules of the processor instantiate them structurally. This chapter begins with the behavioral style, because those leaf cells have to be written before they can be assembled, and ends with the structural style.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#the-always-block",
+    "href": "chapters/05-sv-design.html#the-always-block",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.3 The always block",
+    "text": "5.3 The always block\nThe previous chapter described logic one line at a time with assign. That is enough for an adder, but awkward the moment a function needs an if or a case. For those we use an always block: a block of statements that describes how a set of outputs depends on a set of inputs.\nSystemVerilog has three kinds of always block for hardware, and which one you use is dictated by what you are building:\n\n\n\n\n\n\n\n\nBlock\nDescribes\nRuns when\n\n\n\n\nalways_comb\ncombinational logic\nany signal it reads changes\n\n\nalways_ff @(posedge clk)\nflip-flops\nthe clock edge\n\n\nalways_latch\nlatches\nany of its inputs changes\n\n\n\nThe names are a promise to the tool: if the code inside does not describe the kind of hardware the block name claims, the tool reports it. Older Verilog has a single always @(...) for all three purposes, and a whole class of bugs came from getting it wrong without any warning.\nTwo facts about always blocks are worth keeping in mind from the start. First, every always block in a module is a separate piece of hardware that exists all the time, like an assign, so they all run concurrently and the order in which you write them does not matter. Second, the statements inside one block run in the order written, like a small program. A block is a description of hardware, not a function that gets called.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#sequential-logic-describe-the-hardware-you-want",
+    "href": "chapters/05-sv-design.html#sequential-logic-describe-the-hardware-you-want",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.4 Sequential logic: describe the hardware you want",
+    "text": "5.4 Sequential logic: describe the hardware you want\nHardware description is not programming, and the habit that separates the two is this: decide on the hardware first, then write the code that describes it. If you cannot sketch the flip-flops and gates you expect, you are not ready to write the always block, and the synthesis tool will build something, but not necessarily what you meant.\nSo for every circuit in this chapter we follow the same four steps. First, the hardware we want. Second, its waveform, which says what the circuit must do over time and is the most precise specification there is. Third, the code that describes it. Fourth, a walk through the waveform to check that the code matches it. Learning to read waveforms is half of the work: it is also how you will debug in simulation.\nA convention for all the diagrams in this chapter: the clock rises at the start of each numbered column, and input signals change in the middle of a column, after the clock has fallen. That way an input never changes at the same instant as a rising edge, and it is always clear which value the circuit sampled.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#the-d-flip-flop",
+    "href": "chapters/05-sv-design.html#the-d-flip-flop",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.5 The D flip-flop",
+    "text": "5.5 The D flip-flop\n\n\n\n\n\n\nFigure 5.1: A D flip-flop: q takes the value of d at each rising clock edge.\n\n\n\nThe flip-flop is the memory element of synchronous design. It has a data input d, a clock clk and an output q. At every rising edge of the clock it copies d to q, and between edges it holds that value no matter what d does (Figure 5.1).\nFollow the waveform from left to right. In column 0, q is unknown (the hatched area): nothing has been stored yet. At the rising edge that starts column 1, d is 0, so q becomes 0. In the middle of column 1, d rises, and q does not react: the flip-flop is not looking. At the next rising edge, starting column 2, it samples d = 1 and q rises. The same happens in reverse when d falls in the middle of column 3: q falls only at the edge that starts column 4. A flip-flop is a circuit that looks at its input at one instant per cycle.\nThe code is as short as the circuit:\nmodule dff (\n    input  logic clk, d,\n    output logic q\n);\n  always_ff @(posedge clk) begin\n    q &lt;= d;\n  end\nendmodule\nThe sensitivity list @(posedge clk) names the event that makes the block run, and the block runs only then. Between clock edges nothing happens and q keeps its value: that holding is the memory. The operator is &lt;=, the non-blocking assignment, which we explain at the end of the chapter; for now, remember that it goes with always_ff.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#the-latch",
+    "href": "chapters/05-sv-design.html#the-latch",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.6 The latch",
+    "text": "5.6 The latch\n\n\n\n\n\n\nFigure 5.2: A latch: q follows d while en is high, and holds its value while en is low.\n\n\n\nA latch is a memory element too, but it looks at its input for a whole level, not at one instant. While the enable en is high, the latch is transparent: q follows d continuously. When en falls, the latch closes and q holds the last value (Figure 5.2).\nIn the waveform, en is high during columns 2 to 4. As soon as it rises, q takes the value of d, which is 1. When d falls at the start of column 4, q falls with it, because the latch is still open. en falls at the start of column 5, and from then on q stays 0: when d rises again in column 6, the latch is closed and does not notice. Compare this with the flip-flop of the previous waveform, where q could only change at a clock edge.\nalways_latch begin\n  if (en) q &lt;= d;\nend\nA latch has no clock edge, so a signal passing through it can ripple along for as long as en is high, which makes timing analysis difficult. In a synchronous design we want flip-flops everywhere, and we use a latch only on purpose. The reason to know it exists is that it is easy to build one by accident, and the section on combinational logic below shows how.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#adding-a-reset",
+    "href": "chapters/05-sv-design.html#adding-a-reset",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.7 Adding a reset",
+    "text": "5.7 Adding a reset\n\n\n\n\n\n\nFigure 5.3: Synchronous reset: q clears at the next rising edge after reset rises.\n\n\n\n\n\n\n\n\n\nFigure 5.4: Asynchronous reset: q clears the moment reset rises, without waiting for a clock edge.\n\n\n\nA flip-flop that powers up with an unknown value is a bug waiting to happen, so registers get a reset that forces a known value. There are two ways to write it, and both clear q when reset is high. They differ in when the clear takes effect.\nWith a synchronous reset (Figure 5.3), reset is just another input that the flip-flop looks at on the clock edge. In the waveform d stays 1. q becomes 1 at the edge that starts column 1. reset rises in the middle of column 1 and q does not move; only at the edge starting column 2 does the flip-flop see reset high and clear. It stays cleared through the edges of columns 3 and 4 because reset is still high. reset falls in the middle of column 4, and at the edge starting column 5 the flip-flop loads d again.\nalways_ff @(posedge clk) begin\n  if (reset) q &lt;= 1'b0;\n  else       q &lt;= d;\nend\nWith an asynchronous reset (Figure 5.4), the flip-flop reacts to reset itself, whatever the clock is doing. The same stimulus now clears q in the middle of column 1, the instant reset rises, not at the next edge. It stays 0 while reset is high, and after reset falls it waits for the next edge, at the start of column 5, to load d.\nalways_ff @(posedge clk or posedge reset) begin\n  if (reset) q &lt;= 1'b0;\n  else       q &lt;= d;\nend\nThis is why reset appears in the sensitivity list next to posedge clk: the block must also run when reset rises. An asynchronous reset needs a flip-flop with a dedicated reset pin, and its release matters: if reset falls too close to a clock edge the flip-flop can misbehave, a problem we return to when we discuss synchronizers. A synchronous reset needs a running clock, but is just logic in front of the D input (or a dedicated set/reset input on an FPGA flip-flop, like the one in the slice of the previous chapter).\nThe HIPV SoC chooses one style for the whole design: its coding standard requires a synchronous reset throughout. That is the style we use from now on. Pick one style, use it everywhere, and know which one you picked.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#registers-and-the-enable-signal",
+    "href": "chapters/05-sv-design.html#registers-and-the-enable-signal",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.8 Registers and the enable signal",
+    "text": "5.8 Registers and the enable signal\n\n\n\n\n\n\nFigure 5.5: flopenr: after the reset, Q loads D only at the edges where en is high.\n\n\n\nA single flip-flop stores one bit. A register is a group of flip-flops that load together, and in a processor most registers also need an enable: a signal that says “load a new value at this edge”, and otherwise “keep the old one”. A pipeline register that must hold its contents while the stage ahead is busy is exactly that. This is the most-instantiated cell in HIPV:\nmodule flopenr #(parameter WIDTH = 8) (\n  input  logic             clk, reset, en,\n  input  logic [WIDTH-1:0] D,\n  output logic [WIDTH-1:0] Q);\n\n  always_ff @(posedge clk)\n    if (reset) Q &lt;= '0;\n    else if (en) Q &lt;= D;\n\nendmodule\nThe module is the D flip-flop with a synchronous reset, plus one more condition. WIDTH is a parameter, so the same description serves for a 1-bit flag and for the 32-bit program counter. The priority is spelled out by the if/else if chain: reset wins, then enable, and if neither is active there is no assignment at all, so the register keeps its value. That “no assignment means hold” is legal inside always_ff, since a flip-flop naturally remembers; it is the opposite of the rule for always_comb, where it would build a latch.\nFigure 5.5 shows the behavior. reset is high around the first edge, so at the start of column 1 Q loads 0. D carries the values A, B, C, D, changing mid-column. en is high for the edges starting columns 2, 3 and 4. At column 2 the register loads B. At column 3 D is still B, so Q stays B. At column 4 D is C, so Q loads C. Then en falls in the middle of column 4, and from the edge at column 5 on the register ignores D, even though D keeps changing: Q holds C. Figure 5.6 is what the synthesis tool builds: one flip-flop cell with clock, data, enable and synchronous reset inputs, which is what an FPGA slice flip-flop provides directly (the clock-enable and set/reset inputs of the previous chapter).\n\n\n\n\n\n\nFigure 5.6: The flopenr module (8-bit by default), drawn by Yosys from the real HIPV file. $sdffe is a flip-flop with synchronous reset and enable.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#counters-two-ways-to-write-one",
+    "href": "chapters/05-sv-design.html#counters-two-ways-to-write-one",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.9 Counters: two ways to write one",
+    "text": "5.9 Counters: two ways to write one\nA counter is a register whose next value is its own current value plus one. Its waveform is the simplest of any sequential circuit: after the reset, the output goes up by one at every clock edge (Figure 5.7). There are two common ways to write it, and the best habit is to know both.\nWay 1: everything in one always_ff. The straightforward form says, at each edge, “if reset, clear; otherwise count &lt;= count + 1”:\nmodule counter4 (\n    input  logic       clk,\n    input  logic       reset,\n    output logic [3:0] count\n);\n  always_ff @(posedge clk) begin\n    if (reset) count &lt;= 4'b0000;\n    else       count &lt;= count + 1;\n  end\nendmodule\n\n\n\n\n\n\nFigure 5.7: Timing of counter4: after the reset, count increases by one at every rising edge.\n\n\n\nAt the edge starting column 1, reset is still high and count loads 0. From then on reset is low, and at each edge count takes its own value plus one: 1, 2, 3 and so on. When it reaches 15, the next + 1 wraps around to 0, because the result is truncated to 4 bits.\nWay 2: next-state logic and a register. The second form splits the description in two. A combinational block computes what the next value would be, count_next, and a plain register stores it:\nmodule counter4_next (\n    input  logic       clk,\n    input  logic       reset,\n    output logic [3:0] count\n);\n  logic [3:0] count_next;\n\n  always_comb begin\n    count_next = count + 1;\n  end\n\n  always_ff @(posedge clk) begin\n    if (reset) count &lt;= 4'b0000;\n    else       count &lt;= count_next;\n  end\nendmodule\n\n\n\n\n\n\nFigure 5.8: Timing of counter4_next: count_next is always one ahead of count, and the register copies it at each edge.\n\n\n\nThe waveform now has one more signal (Figure 5.8). count_next is combinational, so it changes as soon as count does, and is always one higher. In column 1, count is 0 and count_next is already 1, but the register ignores it at the edge starting column 1 because reset is high. At the edge starting column 2 the register copies the 1, and so on.\nBoth modules synthesize to exactly the same hardware: an adder, a register with a synchronous reset, and the feedback wire (Figure 5.9).\n\n\n\n\n\n\nFigure 5.9: Both counter descriptions give this circuit, drawn by Yosys: the register output feeds the output port and the adder, and reset drives the synchronous reset input.\n\n\n\nSo why bother with the second form? Because it separates two questions: what is the next value? (combinational logic) and when do we store it? (the register). For a counter the answer to the first is trivial, and way 1 is perfectly fine. For anything bigger, such as a state machine or a pipeline stage, the next-state logic can be dozens of lines of if and case, and keeping it out of the clocked block makes it far easier to read and to check. The HIPV SoC uses this idea in its 64-bit timer counter, cntr, which computes plus_one = count + 1 with an assign and feeds it to a register cell with an enable and a clear, instead of writing the increment inside the clocked block.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#combinational-logic",
+    "href": "chapters/05-sv-design.html#combinational-logic",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.10 Combinational logic",
+    "text": "5.10 Combinational logic\nWe now do the same for combinational circuits. The method is identical: hardware, waveform, code, walk through. The difference is in the waveform: there is no clock, because a combinational output depends only on the current inputs, so it changes as soon as an input does.\nThe block for it is always_comb. It re-evaluates whenever any signal it reads changes. It is closer to a spreadsheet formula that recalculates on every input edit than to a function you call. You write no sensitivity list, since the tool works it out from the signals the block reads. The assignment inside is the blocking =, which reads as “this is what the output equals right now”. There is no state to remember, which gives one rule that matters more than any other: every output must be assigned on every path through the block.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#the-multiplexer",
+    "href": "chapters/05-sv-design.html#the-multiplexer",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.11 The multiplexer",
+    "text": "5.11 The multiplexer\n\n\n\n\n\n\nFigure 5.10: A 2-to-1 multiplexer: Y follows D0 while S is 0 and D1 while S is 1, with no clock.\n\n\n\nA multiplexer selects one of several inputs. The 2-to-1 version is the first cell in rtl/generic, and HIPV writes it as a continuous assignment:\nmodule mux2 #(parameter WIDTH = 8) (\n  input  logic [WIDTH-1:0] D0, D1,\n  input  logic             S,\n  output logic [WIDTH-1:0] Y);\n\n  assign Y = S ? D1 : D0;\n\nendmodule\nFigure 5.10 shows what it does. There is no clock: Y equals D0 while S is 0 and D1 while S is 1, and it changes the moment the selected input or the select changes. At the start of column 2 D0 rises, and since S is 0, so does Y. At the start of column 3 S rises, Y switches over to D1, which is 0, and falls. At column 4 D1 rises, Y follows. At column 6 S falls and Y returns to D0, which is 1.\nThe same multiplexer in an always_comb block reads like this:\nalways_comb begin\n  if (S) Y = D1;\n  else   Y = D0;\nend\nBoth give the same circuit. The assign form is shorter for one line of logic; the always_comb form is better when there are several outputs or several conditions. For a multiplexer with more than two inputs, the case statement is clearer than a chain of ?: operators. HIPV’s 3-to-1 multiplexer, written with a chain of conditional operators in the repository, looks like this as an always_comb with case:\nmodule mux3 #(parameter WIDTH = 8) (\n  input  logic [WIDTH-1:0] D0, D1, D2,\n  input  logic [1:0]       S,\n  output logic [WIDTH-1:0] Y);\n\n  always_comb begin\n    case (S)\n      2'b01:   Y = D1;\n      2'b10:   Y = D2;\n      default: Y = D0;    // 2'b00, and 2'b11 falls back to D0\n    endcase\n  end\nendmodule\nThe case compares S against each listed value and runs the matching branch. The default branch is not optional: it makes sure Y is assigned for every value of S, including the one the designer never intended to use (2'b11), and values containing X or Z in simulation. The synthesized circuit (Figure 5.11) is two comparators and two 2-to-1 multiplexers in series.\n\n\n\n\n\n\nFigure 5.11: The mux3 cell as drawn by Yosys from the HIPV file: S == 2'b10 selects D2, otherwise S == 2'b01 selects D1, otherwise D0.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#the-decoder",
+    "href": "chapters/05-sv-design.html#the-decoder",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.12 The decoder",
+    "text": "5.12 The decoder\n\n\n\n\n\n\nFigure 5.12: An address decoder: one SlaveSel bit goes high for each mapped region, and DecErr goes high for an unmapped address.\n\n\n\nA decoder turns an encoded value into a set of separate control signals, and it is everywhere in a processor: the instruction decoder turns an opcode into control signals, and the bus decoder turns an address into “which device is being accessed”. The second one is a clean example. The HIPV crossbar has five slaves (instruction memory, data memory, UART, timer and GPIO), each mapped to a region of the address space, and the decoder produces a one-hot select, one bit per slave, plus an error flag for an address that belongs to no slave. Here it is with the address map written out:\nmodule addr_decoder (\n    input  logic [31:0] Addr,\n    output logic [4:0]  SlaveSel,\n    output logic        DecErr\n);\n  always_comb begin\n    SlaveSel = '0;                                     // default: nothing selected\n    if (Addr[31:16] == 16'h0000)  SlaveSel[0] = 1'b1;  // instruction memory, 64 KiB\n    if (Addr[31:16] == 16'h1000)  SlaveSel[1] = 1'b1;  // data memory, 64 KiB\n    if (Addr[31:12] == 20'h20000) SlaveSel[2] = 1'b1;  // UART, 4 KiB\n    if (Addr[31:12] == 20'h20001) SlaveSel[3] = 1'b1;  // timer, 4 KiB\n    if (Addr[31:12] == 20'h20002) SlaveSel[4] = 1'b1;  // GPIO, 4 KiB\n  end\n\n  assign DecErr = ~|SlaveSel;\nendmodule\nRead the waveform first (Figure 5.12). Five addresses arrive one after another, two columns each. The first, 0x0000_0040, lies in the instruction-memory region, so SlaveSel[0] goes high. The next addresses hit data memory, the UART and the timer in turn, and each raises exactly one select. The last, 0x3000_0000, matches no region: every select stays low, so DecErr rises. Only one select is ever high, because the regions do not overlap.\nNow the code. The first statement in the block is the important one: SlaveSel = '0 assigns the default, every bit low, before anything else. Each if then overrides one bit. Because every bit of SlaveSel has a value on every path, whatever the address, the block cannot build a latch, and none of the ifs needs an else. This default first, then override pattern is the safest way to write always_comb, and you will see it throughout HIPV. The last line uses the reduction operator from the previous chapter: ~|SlaveSel is true when no select bit is set.\n(The real obi_decoder in the HIPV repository is the same block, with the base addresses and sizes taken from a shared package, so that adding a slave changes one file.)",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#avoiding-latches",
+    "href": "chapters/05-sv-design.html#avoiding-latches",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.13 Avoiding latches",
+    "text": "5.13 Avoiding latches\nThe decoder showed the right way. Here is the wrong way:\nalways_comb begin\n  if (sel) y = in1;\nend\nWhen sel is 0, no branch assigns y. In a spreadsheet an unhandled case would show a blank cell, but in hardware an output cannot go blank. If no branch assigns it, the only way to keep it at some value is to remember the previous one, so the tool builds a latch, the element from earlier in this chapter (Figure 5.13). It adds a storage element you did not intend, it complicates timing analysis, and it is the most common bug in always_comb. Tools warn about it, which is the reason to use always_comb instead of the old always @(*).\n\n\n\n\n\n\nFigure 5.13: What synthesis builds for an incomplete if: a latch whose enable is sel, so y holds its old value whenever sel is 0.\n\n\n\nThere are three ways to follow the rule. Give every output a default at the top of the block, as the decoder does. Or write an else on every if. Or give every case a default branch, as in mux3. Sequential blocks are different: inside always_ff, a missing assignment simply means “keep the value”, which is what a flip-flop does anyway.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#blocking-vs.-non-blocking-assignment",
+    "href": "chapters/05-sv-design.html#blocking-vs.-non-blocking-assignment",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.14 Blocking vs. non-blocking assignment",
+    "text": "5.14 Blocking vs. non-blocking assignment\nWe have used two assignment operators in an always block, and the pairing has been the same every time: = in always_comb, and &lt;= in always_ff. Now we can see why.\nA blocking assignment, =, takes effect immediately: the next statement in the block sees the new value. A non-blocking assignment, &lt;=, only schedules the update, which lands at the end of the current time step: the next statement still sees the old value. The difference only shows when there is interdependency, when a later statement reads something an earlier one wrote.\n\n5.14.1 In combinational logic\nTake three inputs and the function s = c ^ (a ^ b), written with an intermediate signal, once with each operator:\nmodule xor_gate (\n  input  logic a, b, c,\n  output logic s1, s2\n);\n  logic n1, n2;\n\n  // case 1: blocking\n  always_comb begin\n    n1 = a ^ b;\n    s1 = c ^ n1;\n  end\n\n  // case 2: non-blocking\n  always_comb begin\n    n2 &lt;= a ^ b;\n    s2 &lt;= c ^ n2;\n  end\nendmodule\n(Some tools refuse non-blocking assignments inside always_comb altogether; the example is written this way only to show what would happen.)\n\n\n\n\n\n\nFigure 5.14: The two XOR descriptions: s1 always matches c ^ n1, while s2 is computed from the previous value of n2.\n\n\n\nFigure 5.14 shows the result for the same inputs. In case 1, n1 updates immediately, and the next line uses the new n1, so s1 is always c ^ n1. In case 2, n2 is only scheduled to change, so s2 &lt;= c ^ n2 reads the previous n2. Compare the last two rows: n changes at the start of columns 2 and 6, and at exactly those two points s2 differs from s1, because it still uses the old n. Case 1 models a combinational circuit; case 2 does not, because its output depends on a stale value. Synthesis tools often ignore the distinction in combinational blocks and build the right gates anyway, which makes it worse: the simulation shows one behavior and the hardware has another, a simulation/synthesis mismatch, the kind of bug that is hardest to find.\n\n\n5.14.2 In sequential logic\nThe same experiment on two registers in a chain:\nmodule chain (\n  input  logic clk, a,\n  output logic f1, f2\n);\n  logic b1, b2;\n\n  // case 1: blocking\n  always_ff @(posedge clk) begin\n    b1 = a;\n    f1 = b1;\n  end\n\n  // case 2: non-blocking\n  always_ff @(posedge clk) begin\n    b2 &lt;= a;\n    f2 &lt;= b2;\n  end\nendmodule\n\n\n\n\n\n\nFigure 5.15: Two registers in a chain: with blocking assignment f1 follows b1 in the same cycle, with non-blocking assignment f2 lags by one more clock.\n\n\n\nIn Figure 5.15 the clock is drawn with two columns per period, so it rises at the start of columns 1, 3, 5 and 7. The input a is high during columns 2 and 3, so the edge at the start of column 3 is the one that sees it. In case 1, b1 = a happens first, and f1 = b1 then reads the new b1, so f1 gets the value of a in the same cycle: both change at the edge starting column 3, and the second register adds nothing. In case 2, b2 &lt;= a and f2 &lt;= b2 are both evaluated before either update lands, so f2 takes the value b2 had before this edge. b2 rises at column 3, but f2 only at the next edge, at column 5, and it falls one edge after b2 does, at column 7. That is a two-stage chain, which is what two registers in a row should be. This is the behavior every pipeline relies on, and it is why the swap a &lt;= b; b &lt;= a; works with &lt;= and silently fails with =.\n\n\n5.14.3 The rule\n\n\n\n\nBlocking =\nNon-blocking &lt;=\n\n\n\n\nUpdate takes effect\nimmediately\nat the end of the time step\n\n\nThe next statement reads\nthe new value\nthe old value\n\n\nUse in\nalways_comb\nalways_ff\n\n\n\n= for combinational logic, &lt;= for clocked logic, every time. Do not mix the two in one block.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#structural-design-module-instances",
+    "href": "chapters/05-sv-design.html#structural-design-module-instances",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.15 Structural design: module instances",
+    "text": "5.15 Structural design: module instances\nBehavioral modeling describes what a block does. Structural modeling describes a block by how it is composed of simpler modules. Each copy of a smaller module is an instance, and it has a unique name. Here is the smallest useful example, a 4:1 multiplexer assembled from three copies of a 2:1 multiplexer:\nmodule mux2to1 (\n    input  logic a, b, sel,\n    output logic y\n);\n  assign y = sel ? b : a;\nendmodule\n\nmodule mux4to1_struct (\n    input  logic [3:0] d,\n    input  logic [1:0] sel,\n    output logic       y\n);\n  logic y0, y1;                 // wires between the instances\n\n  mux2to1 mux_low   (.a(d[0]), .b(d[1]), .sel(sel[0]), .y(y0));\n  mux2to1 mux_high  (.a(d[2]), .b(d[3]), .sel(sel[0]), .y(y1));\n  mux2to1 mux_final (.a(y0),   .b(y1),   .sel(sel[1]), .y(y));\nendmodule\nAn instantiation has three parts. First comes the module name (mux2to1), then the instance name you choose (mux_final), then in parentheses the port connections. The notation .a(y0) reads “the module’s port a is connected to my signal y0”. These connections by name make the code easy to read and safe to reorder. There is also a positional form, mux2to1 mux_final (y0, y1, sel[1], y);, which is shorter and fails silently if someone later reorders the ports, so we avoid it. Figure 5.16 shows the result: the tool leaves the three instances as boxes, exactly as the hierarchy appears in the code.\n\n\n\n\n\n\nFigure 5.16: The structurally built mux4to1_struct: two instances select within a pair, and a third selects between the two results.\n\n\n\n\n5.15.1 Parameters\nA parameter makes a module configurable, which is how one description serves every width. We have been using this all along: flopenr declares parameter WIDTH = 8, and each instance picks its own. The override goes between the module name and the instance name, after a #:\nflopenr #(32) pcreg (...);          // a 32-bit instance, by position\nflopenr #(.WIDTH(32)) pcreg (...);  // the same, by name\nThe by-name form is safer when a module has several parameters. A localparam is a constant inside a module that, unlike a parameter, cannot be overridden from outside, which makes it the right choice for derived constants.\n\n\n5.15.2 A real example: the program counter of HIPV\nHIPV’s fetch unit is almost entirely structural. Its program-counter loop is built from three of the leaf cells we wrote above. The code is the actual instantiation, reduced to this loop:\nmodule pc_unit (\n    input  logic        clk, reset,\n    input  logic        PCEnF,\n    input  logic        PCSrcE,\n    input  logic [31:0] PCTargetE,\n    output logic [31:0] PCF\n);\n  logic [31:0] PCNextF, PCPlus4F;\n\n  // next PC selection: sequential or redirect from Execute\n  mux2 #(32) pcmux (\n      .D0(PCPlus4F), .D1(PCTargetE), .S(PCSrcE), .Y(PCNextF));\n\n  // PC register\n  flopenr #(32) pcreg (\n      .clk(clk), .reset(reset), .en(PCEnF), .D(PCNextF), .Q(PCF));\n\n  // sequential PC\n  adder #(32) pcadd4 (\n      .A(PCF), .B(32'd4), .Y(PCPlus4F));\nendmodule\nEverything inside the parentheses is a wire name, and nothing here describes any behavior: it only says which cell goes where. The register holds the PC, the adder computes PC + 4, and the multiplexer chooses between that and a branch target (Figure 5.17). Note how the signals form a loop through the register, which is the only place where the loop is broken by a clock.\n\n\n\n\n\n\nFigure 5.17: The PC loop of HIPV, drawn by Yosys with the three cells expanded into their hardware: the $sdffe register, the +4 adder, and the next-PC multiplexer.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#testbenches",
+    "href": "chapters/05-sv-design.html#testbenches",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.16 Testbenches",
+    "text": "5.16 Testbenches\nA testbench is a module that tests another module, the device under test (DUT). It applies inputs to the DUT and, ideally, checks that the outputs are right. Its inputs and the expected outputs are the test vectors. A testbench has no ports of its own: it sits at the top of the simulation, so everything it needs is declared inside as plain logic signals and wired to the DUT by name, like any other instance.\nmodule tb_mux4to1;\n  logic [3:0] d;\n  logic [1:0] sel;\n  logic       y;\n\n  mux4to1_struct dut (.d(d), .sel(sel), .y(y));\n\n  initial begin\n    d = 4'b1010;\n    for (int i = 0; i &lt; 4; i++) begin\n      sel = i[1:0];\n      #10;\n      $display(\"d=%b sel=%b y=%b\", d, sel, y);\n      if (y !== d[sel]) $error(\"sel=%b: expected %b, got %b\", sel, d[sel], y);\n    end\n    $finish;\n  end\nendmodule\nEverything happens in the initial block, which starts at time zero and runs once. It holds d fixed and sweeps sel through all four values. After each change it waits #10 time units, $display prints the inputs and the output, and the if checks y against the bit of d that sel selects. The #10 delay is not needed by the circuit, since a combinational output settles almost instantly. It gives each test case its own slice of simulation time, so the printed lines and the waveform stay readable. The comparison uses !==, which also catches an X on the output where != would stay silent. $finish ends the simulation.\nThese statements (initial, #10, $display, $finish) exist only in simulation. A synthesizer has no hardware for “wait 10 time units”, which is the line between the code you simulate and the code you synthesize.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#testbench-for-a-sequential-design",
+    "href": "chapters/05-sv-design.html#testbench-for-a-sequential-design",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.17 Testbench for a sequential design",
+    "text": "5.17 Testbench for a sequential design\nA registered design only changes on a clock edge, so the testbench has to supply that clock; nothing else in the simulation will. Here it is for the counter of this chapter:\nmodule tb_counter;\n  logic       clk = 0;\n  logic       reset = 1;\n  logic [3:0] count;\n\n  counter4 dut (.clk(clk), .reset(reset), .count(count));\n\n  always #5 clk = ~clk;              // clock generator: period of 10 units\n\n  initial begin\n    #12 reset = 0;                   // release reset between clock edges\n    #100;\n    $display(\"count=%0d\", count);\n    $finish;\n  end\nendmodule\nThe separate always #5 clk = ~clk; has no sensitivity list and no guard, so it keeps re-executing for the whole simulation and flips clk every 5 time units. That gives a free-running clock with a period of 10. It runs concurrently with the initial block below it: every initial and always block in a module starts at time zero and proceeds independently, which is why the clock generator lives in its own block.\nThe stimulus holds reset high for the first clock edge (at time 5), then releases it at time 12, between edges, so that no input changes exactly when the clock rises, the same convention as in our waveforms. After the remaining ten rising edges the counter holds 10, which $display prints. The key difference from the combinational testbench is the waiting. A combinational output is valid almost immediately after its inputs change, but a register updates only once per clock edge, so a sequential testbench must always budget enough simulated time, or wait for a specific number of @(posedge clk) events, before checking the outputs.\n$finish matters even more here. The clock generator never terminates on its own, so without an explicit $finish the simulation would run forever.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#running-a-simulation",
+    "href": "chapters/05-sv-design.html#running-a-simulation",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.18 Running a simulation",
+    "text": "5.18 Running a simulation\nAny SystemVerilog simulator can run these testbenches. With the open-source Icarus Verilog, you compile the design together with its testbench and run the result:\niverilog -g2012 -o sim_counter counter4.sv tb_counter.sv\nvvp sim_counter\nThe -g2012 option selects the SystemVerilog language level. To look at waveforms instead of printed lines, add two statements at the start of the initial block, and open the resulting file in GTKWave:\n$dumpfile(\"tb_counter.vcd\");\n$dumpvars(0, tb_counter);\nThe waveforms you get are the same kind as the ones drawn in this chapter, and reading them is the same skill. Checking results by eye does not scale beyond a handful of signals, though. A testbench that compares outputs against expected values, as ours does with $error, can be run again after every change and report a clear pass or fail. Later in the course we move this idea to a Python framework, cocotb, which makes writing such checks much easier.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/05-sv-design.html#from-design-to-the-pipeline",
+    "href": "chapters/05-sv-design.html#from-design-to-the-pipeline",
+    "title": "5  Designing with SystemVerilog",
+    "section": "5.19 From design to the pipeline",
+    "text": "5.19 From design to the pipeline\nEverything introduced here is the working vocabulary of the rest of the course. always_ff with non-blocking assignment and a synchronous reset is how every pipeline register is built, through flopenr and its siblings. always_comb with a default at the top is how the ALU and the decoders avoid latch inference. Instances and parameters are how those cells are assembled into stages, and stages into a processor. The pipeline chapters introduce no new syntax: they put these constructs to work on a larger example.",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Designing with SystemVerilog</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06-pipeline-structure.html",
+    "href": "chapters/06-pipeline-structure.html",
+    "title": "6  Five-Stage Pipeline — Structure",
     "section": "",
     "text": "Five-stage pipeline",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
   },
   {
-    "objectID": "chapters/05-pipeline-structure.html#goal-for-this-week",
-    "href": "chapters/05-pipeline-structure.html#goal-for-this-week",
-    "title": "5  Five-Stage Pipeline — Structure",
-    "section": "5.1 Goal for this week",
-    "text": "5.1 Goal for this week\n\nTranslate the well-known pipeline theory (IF/ID/EX/MEM/WB) into SystemVerilog\nApply SystemVerilog syntax immediately on a real, motivating example\nTreat memory (for now) as an interface — the implementation follows next week\n\nWe implement pipeline registers as separate modules for two reasons. First, pedagogically: each such register is a direct, visible example of a D flip-flop (DFF) in the context of a real processor, which was an explicit goal of the second part of the course. Second, practically: separate modules with a fixed interface (see pipeline_pkg.sv) allow us to substitute an individual stage with a reference (“golden”) implementation in the jigsaw testing methodology — discussed in more detail in the verification chapter. This five-stage IF/ID/EX/MEM/WB structure follows the classic pipelined datapath described by Patterson and Hennessy (2017).",
+    "objectID": "chapters/06-pipeline-structure.html#goal-for-this-week",
+    "href": "chapters/06-pipeline-structure.html#goal-for-this-week",
+    "title": "6  Five-Stage Pipeline — Structure",
+    "section": "6.1 Goal for this week",
+    "text": "6.1 Goal for this week\n\nTranslate the well-known pipeline theory (IF/ID/EX/MEM/WB) into SystemVerilog\nApply SystemVerilog syntax immediately on a real, motivating example\nTreat memory (for now) as an interface — the implementation follows next week\n\nWe implement pipeline registers as separate modules for two reasons. First, pedagogically: each such register is a direct, visible example of a D flip-flop (DFF) in the context of a real processor, which was an explicit goal of the second part of the course. Second, practically: separate modules with a fixed interface (see pipeline_pkg.sv) allow us to substitute an individual stage with a reference (“golden”) implementation in the jigsaw testing methodology — discussed in more detail in the verification chapter. This five-stage IF/ID/EX/MEM/WB structure follows the classic pipelined datapath described by Patterson and Hennessy (2017).",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
   },
   {
-    "objectID": "chapters/05-pipeline-structure.html#modules-for-this-week",
-    "href": "chapters/05-pipeline-structure.html#modules-for-this-week",
-    "title": "5  Five-Stage Pipeline — Structure",
-    "section": "5.2 Modules for this week",
-    "text": "5.2 Modules for this week\n\nif_stage, if_id_reg\nid_stage (regfile, imm_gen, decoder)\nid_ex_reg\nex_stage (alu)\n(mem_stage, wb_stage — interface only for now, implementation next week)\n\n\n\n\nModular pipeline structure",
+    "objectID": "chapters/06-pipeline-structure.html#modules-for-this-week",
+    "href": "chapters/06-pipeline-structure.html#modules-for-this-week",
+    "title": "6  Five-Stage Pipeline — Structure",
+    "section": "6.2 Modules for this week",
+    "text": "6.2 Modules for this week\n\nif_stage, if_id_reg\nid_stage (regfile, imm_gen, decoder)\nid_ex_reg\nex_stage (alu)\n(mem_stage, wb_stage — interface only for now, implementation next week)\n\n\n\n\nModular pipeline structure",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
   },
   {
-    "objectID": "chapters/05-pipeline-structure.html#example-pipeline_pkg.sv",
-    "href": "chapters/05-pipeline-structure.html#example-pipeline_pkg.sv",
-    "title": "5  Five-Stage Pipeline — Structure",
-    "section": "5.3 Example: pipeline_pkg.sv",
-    "text": "5.3 Example: pipeline_pkg.sv\npackage pipeline_pkg;\n\n  typedef enum logic [3:0] {\n    ALU_ADD, ALU_SUB, ALU_AND, ALU_OR, ALU_XOR,\n    ALU_SLL, ALU_SRL, ALU_SRA, ALU_SLT, ALU_SLTU\n  } alu_ctrl_t;\n\n  typedef struct packed {\n    logic mem_read;\n    logic mem_write;\n    logic [1:0] mem_size;\n    logic mem_unsigned;\n  } mem_ctrl_t;\n\n  typedef struct packed {\n    logic reg_write;\n    logic [1:0] wb_sel;\n  } wb_ctrl_t;\n\nendpackage\n\n5.3.1 Why a struct instead of individual signals\ntypedef struct packed is standard synthesizable SystemVerilog (IEEE 2017), so this pattern is portable across the tools you will use this semester.\nAn alternative to the approach above would be for each control signal (mem_read, mem_write, reg_write, …) to travel through the pipeline as a separate wire and a separate field in every pipeline register. This quickly becomes unwieldy as the number of control signals grows — every new signal requires a port change on every intermediate register. Using a typedef struct packed instead, we define a single type that a pipeline register carries as a whole; adding a new field to the struct does not require changing the register’s ports.",
+    "objectID": "chapters/06-pipeline-structure.html#example-pipeline_pkg.sv",
+    "href": "chapters/06-pipeline-structure.html#example-pipeline_pkg.sv",
+    "title": "6  Five-Stage Pipeline — Structure",
+    "section": "6.3 Example: pipeline_pkg.sv",
+    "text": "6.3 Example: pipeline_pkg.sv\npackage pipeline_pkg;\n\n  typedef enum logic [3:0] {\n    ALU_ADD, ALU_SUB, ALU_AND, ALU_OR, ALU_XOR,\n    ALU_SLL, ALU_SRL, ALU_SRA, ALU_SLT, ALU_SLTU\n  } alu_ctrl_t;\n\n  typedef struct packed {\n    logic mem_read;\n    logic mem_write;\n    logic [1:0] mem_size;\n    logic mem_unsigned;\n  } mem_ctrl_t;\n\n  typedef struct packed {\n    logic reg_write;\n    logic [1:0] wb_sel;\n  } wb_ctrl_t;\n\nendpackage\n\n6.3.1 Why a struct instead of individual signals\ntypedef struct packed is standard synthesizable SystemVerilog (IEEE 2017), so this pattern is portable across the tools you will use this semester.\nAn alternative to the approach above would be for each control signal (mem_read, mem_write, reg_write, …) to travel through the pipeline as a separate wire and a separate field in every pipeline register. This quickly becomes unwieldy as the number of control signals grows — every new signal requires a port change on every intermediate register. Using a typedef struct packed instead, we define a single type that a pipeline register carries as a whole; adding a new field to the struct does not require changing the register’s ports.",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
   },
   {
-    "objectID": "chapters/05-pipeline-structure.html#next-step",
-    "href": "chapters/05-pipeline-structure.html#next-step",
-    "title": "5  Five-Stage Pipeline — Structure",
-    "section": "5.4 Next step",
-    "text": "5.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
+    "objectID": "chapters/06-pipeline-structure.html#next-step",
+    "href": "chapters/06-pipeline-structure.html#next-step",
+    "title": "6  Five-Stage Pipeline — Structure",
+    "section": "6.4 Next step",
+    "text": "6.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
   },
   {
-    "objectID": "chapters/06-pipeline-hazards.html",
-    "href": "chapters/06-pipeline-hazards.html",
-    "title": "6  Five-Stage Pipeline — Hazards",
+    "objectID": "chapters/07-pipeline-hazards.html",
+    "href": "chapters/07-pipeline-hazards.html",
+    "title": "7  Five-Stage Pipeline — Hazards",
     "section": "",
     "text": "Pipeline hazards\n(placeholder — fill in with week 4 content: forwarding, stall, branch flush)",
     "crumbs": [
-      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Hazards</span>"
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Five-Stage Pipeline — Hazards</span>"
     ]
   },
   {
-    "objectID": "chapters/07-memory.html",
-    "href": "chapters/07-memory.html",
-    "title": "7  Memory — Implementation in SystemVerilog",
+    "objectID": "chapters/08-memory.html",
+    "href": "chapters/08-memory.html",
+    "title": "8  Memory — Implementation in SystemVerilog",
     "section": "",
     "text": "Memory\n(placeholder — fill in with week 5 content)",
     "crumbs": [
-      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Memory — Implementation in SystemVerilog</span>"
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Memory — Implementation in SystemVerilog</span>"
     ]
   },
   {
-    "objectID": "chapters/08-cocotb-verification.html",
-    "href": "chapters/08-cocotb-verification.html",
-    "title": "8  Verification with CocoTB",
+    "objectID": "chapters/09-cocotb-verification.html",
+    "href": "chapters/09-cocotb-verification.html",
+    "title": "9  Verification with CocoTB",
     "section": "",
     "text": "Verification with CocoTB\n(placeholder — fill in with week 6-7 content)",
     "crumbs": [
-      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Verification with CocoTB</span>"
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Verification with CocoTB</span>"
     ]
   },
   {
     "objectID": "references.html",
     "href": "references.html",
-    "title": "9  References",
+    "title": "10  References",
     "section": "",
     "text": "IEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA. RISC-V Foundation.",
     "crumbs": [
-      "<span class='chapter-number'>9</span>  <span class='chapter-title'>References</span>"
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>References</span>"
     ]
   }
 ]

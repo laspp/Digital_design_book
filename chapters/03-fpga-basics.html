@@ -47,7 +47,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-fd0503e23dce65854c81c5baaade3bdf.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -143,37 +143,43 @@ ul.task-list li input[type="checkbox"] {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span></a>
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/05-pipeline-structure.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/06-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/07-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/08-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -266,7 +272,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 data-number="3.3.1" class="anchored" data-anchor-id="configurable-logic-block-clb"><span class="header-section-number">3.3.1</span> Configurable Logic Block (CLB)</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="../images/clb-slice.svg" class="img-fluid figure-img"></p>
+<p><img src="../images/blocks/clb-slice.svg" class="img-fluid figure-img"></p>
 <figcaption>One CLB slice: a LUT2 and a flip-flop, with the output mux picking between the combinational and registered result</figcaption>
 </figure>
 </div>
@@ -274,7 +280,7 @@ ul.task-list li input[type="checkbox"] {
 <p>A LUT implements combinational logic through memory lookup rather than by wiring gates together. Structurally, it consists of SRAM (static random-access memory) cells paired with a multiplexer that selects which cell’s content is forwarded to the output, based on the signal inputs. To see this concretely, consider the smallest useful case, a two-input LUT, or LUT2. With two inputs there are four possible input combinations, so a LUT2 is built from four memory cells and a 4-to-1 multiplexer. The two inputs act as the multiplexer’s select lines, in other words as an <em>address</em>, and the output is simply whatever bit is stored in the addressed cell.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="../images/LUT.PNG" class="img-fluid figure-img"></p>
+<p><img src="../images/blocks/lut2-internals.svg" class="img-fluid figure-img" style="width:55.0%"></p>
 <figcaption>LUT2 internals: the two inputs address one of four SRAM cells, and the addressed cell’s stored bit is forwarded to the output</figcaption>
 </figure>
 </div>
@@ -282,7 +288,7 @@ ul.task-list li input[type="checkbox"] {
 <p>We do not build larger LUTs as one giant memory array wired to a huge multiplexer. Instead, real FPGA architectures build them recursively from smaller LUTs, adding one extra input and one extra multiplexer stage at a time. A LUT3 is nothing more than two LUT2s, both fed by the same two inputs, with their outputs chosen between by a 2:1 mux controlled by the third input. Extending the same idea, a LUT4 is built from two LUT3s, each in turn built from two LUT2s, combined by one more 2:1 mux controlled by the fourth input. Each additional input doubles the number of underlying LUT2 building blocks and adds one more layer of multiplexing on top. This recursive structure is exactly why vendors describe their larger LUTs as fracturable: the same physical hardware that implements one LUT4 can, with a small configuration change, split back into two independent LUT3s, or four independent LUT2s, letting the synthesis tool pack more, smaller functions into fewer CLBs when a design does not need the full input width.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="../images/LUT8.png" class="img-fluid figure-img"></p>
+<p><img src="../images/blocks/lut4-from-lut2.svg" class="img-fluid figure-img"></p>
 <figcaption>Building a LUT4 from four LUT2s: two levels of 2:1 muxing, selected by in3 and in4</figcaption>
 </figure>
 </div>
@@ -304,7 +310,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 data-number="3.3.3" class="anchored" data-anchor-id="io-blocks"><span class="header-section-number">3.3.3</span> I/O blocks</h3>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="../images/io-block.svg" class="img-fluid figure-img"></p>
+<p><img src="../images/blocks/io-block.svg" class="img-fluid figure-img"></p>
 <figcaption>I/O block output and input paths: an optional register and a tri-state buffer on output, an optional register on input</figcaption>
 </figure>
 </div>
@@ -330,7 +336,7 @@ ul.task-list li input[type="checkbox"] {
 <p>Because addition is one of the most common operations in digital design, each slice also includes a dedicated carry chain: fast, purpose-built hardware that propagates carry signals between adjacent slices without routing them back through the general interconnect, considerably speeding up adders and comparators compared to building the same carry logic out of ordinary LUTs. On the sequential side, each slice packs eight flip-flops rather than the one flip-flop per LUT we introduced earlier. Four of these are configurable to behave as either an edge-triggered flip-flop or a level-sensitive latch, while the remaining four are flip-flop only; all eight share one clock and one clock-enable signal, though each still has its own configuration bits for init value and set/reset behavior, echoing the per-flip-flop reconfigurability we discussed for the generic CLB.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="../images/slicel-block-diagram.svg" class="img-fluid figure-img"></p>
+<p><img src="../images/blocks/slicel.svg" class="img-fluid figure-img"></p>
 <figcaption>SLICEL, simplified block diagram: four LUT6s feed the F7A/F7B/F8 combining muxes and the carry chain, each lane ending in an FF/Latch and an FF-only register sharing one clock and clock-enable (redrawn, not to scale, after AMD/Xilinx UG474, Fig. 2)</figcaption>
 </figure>
 </div>
@@ -767,8 +773,8 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/04-sv-basics.html" class="pagination-link" aria-label="SystemVerilog — Syntax and Synthesizable Coding Style">
-        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog — Syntax and Synthesizable Coding Style</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/04-sv-basics.html" class="pagination-link" aria-label="SystemVerilog Basics">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
