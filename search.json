@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Designing a RISC-V SoC",
     "section": "",
-    "text": "Preface\nThis material was written alongside the lectures for the course DN, redesigned around the theme of RISC-V SoC design. Each chapter corresponds to one week of lectures and serves a dual purpose:\n\nAs lecture notes — rendered as a slide deck (reveal.js).\nAs a book chapter — rendered as part of the combined PDF/HTML course material.\n\nContent intended for only one of the two formats (e.g. discussion questions used in class, or in-depth derivations meant for the book) is marked with content-visible blocks — see the example in the chapter on pipeline structure.\n\n\n\n\n\n\nWarningWork in progress\n\n\n\nThis material is a work in progress. It is written and revised alongside the course as it is taught, so chapters vary in polish, and some sections still need further revision. Please read it with that in mind, and feel free to flag anything that is unclear, incomplete, or incorrect.",
+    "text": "Preface\nThis material was written alongside the lectures for the course DN, redesigned around the theme of RISC-V SoC design. Each chapter corresponds to one week of lectures and serves a dual purpose:\n\nAs lecture notes — rendered as a slide deck (reveal.js).\nAs a book chapter — rendered as part of the combined PDF/HTML course material.\n\nContent intended for only one of the two formats (e.g. discussion questions used in class, or in-depth derivations meant for the book) is marked with content-visible blocks — see the example in the chapter on pipeline structure.\n\n\n\n\n\n\nWork in progress\n\n\n\nThis material is a work in progress. It is written and revised alongside the course as it is taught, so chapters vary in polish, and some sections still need further revision. Please read it with that in mind, and feel free to flag anything that is unclear, incomplete, or incorrect.",
     "crumbs": [
       "Preface"
     ]
@@ -304,7 +304,7 @@
     "href": "chapters/04-sv-basics.html#two-drivers-on-one-net",
     "title": "4  SystemVerilog Basics",
     "section": "4.12 Two drivers on one net",
-    "text": "4.12 Two drivers on one net\nThe second example is the one that breaks C intuition completely:\nwire c;\nassign c = a;\nassign c = b;\nIn a programming language the second line would overwrite the first, and c would end up with the value of b. In hardware, both lines are always active, so the net c is driven by two sources at once. When a and b agree, nothing is wrong. When they differ, one source pulls the wire high while the other pulls it low, and the simulator reports an unknown value X (Figure 4.2). In a real circuit, this is a short circuit between two gate outputs.\n\n\n\n\n\n\nFigure 4.2: A net driven by a and by b: whenever they disagree, c is X.\n\n\n\nIf c were declared as logic, the tool would reject the second assignment at compile time, because a logic signal may have only one driver. That is the reason to prefer logic: it turns a silent X in simulation into an error you see immediately. This situation must be avoided in every design that is not a deliberate tri-state bus.",
+    "text": "4.12 Two drivers on one net\nThe second example is the one that breaks C intuition completely:\nlogic c;\nassign c = a;\nassign c = b;\nIn a programming language the second line would overwrite the first, and c would end up with the value of b. In hardware, both lines are always active, so the net c is driven by two sources at once. When a and b agree, nothing is wrong. When they differ, one source pulls the wire high while the other pulls it low, and the simulator reports an unknown value X (Figure 4.2). In a real circuit, this is a short circuit between two gate outputs.\n\n\n\n\n\n\nFigure 4.2: A net driven by a and by b: whenever they disagree, c is X.\n\n\n\nIf c were declared as logic, the tool would reject the second assignment at compile time, because a logic signal may have only one driver. That is the reason to prefer logic: it turns a silent X in simulation into an error you see immediately. This situation must be avoided in every design that is not a deliberate tri-state bus.",
     "crumbs": [
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>SystemVerilog Basics</span>"
     ]
@@ -624,7 +624,7 @@
     "href": "chapters/06-pipeline-structure.html#next-step",
     "title": "6  Five-Stage Pipeline — Structure",
     "section": "6.4 Next step",
-    "text": "6.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
+    "text": "6.4 Next step\nThe next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.\n\n\n\n\nIEEE. 2017. “IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.”\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.",
     "crumbs": [
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Five-Stage Pipeline — Structure</span>"
     ]
@@ -664,7 +664,7 @@
     "href": "references.html",
     "title": "10  References",
     "section": "",
-    "text": "IEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA. RISC-V Foundation.",
+    "text": "IEEE. 2017. “IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.”\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. “The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA.” RISC-V Foundation.",
     "crumbs": [
       "<span class='chapter-number'>10</span>  <span class='chapter-title'>References</span>"
     ]

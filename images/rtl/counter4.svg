@@ -19,29 +19,29 @@
   .splitjoinBody {
     fill:#000;
   }</style>
-  <g s:type="add" transform="translate(77,108.5)" s:width="25" s:height="25" id="cell_$add$/Users/ratko.pilipovic/Documents/Repositories/Digital_design_book/images/rtl/counter4.sv:9$2">
+  <g s:type="add" transform="translate(77,108.5)" s:width="25" s:height="25" id="cell_$add$/home/ratkop/Documents/Repositories/course-material/images/rtl/counter4.sv:9$2">
     <s:alias val="$add"/>
-    <circle r="12.5" cx="12.5" cy="12.5" class="cell_$add$/Users/ratko.pilipovic/Documents/Repositories/Digital_design_book/images/rtl/counter4.sv:9$2"/>
-    <line x1="7.5" x2="17.5" y1="12.5" y2="12.5" class="cell_$add$/Users/ratko.pilipovic/Documents/Repositories/Digital_design_book/images/rtl/counter4.sv:9$2"/>
-    <line x1="12.5" x2="12.5" y1="7.5" y2="17.5" class="cell_$add$/Users/ratko.pilipovic/Documents/Repositories/Digital_design_book/images/rtl/counter4.sv:9$2"/>
+    <circle r="12.5" cx="12.5" cy="12.5" class="cell_$add$/home/ratkop/Documents/Repositories/course-material/images/rtl/counter4.sv:9$2"/>
+    <line x1="7.5" x2="17.5" y1="12.5" y2="12.5" class="cell_$add$/home/ratkop/Documents/Repositories/course-material/images/rtl/counter4.sv:9$2"/>
+    <line x1="12.5" x2="12.5" y1="7.5" y2="17.5" class="cell_$add$/home/ratkop/Documents/Repositories/course-material/images/rtl/counter4.sv:9$2"/>
     <g s:x="3" s:y="5" s:pid="A"/>
     <g s:x="3" s:y="20" s:pid="B"/>
     <g s:x="25" s:y="12.5" s:pid="Y"/>
   </g>
-  <g s:type="generic" transform="translate(227,68)" s:width="30" s:height="40" id="cell_$auto$ff.cc:262:slice$7">
-    <text x="15" y="-4" class="nodelabel cell_$auto$ff.cc:262:slice$7" s:attribute="ref">$sdff</text>
-    <rect width="30" height="60" s:generic="body" class="cell_$auto$ff.cc:262:slice$7"/>
-    <g transform="translate(0,10)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:262:slice$7~CLK">
-      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:262:slice$7">CLK</text>
+  <g s:type="generic" transform="translate(227,68)" s:width="30" s:height="40" id="cell_$auto$ff.cc:337:slice$7">
+    <text x="15" y="-4" class="nodelabel cell_$auto$ff.cc:337:slice$7" s:attribute="ref">$sdff</text>
+    <rect width="30" height="60" s:generic="body" class="cell_$auto$ff.cc:337:slice$7"/>
+    <g transform="translate(0,10)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:337:slice$7~CLK">
+      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:337:slice$7">CLK</text>
     </g>
-    <g transform="translate(0,30)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:262:slice$7~D">
-      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:262:slice$7">D</text>
+    <g transform="translate(0,30)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:337:slice$7~D">
+      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:337:slice$7">D</text>
     </g>
-    <g transform="translate(0,50)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:262:slice$7~SRST">
-      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:262:slice$7">SRST</text>
+    <g transform="translate(0,50)" s:x="0" s:y="10" s:pid="in0" id="port_$auto$ff.cc:337:slice$7~SRST">
+      <text x="-3" y="-4" class="inputPortLabel cell_$auto$ff.cc:337:slice$7">SRST</text>
     </g>
-    <g transform="translate(30,10)" s:x="30" s:y="10" s:pid="out0" id="port_$auto$ff.cc:262:slice$7~Q">
-      <text x="5" y="-4" style="fill:#000; stroke:none" class="cell_$auto$ff.cc:262:slice$7">Q</text>
+    <g transform="translate(30,10)" s:x="30" s:y="10" s:pid="out0" id="port_$auto$ff.cc:337:slice$7~Q">
+      <text x="5" y="-4" style="fill:#000; stroke:none" class="cell_$auto$ff.cc:337:slice$7">Q</text>
     </g>
   </g>
   <g s:type="inputExt" transform="translate(137,33)" s:width="30" s:height="20" id="cell_clk">

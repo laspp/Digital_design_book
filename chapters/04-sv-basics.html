@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.7.31">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>4&nbsp; SystemVerilog Basics – Designing a RISC-V SoC</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -79,10 +73,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-467c603866d931062acf9dde62877a13.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -353,14 +347,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="anatomy-of-a-module" class="level2" data-number="4.5">
 <h2 data-number="4.5" class="anchored" data-anchor-id="anatomy-of-a-module"><span class="header-section-number">4.5</span> Anatomy of a module</h2>
 <p>Every piece of hardware in SystemVerilog lives inside a <strong>module</strong>. The keywords <code>module</code> and <code>endmodule</code> mark the beginning and the end of the description, and a module can instantiate other modules inside it, which is how hierarchical designs are built.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> and_or (</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> and_or (</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> a, b, c,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> y</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>);</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> t;                 <span class="co">// internal signal</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> t = a &amp; b;</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> y = t | c;</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The module name is followed by a <strong>port list</strong> in parentheses. Each port has a <em>direction</em>, a <em>type</em>, and a name. Several ports of the same direction and type can share one declaration, as <code>a, b, c</code> do above. After the semicolon comes the module body: declarations of internal signals such as <code>t</code>, and the statements that describe behavior, here two continuous assignments. <a href="#fig-and-or" class="quarto-xref">Figure&nbsp;<span>4.1</span></a> shows what a synthesis tool builds from this module.</p>
 <table class="caption-top table">
 <colgroup>
@@ -551,32 +545,32 @@ Figure&nbsp;4.1: The <code>and_or</code> module, drawn by Yosys directly from th
 <section id="writing-constants" class="level2" data-number="4.9">
 <h2 data-number="4.9" class="anchored" data-anchor-id="writing-constants"><span class="header-section-number">4.9</span> Writing constants</h2>
 <p>A SystemVerilog constant carries its own width, written as <code>&lt;size&gt;'&lt;base&gt;&lt;value&gt;</code>, where <code>&lt;size&gt;</code> is the number of bits and <code>&lt;base&gt;</code> is <code>b</code>, <code>o</code>, <code>d</code> or <code>h</code> for binary, octal, decimal and hexadecimal. The four constants below all have the value ten, but different widths:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] binary_num  = <span class="bn">4'b1010</span>;  <span class="co">// 4-bit binary 1010</span></span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] binary_num  = <span class="bn">4'b1010</span>;  <span class="co">// 4-bit binary 1010</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">5</span>:<span class="dv">0</span>] octal_num   = <span class="bn">6'o12</span>;    <span class="co">// 6-bit octal 12</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">7</span>:<span class="dv">0</span>] decimal_num = <span class="bn">8'd10</span>;    <span class="co">// 8-bit decimal 10</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">7</span>:<span class="dv">0</span>] hex_num     = <span class="bn">8'hA</span>;     <span class="co">// 8-bit hexadecimal A</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">7</span>:<span class="dv">0</span>] hex_num     = <span class="bn">8'hA</span>;     <span class="co">// 8-bit hexadecimal A</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Underscores are ignored and are there for readability, so <code>8'b1010_1010</code> is easier to read than <code>8'b10101010</code>. The characters <code>x</code> and <code>z</code> are allowed in a constant: <code>4'b10xz</code>.</p>
 <p>Always write the size. A bare number such as <code>10</code> is a <strong>32-bit signed decimal</strong>, and silently mixing it with narrower signals is a common source of width mismatches. If the value is bigger than the stated size, the extra upper bits are discarded: <code>4'd20</code> is <code>4'b0100</code>. To fill every bit of a signal of any width with the same value, use the unsized forms <code>'0</code> and <code>'1</code>.</p>
 </section>
 <section id="continuous-assignment" class="level2" data-number="4.10">
 <h2 data-number="4.10" class="anchored" data-anchor-id="continuous-assignment"><span class="header-section-number">4.10</span> Continuous assignment</h2>
 <p>The <code>assign</code> keyword connects a value to a signal <strong>continuously</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> out = a &amp; b;   <span class="co">// out always equals a AND b</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> out = a &amp; b;   <span class="co">// out always equals a AND b</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Whenever <code>a</code> or <code>b</code> changes, <code>out</code> changes with it. A continuous assignment is not a step in a program. It is a gate that exists as long as the circuit is powered, and it models combinational logic.</p>
 </section>
 <section id="not-like-assignment-in-c" class="level2" data-number="4.11">
 <h2 data-number="4.11" class="anchored" data-anchor-id="not-like-assignment-in-c"><span class="header-section-number">4.11</span> Not like assignment in C</h2>
 <p>A programming language would read the next two lines top to bottom:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> b = a;</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = b;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> b = a;</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = b;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>First copy <code>a</code> into <code>b</code>, then copy <code>b</code> into <code>c</code>. In hardware both lines exist at the same time as two connections, and <code>b</code> is just the wire between them. A synthesis tool removes it and infers <code>assign c = a</code>. For the same reason, swapping the two lines changes nothing.</p>
 </section>
 <section id="two-drivers-on-one-net" class="level2" data-number="4.12">
 <h2 data-number="4.12" class="anchored" data-anchor-id="two-drivers-on-one-net"><span class="header-section-number">4.12</span> Two drivers on one net</h2>
 <p>The second example is the one that breaks C intuition completely:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">wire</span> c;</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> c;</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = a;</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = b;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = b;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>In a programming language the second line would overwrite the first, and <code>c</code> would end up with the value of <code>b</code>. In hardware, both lines are always active, so the net <code>c</code> is <strong>driven by two sources at once</strong>. When <code>a</code> and <code>b</code> agree, nothing is wrong. When they differ, one source pulls the wire high while the other pulls it low, and the simulator reports an unknown value <code>X</code> (<a href="#fig-two-drivers" class="quarto-xref">Figure&nbsp;<span>4.2</span></a>). In a real circuit, this is a short circuit between two gate outputs.</p>
 <div id="fig-two-drivers" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
@@ -654,22 +648,22 @@ Figure&nbsp;4.2: A net driven by <code>a</code> and by <code>b</code>: whenever 
 <section id="bitwise-vs.-logical" class="level2" data-number="4.14">
 <h2 data-number="4.14" class="anchored" data-anchor-id="bitwise-vs.-logical"><span class="header-section-number">4.14</span> Bitwise vs.&nbsp;logical</h2>
 <p>The bitwise operators <code>&amp;</code>, <code>|</code>, <code>^</code> and <code>~</code> work on each bit position separately, and the result is as wide as the operands. The logical operators <code>&amp;&amp;</code>, <code>||</code> and <code>!</code> treat each whole operand as a single truth value (zero is false, anything else is true) and return one bit.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] a = <span class="bn">4'b1010</span>;</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] a = <span class="bn">4'b1010</span>;</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] b = <span class="bn">4'b0101</span>;</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> x = a &amp; b;     <span class="co">// 4'b0000: no bit position has a 1 in both</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> y = a &amp;&amp; b;    <span class="co">// 1'b1: a is non-zero, and so is b</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> y = a &amp;&amp; b;    <span class="co">// 1'b1: a is non-zero, and so is b</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Both lines look like “a AND b”, and they give opposite answers. For single-bit signals the two are interchangeable, which is why mixing them up usually goes unnoticed until the signals become vectors. Use <code>&amp;</code> and <code>|</code> for data, and <code>&amp;&amp;</code> and <code>||</code> only in conditions.</p>
 </section>
 <section id="reduction-relational-and-shift-operators" class="level2" data-number="4.15">
 <h2 data-number="4.15" class="anchored" data-anchor-id="reduction-relational-and-shift-operators"><span class="header-section-number">4.15</span> Reduction, relational and shift operators</h2>
 <p>A <strong>reduction</strong> operator is a bitwise operator written with a single operand. It combines all the bits of a vector into one:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">5</span>:<span class="dv">0</span>] a = <span class="bn">6'b101010</span>;</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">5</span>:<span class="dv">0</span>] a = <span class="bn">6'b101010</span>;</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> c, d, e;</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = &amp;a;   <span class="co">// AND of all bits: 0</span></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> d = |a;   <span class="co">// OR of all bits: 1</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> e = ^a;   <span class="co">// XOR of all bits: 1, the parity of a</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> e = ^a;   <span class="co">// XOR of all bits: 1, the parity of a</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Reduction operators are a compact way to write a wide gate: <code>&amp;a</code> is a six-input AND, and <code>^a</code> is a parity tree.</p>
 <p>The <strong>relational</strong> operators <code>== != &lt; &lt;= &gt; &gt;=</code> compare two values and return one bit. <code>==</code> gives <code>X</code> if either operand has an <code>X</code> or <code>Z</code> bit. There is also a case-equality operator, <code>===</code>, that compares <code>X</code> and <code>Z</code> literally, but it exists only for simulation and is not synthesizable. The <strong>shift</strong> operators move the bits of a vector: <code>&lt;&lt;</code> and <code>&gt;&gt;</code> shift in zeros, and <code>&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;</code> are the arithmetic versions, which keep the sign bit of a signed operand when shifting right.</p>
 <p>Operator precedence mostly follows C, but you should not rely on remembering it. Add parentheses.</p>
@@ -678,20 +672,20 @@ Figure&nbsp;4.2: A net driven by <code>a</code> and by <code>b</code>: whenever 
 <h2 data-number="4.16" class="anchored" data-anchor-id="conditional-operator-concatenation-and-replication"><span class="header-section-number">4.16</span> Conditional operator, concatenation and replication</h2>
 <p>The <strong>conditional</strong> operator <code>cond ? x : y</code> selects between two values. In hardware it is a multiplexer: both <code>x</code> and <code>y</code> exist, and <code>cond</code> chooses which one reaches the output. It can be nested, which is how we build larger multiplexers below.</p>
 <p>The <strong>concatenation</strong> operator <code>{}</code> joins bits, vectors or expressions into one longer vector. The <strong>replication</strong> operator <code>{n{...}}</code> repeats a value <code>n</code> times:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] a = <span class="bn">4'b1010</span>;</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] a = <span class="bn">4'b1010</span>;</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] b = <span class="bn">4'b0101</span>;</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">7</span>:<span class="dv">0</span>] c;</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] d = <span class="bn">2'b11</span>;</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> [<span class="dv">5</span>:<span class="dv">0</span>] e;</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> c = {a, b};     <span class="co">// 8'b10100101</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> e = {<span class="dv">3</span>{d}};     <span class="co">// 6'b111111</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> e = {<span class="dv">3</span>{d}};     <span class="co">// 6'b111111</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Concatenation is also valid on the left of an assignment, which we use below to capture the carry of an adder.</p>
 </section>
 <section id="example-4-bit-41-multiplexer" class="level2" data-number="4.17">
 <h2 data-number="4.17" class="anchored" data-anchor-id="example-4-bit-41-multiplexer"><span class="header-section-number">4.17</span> Example: 4-bit 4:1 multiplexer</h2>
 <p>A 4-bit, 4-input multiplexer passes one of four 4-bit inputs to the output, chosen by a 2-bit select signal. Built from nested conditional operators:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux4to1 (</span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux4to1 (</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] in0, in1, in2, in3,   <span class="co">// four 4-bit data inputs</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel,                  <span class="co">// 2-bit select</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] out                   <span class="co">// 4-bit output</span></span>
@@ -700,7 +694,7 @@ Figure&nbsp;4.2: A net driven by <code>a</code> and by <code>b</code>: whenever 
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>               (sel == <span class="bn">2'b01</span>) ? in1 :</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>               (sel == <span class="bn">2'b10</span>) ? in2 :</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                                in3;</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Each <code>?:</code> tests one value of <code>sel</code> and, if it does not match, hands the decision to the next. The last branch, <code>in3</code>, is the default that is taken when no earlier condition is true, so there is always a value for <code>out</code>. The synthesized result is in <a href="#fig-mux4to1" class="quarto-xref">Figure&nbsp;<span>4.3</span></a>.</p>
 <div id="fig-mux4to1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
@@ -716,7 +710,7 @@ Figure&nbsp;4.3: The <code>mux4to1</code> module as drawn by Yosys.
 <section id="example-4-bit-adder" class="level2" data-number="4.18">
 <h2 data-number="4.18" class="anchored" data-anchor-id="example-4-bit-adder"><span class="header-section-number">4.18</span> Example: 4-bit adder</h2>
 <p>The adder adds two 4-bit numbers and produces a 4-bit sum and a carry-out bit. We build it exactly as on paper: a half adder for the least significant bit, then a full adder for each following bit, with an internal carry wire <code>c1</code>, <code>c2</code>, <code>c3</code> passed from one stage to the next.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> adder4bit (</span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> adder4bit (</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] a, b,</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] <span class="ot">sum</span>,</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>       carry_out</span>
@@ -736,9 +730,9 @@ Figure&nbsp;4.3: The <code>mux4to1</code> module as drawn by Yosys.
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> <span class="ot">sum</span>[<span class="dv">3</span>]    = a[<span class="dv">3</span>] ^ b[<span class="dv">3</span>] ^ c3;</span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> carry_out = (a[<span class="dv">3</span>] &amp; b[<span class="dv">3</span>]) | (c3 &amp; (a[<span class="dv">3</span>] ^ b[<span class="dv">3</span>]));</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Writing out the gate equations is useful once, to see what an adder is. In practice we let the tool do it. The <code>+</code> operator, with a concatenation on the left to catch the carry, describes the same adder in one line:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> {carry_out, <span class="ot">sum</span>} = a + b;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> {carry_out, <span class="ot">sum</span>} = a + b;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The 5-bit result of <code>a + b</code> is split across the 1-bit <code>carry_out</code> and the 4-bit <code>sum</code>. <a href="#fig-adder-gates" class="quarto-xref">Figure&nbsp;<span>4.4</span></a> shows the hand-built carry chain, and <a href="#fig-adder-plus" class="quarto-xref">Figure&nbsp;<span>4.5</span></a> the single adder block that a synthesis tool is free to map onto the dedicated carry logic of an FPGA.</p>
 <div id="fig-adder-gates" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
@@ -821,14 +815,13 @@ Figure&nbsp;4.5: The same adder written with the <code>+</code> operator.
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
