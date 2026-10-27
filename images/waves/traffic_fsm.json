@@ -1,0 +1,15 @@
+{ "signal": [
+    { "name": "clk",     "wave": "p....................." },
+    { "name": "reset",   "wave": "10....................", "phase": 0.5 },
+    { "name": "Tick",    "wave": "0101010101010101010101" },
+    { "name": "MsCount", "wave": "=.=.=.=.=...=.=.=.=.=.",
+      "data": ["0","1","2","3","0","1","2","0","1","0"] },
+    { "name": "State",   "wave": "=.......=.=.....=...=.",
+      "data": ["RED","RY","GREEN","YELLOW","RED"] },
+    {},
+    { "name": "Red",     "wave": "1.........0.........1." },
+    { "name": "Yellow",  "wave": "0.......1.0.....1...0." },
+    { "name": "Green",   "wave": "0.........1.....0....." }
+  ],
+  "head": { "text": "traffic_fsm, scaled down: Tick every 2 cycles; RED 4, RED_YELLOW (RY) 1, GREEN 3, YELLOW 2 ticks", "tock": 0 }
+}

@@ -1,0 +1,10 @@
+{ "signal": [
+    { "name": "clk",    "wave": "p......." },
+    { "name": "Button", "wave": "0.10..10" },
+    { "name": "State",  "wave": "=..=...=", "data": ["UP","DOWN","UP"] },
+    {},
+    { "name": "Push",   "wave": "0.10...." },
+    { "name": "Pull",   "wave": "0.....10" }
+  ],
+  "head": { "text": "blinds_fsm: Mealy outputs respond in the same cycle as Button", "tock": 0 }
+}

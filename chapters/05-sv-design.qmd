@@ -448,13 +448,13 @@ with a synchronous reset, and the feedback wire (@fig-counter-rtl).
 So why bother with the second form? Because it separates two questions:
 *what is the next value?* (combinational logic) and *when do we store it?*
 (the register). For a counter the answer to the first is trivial, and way 1 is
-perfectly fine. For anything bigger, such as a state machine or a pipeline
-stage, the next-state logic can be dozens of lines of `if` and `case`, and
-keeping it out of the clocked block makes it far easier to read and to
-check. The HIPV SoC uses this idea in its 64-bit timer counter, `cntr`,
-which computes `plus_one = count + 1` with an `assign` and feeds it to a
-register cell with an enable and a clear, instead of writing the increment
-inside the clocked block.
+perfectly fine. For anything bigger, such as a state machine (see the
+[next chapter](05b-fsm.qmd)) or a pipeline stage, the next-state logic can be
+dozens of lines of `if` and `case`, and keeping it out of the clocked block
+makes it far easier to read and to check. The HIPV SoC uses this idea in its
+64-bit timer counter, `cntr`, which computes `plus_one = count + 1` with an
+`assign` and feeds it to a register cell with an enable and a clear, instead
+of writing the increment inside the clocked block.
 :::
 
 ## Combinational logic

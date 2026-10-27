@@ -14,6 +14,7 @@ book:
     - chapters/03-fpga-basics.qmd
     - chapters/04-sv-basics.qmd
     - chapters/05-sv-design.qmd
+    - chapters/05b-fsm.qmd
     - chapters/06-pipeline-structure.qmd
     - chapters/07-pipeline-hazards.qmd
     - chapters/08-memory.qmd
