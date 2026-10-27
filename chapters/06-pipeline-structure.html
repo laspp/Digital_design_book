@@ -2,17 +2,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.31">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>6&nbsp; Five-Stage Pipeline — Structure – Designing a RISC-V SoC</title>
+<title>7&nbsp; Five-Stage Pipeline — Structure – Designing a RISC-V SoC</title>
 <style>
-code{white-space: pre-wrap;}
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -59,7 +65,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
-  margin-bottom: 0em;
 }
 .hanging-indent div.csl-entry {
   margin-left:2em;
@@ -86,17 +91,17 @@ div.csl-indent {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../chapters/07-pipeline-hazards.html" rel="next">
-<link href="../chapters/05-sv-design.html" rel="prev">
+<link href="../chapters/05b-fsm.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-467c603866d931062acf9dde62877a13.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -137,7 +142,7 @@ div.csl-indent {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06-pipeline-structure.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06-pipeline-structure.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -203,32 +208,38 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -243,13 +254,13 @@ div.csl-indent {
   <ul>
   <li><a href="#sec-pipeline-structure" id="toc-sec-pipeline-structure" class="nav-link active" data-scroll-target="#sec-pipeline-structure">Five-stage pipeline</a>
   <ul class="collapse">
-  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">6.1</span> Goal for this week</a></li>
-  <li><a href="#modules-for-this-week" id="toc-modules-for-this-week" class="nav-link" data-scroll-target="#modules-for-this-week"><span class="header-section-number">6.2</span> Modules for this week</a></li>
-  <li><a href="#example-pipeline_pkg.sv" id="toc-example-pipeline_pkg.sv" class="nav-link" data-scroll-target="#example-pipeline_pkg.sv"><span class="header-section-number">6.3</span> Example: <code>pipeline_pkg.sv</code></a>
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">7.1</span> Goal for this week</a></li>
+  <li><a href="#modules-for-this-week" id="toc-modules-for-this-week" class="nav-link" data-scroll-target="#modules-for-this-week"><span class="header-section-number">7.2</span> Modules for this week</a></li>
+  <li><a href="#example-pipeline_pkg.sv" id="toc-example-pipeline_pkg.sv" class="nav-link" data-scroll-target="#example-pipeline_pkg.sv"><span class="header-section-number">7.3</span> Example: <code>pipeline_pkg.sv</code></a>
   <ul class="collapse">
-  <li><a href="#why-a-struct-instead-of-individual-signals" id="toc-why-a-struct-instead-of-individual-signals" class="nav-link" data-scroll-target="#why-a-struct-instead-of-individual-signals"><span class="header-section-number">6.3.1</span> Why a struct instead of individual signals</a></li>
+  <li><a href="#why-a-struct-instead-of-individual-signals" id="toc-why-a-struct-instead-of-individual-signals" class="nav-link" data-scroll-target="#why-a-struct-instead-of-individual-signals"><span class="header-section-number">7.3.1</span> Why a struct instead of individual signals</a></li>
   </ul></li>
-  <li><a href="#next-step" id="toc-next-step" class="nav-link" data-scroll-target="#next-step"><span class="header-section-number">6.4</span> Next step</a></li>
+  <li><a href="#next-step" id="toc-next-step" class="nav-link" data-scroll-target="#next-step"><span class="header-section-number">7.4</span> Next step</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -259,7 +270,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></h1>
+<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></h1>
 </div>
 
 
@@ -278,8 +289,8 @@ div.csl-indent {
 
 <section id="sec-pipeline-structure" class="level1 unnumbered">
 <h1 class="unnumbered">Five-stage pipeline</h1>
-<section id="goal-for-this-week" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">6.1</span> Goal for this week</h2>
+<section id="goal-for-this-week" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">7.1</span> Goal for this week</h2>
 <ul>
 <li>Translate the well-known pipeline theory (IF/ID/EX/MEM/WB) into SystemVerilog</li>
 <li>Apply SystemVerilog syntax immediately on a real, motivating example</li>
@@ -287,8 +298,8 @@ div.csl-indent {
 </ul>
 <p>We implement pipeline registers as separate modules for two reasons. First, pedagogically: each such register is a direct, visible example of a D flip-flop (DFF) in the context of a real processor, which was an explicit goal of the second part of the course. Second, practically: separate modules with a fixed interface (see <code>pipeline_pkg.sv</code>) allow us to substitute an individual stage with a reference (“golden”) implementation in the jigsaw testing methodology — discussed in more detail in the verification chapter. This five-stage IF/ID/EX/MEM/WB structure follows the classic pipelined datapath described by <span class="citation" data-cites="patterson2017comporg">Patterson and Hennessy (<a href="#ref-patterson2017comporg" role="doc-biblioref">2017</a>)</span>.</p>
 </section>
-<section id="modules-for-this-week" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="modules-for-this-week"><span class="header-section-number">6.2</span> Modules for this week</h2>
+<section id="modules-for-this-week" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="modules-for-this-week"><span class="header-section-number">7.2</span> Modules for this week</h2>
 <ul>
 <li><code>if_stage</code>, <code>if_id_reg</code></li>
 <li><code>id_stage</code> (<code>regfile</code>, <code>imm_gen</code>, <code>decoder</code>)</li>
@@ -303,9 +314,9 @@ div.csl-indent {
 </figure>
 </div>
 </section>
-<section id="example-pipeline_pkg.sv" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="example-pipeline_pkg.sv"><span class="header-section-number">6.3</span> Example: <code>pipeline_pkg.sv</code></h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> pipeline_pkg;</span>
+<section id="example-pipeline_pkg.sv" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="example-pipeline_pkg.sv"><span class="header-section-number">7.3</span> Example: <code>pipeline_pkg.sv</code></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> pipeline_pkg;</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] {</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    ALU_ADD, ALU_SUB, ALU_AND, ALU_OR, ALU_XOR,</span>
@@ -324,21 +335,21 @@ div.csl-indent {
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] wb_sel;</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  } wb_ctrl_t;</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<section id="why-a-struct-instead-of-individual-signals" class="level3" data-number="6.3.1">
-<h3 data-number="6.3.1" class="anchored" data-anchor-id="why-a-struct-instead-of-individual-signals"><span class="header-section-number">6.3.1</span> Why a struct instead of individual signals</h3>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="why-a-struct-instead-of-individual-signals" class="level3" data-number="7.3.1">
+<h3 data-number="7.3.1" class="anchored" data-anchor-id="why-a-struct-instead-of-individual-signals"><span class="header-section-number">7.3.1</span> Why a struct instead of individual signals</h3>
 <p><code>typedef struct packed</code> is standard synthesizable SystemVerilog <span class="citation" data-cites="ieee1800sv">(<a href="#ref-ieee1800sv" role="doc-biblioref">IEEE 2017</a>)</span>, so this pattern is portable across the tools you will use this semester.</p>
 <p>An alternative to the approach above would be for each control signal (<code>mem_read</code>, <code>mem_write</code>, <code>reg_write</code>, …) to travel through the pipeline as a separate wire and a separate field in every pipeline register. This quickly becomes unwieldy as the number of control signals grows — every new signal requires a port change on every intermediate register. Using a <code>typedef struct packed</code> instead, we define a single type that a pipeline register carries as a whole; adding a new field to the struct does not require changing the register’s ports.</p>
 </section>
 </section>
-<section id="next-step" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="next-step"><span class="header-section-number">6.4</span> Next step</h2>
+<section id="next-step" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="next-step"><span class="header-section-number">7.4</span> Next step</h2>
 <p>The next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.</p>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-ieee1800sv" class="csl-entry" role="listitem">
-IEEE. 2017. <span>“IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.”</span>
+IEEE. 2017. <em>IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language</em>.
 </div>
 <div id="ref-patterson2017comporg" class="csl-entry" role="listitem">
 Patterson, David A., and John L. Hennessy. 2017. <em>Computer Organization and Design RISC-v Edition: The Hardware Software Interface</em>. Morgan Kaufmann.
@@ -399,13 +410,14 @@ Patterson, David A., and John L. Hennessy. 2017. <em>Computer Organization and D
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
@@ -749,13 +761,13 @@ Patterson, David A., and John L. Hennessy. 2017. <em>Computer Organization and D
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/05-sv-design.html" class="pagination-link" aria-label="Designing with SystemVerilog">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span>
+      <a href="../chapters/05b-fsm.html" class="pagination-link" aria-label="Finite State Machines">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
       <a href="../chapters/07-pipeline-hazards.html" class="pagination-link" aria-label="Five-Stage Pipeline — Hazards">
-        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
