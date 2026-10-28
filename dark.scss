@@ -1,0 +1,12 @@
+/*-- scss:defaults --*/
+$link-color: #7FB3D5;   // lighter version of the book's #1A5276 accent
+
+/*-- scss:rules --*/
+// Figures (schemdraw blocks, waveforms, RTL schematics, photos) are drawn
+// with dark ink on a transparent background, so give them a light card.
+main img,
+main svg.figure-img {
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  padding: 6px;
+}
