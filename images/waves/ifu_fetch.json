@@ -1,0 +1,77 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p.........."
+  },
+  {
+   "name": "State",
+   "wave": "=.==..=.===",
+   "data": [
+    "REQUEST",
+    "WAIT_RESP",
+    "DONE",
+    "REQUEST",
+    "WAIT_RESP",
+    "DONE",
+    "REQUEST"
+   ]
+  },
+  {},
+  {
+   "name": "ObiReqF",
+   "wave": "1.0...1.0.1"
+  },
+  {
+   "name": "ObiGntF",
+   "wave": "010....10.."
+  },
+  {
+   "name": "ObiRvalidF",
+   "wave": "0.10....10."
+  },
+  {
+   "name": "ReadyD",
+   "wave": "1..0.1....."
+  },
+  {},
+  {
+   "name": "InstrEnF",
+   "wave": "0.10....10."
+  },
+  {
+   "name": "ValidF",
+   "wave": "0..1..0..10"
+  },
+  {
+   "name": "PCEnF",
+   "wave": "0....10..10"
+  },
+  {},
+  {
+   "name": "PCF",
+   "wave": "=.....=...=",
+   "data": [
+    "0x0",
+    "0x4",
+    "0x8"
+   ]
+  },
+  {
+   "name": "InstrF",
+   "wave": "=..=.....=.",
+   "data": [
+    "0",
+    "I0",
+    "I1"
+   ]
+  }
+ ],
+ "head": {
+  "text": "Two fetches, with Decode stalling the first",
+  "tock": 1
+ },
+ "config": {
+  "hscale": 3
+ }
+}

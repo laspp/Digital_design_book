@@ -362,9 +362,9 @@ set of process steps for both transistor types.
 - Start with a bare silicon wafer
 - Oxidation: grow a thin SiO2 layer over the whole wafer
 - Photoresist coating: spin on a light-sensitive polymer
-  - **Negative** resist (the default): becomes soluble where light hits
+  - **Positive** resist (the default): becomes soluble where light hits
     it
-  - **Positive** resist: the opposite
+  - **Negative** resist: the opposite
 - Stepper exposure: a glass mask with the pattern is aligned over the
   wafer, and UV light exposes it through the mask's transparent regions
 - Development and baking: dissolve away the exposed (or unexposed)

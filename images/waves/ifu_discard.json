@@ -1,0 +1,80 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p........"
+  },
+  {
+   "name": "State",
+   "wave": "==..==..=",
+   "data": [
+    "REQUEST",
+    "WAIT_RESP",
+    "REQUEST",
+    "WAIT_RESP",
+    "DONE"
+   ]
+  },
+  {},
+  {
+   "name": "ObiReqF",
+   "wave": "10..10..."
+  },
+  {
+   "name": "ObiGntF",
+   "wave": "10..10..."
+  },
+  {
+   "name": "PCSrcE",
+   "wave": "010......"
+  },
+  {
+   "name": "DiscardF",
+   "wave": "0.1.0...."
+  },
+  {
+   "name": "ObiRvalidF",
+   "wave": "0..10..10"
+  },
+  {
+   "name": "ObiRdataF",
+   "wave": "x..=x..=x",
+   "data": [
+    "I(A)",
+    "I(T)"
+   ]
+  },
+  {},
+  {
+   "name": "InstrEnF",
+   "wave": "0......10"
+  },
+  {
+   "name": "ValidF",
+   "wave": "0.......1"
+  },
+  {
+   "name": "PCF",
+   "wave": "=.=......",
+   "data": [
+    "A",
+    "T"
+   ]
+  },
+  {
+   "name": "InstrF",
+   "wave": "=.......=",
+   "data": [
+    "0",
+    "I(T)"
+   ]
+  }
+ ],
+ "head": {
+  "text": "A redirect with a response outstanding",
+  "tock": 1
+ },
+ "config": {
+  "hscale": 3
+ }
+}

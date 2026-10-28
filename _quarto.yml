@@ -16,6 +16,7 @@ book:
     - chapters/05-sv-design.qmd
     - chapters/05b-fsm.qmd
     - chapters/06-pipeline-structure.qmd
+    - chapters/06b-ifu.qmd
     - chapters/07-pipeline-hazards.qmd
     - chapters/08-memory.qmd
     - chapters/09-cocotb-verification.qmd

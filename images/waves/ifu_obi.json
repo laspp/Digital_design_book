@@ -1,0 +1,41 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p........"
+  },
+  {
+   "name": "ObiReqF",
+   "wave": "1.0.1.0.1"
+  },
+  {
+   "name": "ObiAddrF",
+   "wave": "=...=...=",
+   "data": [
+    "0x0",
+    "0x4",
+    "0x8"
+   ]
+  },
+  {
+   "name": "ObiGntF",
+   "wave": "010..10.."
+  },
+  {
+   "name": "ObiRvalidF",
+   "wave": "0.10..10."
+  },
+  {
+   "name": "ObiRdataF",
+   "wave": "x.=x..=x.",
+   "data": [
+    "I0",
+    "I1"
+   ]
+  }
+ ],
+ "head": {
+  "text": "Two OBI read transactions",
+  "tock": 1
+ }
+}

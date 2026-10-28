@@ -1,0 +1,39 @@
+{
+ "signal": [
+  {
+   "name": "clk",
+   "wave": "p............."
+  },
+  {
+   "name": "ValidF",
+   "wave": "0..1..0..10..1"
+  },
+  {
+   "name": "ReadyD",
+   "wave": "1..0.1........"
+  },
+  {
+   "name": "InstrF",
+   "wave": "=..=.....=...=",
+   "data": [
+    "0",
+    "I0",
+    "I1",
+    "I2"
+   ]
+  },
+  {
+   "name": "PCF",
+   "wave": "=.....=...=...",
+   "data": [
+    "0x0",
+    "0x4",
+    "0x8"
+   ]
+  }
+ ],
+ "head": {
+  "text": "IFU to Decode: the valid/ready handshake",
+  "tock": 1
+ }
+}
