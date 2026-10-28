@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>8&nbsp; Instruction fetch unit – Designing a RISC-V SoC</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/07-pipeline-hazards.html" rel="next">
+<link href="../chapters/06-pipeline-structure.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-d3f7f8e73c8d287b30bcf59c2b563615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06b-ifu.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-ifu" id="toc-sec-ifu" class="nav-link active" data-scroll-target="#sec-ifu">Instruction fetch unit</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">8.1</span> Goal for this week</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">8.2</span> Introduction</a></li>
+  <li><a href="#interface-of-the-ifu" id="toc-interface-of-the-ifu" class="nav-link" data-scroll-target="#interface-of-the-ifu"><span class="header-section-number">8.3</span> Interface of the IFU</a>
+  <ul class="collapse">
+  <li><a href="#handshake-with-decode" id="toc-handshake-with-decode" class="nav-link" data-scroll-target="#handshake-with-decode"><span class="header-section-number">8.3.1</span> Handshake with Decode</a></li>
+  <li><a href="#redirect-from-execute" id="toc-redirect-from-execute" class="nav-link" data-scroll-target="#redirect-from-execute"><span class="header-section-number">8.3.2</span> Redirect from Execute</a></li>
+  <li><a href="#stage-outputs" id="toc-stage-outputs" class="nav-link" data-scroll-target="#stage-outputs"><span class="header-section-number">8.3.3</span> Stage outputs</a></li>
+  <li><a href="#port-to-instruction-memory" id="toc-port-to-instruction-memory" class="nav-link" data-scroll-target="#port-to-instruction-memory"><span class="header-section-number">8.3.4</span> Port to instruction memory</a></li>
+  </ul></li>
+  <li><a href="#structure-of-the-ifu" id="toc-structure-of-the-ifu" class="nav-link" data-scroll-target="#structure-of-the-ifu"><span class="header-section-number">8.4</span> Structure of the IFU</a>
+  <ul class="collapse">
+  <li><a href="#the-building-blocks" id="toc-the-building-blocks" class="nav-link" data-scroll-target="#the-building-blocks"><span class="header-section-number">8.4.1</span> The building blocks</a></li>
+  <li><a href="#the-ifu-in-systemverilog" id="toc-the-ifu-in-systemverilog" class="nav-link" data-scroll-target="#the-ifu-in-systemverilog"><span class="header-section-number">8.4.2</span> The IFU in SystemVerilog</a></li>
+  </ul></li>
+  <li><a href="#sec-ifu-ctrl" id="toc-sec-ifu-ctrl" class="nav-link" data-scroll-target="#sec-ifu-ctrl"><span class="header-section-number">8.5</span> The IFU controller</a>
+  <ul class="collapse">
+  <li><a href="#the-states" id="toc-the-states" class="nav-link" data-scroll-target="#the-states"><span class="header-section-number">8.5.1</span> The states</a></li>
+  <li><a href="#sec-ifu-discard" id="toc-sec-ifu-discard" class="nav-link" data-scroll-target="#sec-ifu-discard"><span class="header-section-number">8.5.2</span> The discard flag</a></li>
+  <li><a href="#transitions" id="toc-transitions" class="nav-link" data-scroll-target="#transitions"><span class="header-section-number">8.5.3</span> Transitions</a></li>
+  <li><a href="#the-controller-in-systemverilog" id="toc-the-controller-in-systemverilog" class="nav-link" data-scroll-target="#the-controller-in-systemverilog"><span class="header-section-number">8.5.4</span> The controller in SystemVerilog</a></li>
+  <li><a href="#the-outputs" id="toc-the-outputs" class="nav-link" data-scroll-target="#the-outputs"><span class="header-section-number">8.5.5</span> The outputs</a></li>
+  <li><a href="#the-controller-in-the-waveform" id="toc-the-controller-in-the-waveform" class="nav-link" data-scroll-target="#the-controller-in-the-waveform"><span class="header-section-number">8.5.6</span> The controller in the waveform</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">8.6</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-ifu" class="level1 unnumbered">
+<h1 class="unnumbered">Instruction fetch unit</h1>
+<section id="goal-for-this-week" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">8.1</span> Goal for this week</h2>
+<ul>
+<li>Know what the instruction fetch unit (IFU) does, and which other parts of the core it talks to</li>
+<li>Read the IFU interface: the handshake to Decode, the redirect from Execute, and the OBI port to instruction memory</li>
+<li>Build the IFU datapath from generic blocks: <code>flopenr</code>, <code>mux2</code> and <code>adder</code></li>
+<li>Design the IFU controller as an FSM: states, transitions, the discard flag and the outputs</li>
+</ul>
+</section>
+<section id="introduction" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">8.2</span> Introduction</h2>
+<p>The instruction fetch unit is the first stage of the HIPV pipeline (see the overview in the <a href="../chapters/06-pipeline-structure.html">previous chapter</a>). Before the core can execute an instruction, it must fetch it from memory, and which instruction it fetches is determined by the <strong>program counter</strong> (PC), the register that holds the address of the current instruction. RISC-V instructions are 32 bits wide, four bytes, so without jumps the program counter advances by four after every instruction.</p>
+<p>To do this job, the IFU needs five things:</p>
+<ul>
+<li>two <strong>registers</strong>, one that holds the PC and one that holds the fetched instruction;</li>
+<li>an <strong>adder</strong> that computes the address of the next instruction, <code>PC + 4</code>;</li>
+<li>a <strong>multiplexer</strong> that chooses the next PC: the sequential <code>PC + 4</code>, or the target of a jump or taken branch;</li>
+<li>a <strong>port to the instruction memory</strong>, through which it sends the address and receives the instruction;</li>
+<li>a <strong>controller</strong> that decides when each register is loaded, when a request goes to memory, and when the fetched instruction is ready for the next stage.</li>
+</ul>
+<p>The first four form the datapath, and they are built from the generic blocks of the chapter on <a href="../chapters/05-sv-design.html">designing with SystemVerilog</a>. The controller is a finite state machine, and it is where most of the thinking in this chapter goes.</p>
+</section>
+<section id="interface-of-the-ifu" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="interface-of-the-ifu"><span class="header-section-number">8.3</span> Interface of the IFU</h2>
+<p>The ports of the IFU fall into four groups: the handshake with the Decode stage, the redirect from the Execute stage, the stage outputs, and the port to the instruction memory. The suffix of every name says which stage the signal belongs to: <code>F</code> for Fetch, <code>D</code> for Decode, <code>E</code> for Execute.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> ifu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// pipeline handshake and redirect</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ReadyD,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ValidF,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        PCSrcE,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCTargetE,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>            <span class="co">// stage outputs to Decode</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] InstrF,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCF, PCPlus4F,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            <span class="co">// OBI master port to instruction memory</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ObiReqF,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ObiGntF,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiAddrF,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ObiRvalidF,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiRdataF);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="handshake-with-decode" class="level3" data-number="8.3.1">
+<h3 data-number="8.3.1" class="anchored" data-anchor-id="handshake-with-decode"><span class="header-section-number">8.3.1</span> Handshake with Decode</h3>
+<div id="fig-ifu-handshake" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/ifu_handshake.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.1: The handshake between the IFU and Decode. <code>InstrF</code> holds <code>I0</code> from cycle 4 to 9, but it is a valid instruction only while <code>ValidF</code> is high. Decode is busy in cycles 4 and 5 (<code>ReadyD = 0</code>), so <code>I0</code> waits; it is transferred at the end of cycle 6, where both signals are high.
+</figcaption>
+</figure>
+</div>
+<p>The IFU and Decode work at their own pace, so they agree on each transfer with two signals:</p>
+<ul>
+<li><code>ValidF</code> (output) says that the output of the IFU is valid: the bits on <code>InstrF</code> are a fetched instruction, not leftovers from an earlier one or random bits after reset.</li>
+<li><code>ReadyD</code> (input) says that Decode is ready to accept a new instruction.</li>
+</ul>
+<p>An instruction moves from Fetch to Decode at a clock edge where both signals are high. While <code>ValidF</code> is high and <code>ReadyD</code> is low, the IFU keeps its outputs stable and waits. <a href="#fig-ifu-handshake" class="quarto-xref">Figure&nbsp;<span>8.1</span></a> shows both cases. Note that <code>InstrF</code> itself does not tell whether it is valid: between cycles 7 and 9 it still holds <code>I0</code>, which has already been handed over, and only <code>ValidF = 0</code> tells Decode to ignore it. The same pair of signals connects every two neighbouring stages of HIPV, which is why the pipeline is called <em>elastic</em>: a slow stage simply holds back the stages in front of it.</p>
+</section>
+<section id="redirect-from-execute" class="level3" data-number="8.3.2">
+<h3 data-number="8.3.2" class="anchored" data-anchor-id="redirect-from-execute"><span class="header-section-number">8.3.2</span> Redirect from Execute</h3>
+<p>Jumps and branches are resolved in the Execute stage, and Execute tells the IFU about them with two signals:</p>
+<ul>
+<li><code>PCSrcE</code> is one bit: 1 means that a jump or a taken branch has occurred, so the next PC is the target; 0 means normal, sequential execution.</li>
+<li><code>PCTargetE</code> is the 32-bit target address.</li>
+</ul>
+<p><code>PCSrcE</code> lasts exactly one clock cycle. In HIPV it is <code>ValidEReg &amp; ReadyM &amp; (JumpE | JalrE | (BranchE &amp; TakenE))</code>: it is high only in the cycle in which the branch leaves Execute. In that same cycle the instruction in Decode is flushed (its valid bit is gated with <code>~PCSrcE</code>), so in the next cycle Execute holds a bubble and <code>PCSrcE</code> drops back to 0. The IFU must therefore react to the redirect in the cycle it sees it. It cannot look at <code>PCSrcE</code> again later, which is the root of the discard flag (<a href="#sec-ifu-discard" class="quarto-xref"><span>Section 8.5.2</span></a>).</p>
+</section>
+<section id="stage-outputs" class="level3" data-number="8.3.3">
+<h3 data-number="8.3.3" class="anchored" data-anchor-id="stage-outputs"><span class="header-section-number">8.3.3</span> Stage outputs</h3>
+<p>The IFU hands three values to Decode:</p>
+<ul>
+<li><code>InstrF</code>, the fetched instruction;</li>
+<li><code>PCF</code>, the address the instruction was fetched from;</li>
+<li><code>PCPlus4F</code>, the address of the next instruction, <code>PCF + 4</code>.</li>
+</ul>
+<p>The two PC values are not needed in the IFU, but in later stages. Execute adds an offset to <code>PCF</code> to compute the target of a branch or of <code>jal</code>, and <code>auipc</code> adds an immediate to it. <code>PCPlus4F</code> is the return address that <code>jal</code> and <code>jalr</code> write into the destination register. Both travel down the pipeline together with their instruction.</p>
+</section>
+<section id="port-to-instruction-memory" class="level3" data-number="8.3.4">
+<h3 data-number="8.3.4" class="anchored" data-anchor-id="port-to-instruction-memory"><span class="header-section-number">8.3.4</span> Port to instruction memory</h3>
+<div id="fig-ifu-obi" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifu-obi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/ifu_obi.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifu-obi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.2: Two read transactions on the OBI port. In the address phase (cycles 1–2, 5–6) <code>ObiReqF</code> and <code>ObiAddrF</code> are held until the memory grants the request with <code>ObiGntF</code>. In the response phase, at least one cycle later, <code>ObiRvalidF</code> marks the cycle in which <code>ObiRdataF</code> carries the instruction.
+</figcaption>
+</figure>
+</div>
+<p>The IFU reads instructions over the OBI (Open Bus Interface) protocol, which we discuss in detail <a href="https://laspp.github.io/digital_design/22-OBI.html">later in the semester</a>. For now, a simplified view is enough. The IFU only reads, so it uses five signals:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Direction</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ObiReqF</code></td>
+<td>out</td>
+<td>request: the IFU wants to start a read</td>
+</tr>
+<tr class="even">
+<td><code>ObiAddrF</code></td>
+<td>out</td>
+<td>address of the location to read</td>
+</tr>
+<tr class="odd">
+<td><code>ObiGntF</code></td>
+<td>in</td>
+<td>grant: the memory has accepted the request</td>
+</tr>
+<tr class="even">
+<td><code>ObiRvalidF</code></td>
+<td>in</td>
+<td>response valid: <code>ObiRdataF</code> carries the read data</td>
+</tr>
+<tr class="odd">
+<td><code>ObiRdataF</code></td>
+<td>in</td>
+<td>the data read, here an instruction</td>
+</tr>
+</tbody>
+</table>
+<p>Each read, or <em>transaction</em>, has two phases (<a href="#fig-ifu-obi" class="quarto-xref">Figure&nbsp;<span>8.2</span></a>). In the <strong>address phase</strong>, the IFU raises <code>ObiReqF</code> and puts the address on <code>ObiAddrF</code>, and keeps both until the memory answers with <code>ObiGntF</code>. At the edge where <code>ObiReqF</code> and <code>ObiGntF</code> are both high, the memory has taken the address. This is the same valid/ready idea as the handshake with Decode. In the <strong>response phase</strong>, at least one cycle after the grant, the memory raises <code>ObiRvalidF</code> for one cycle, and in that cycle <code>ObiRdataF</code> holds the instruction. Outside that cycle, <code>ObiRdataF</code> is meaningless.</p>
+<p>The memory decides how long each phase takes. In <a href="#fig-ifu-obi" class="quarto-xref">Figure&nbsp;<span>8.2</span></a> it grants after one wait cycle and responds one cycle after the grant, but a slower memory may need more cycles for either. Two properties are important for the controller. First, once the request is granted, the response <em>will</em> come, and the protocol has no way of cancelling it. Second, a response carries no tag that says which request it belongs to: responses come back in the order of the requests. HIPV keeps at most one transaction in flight at a time, so the response always belongs to the last granted request.</p>
+</section>
+</section>
+<section id="structure-of-the-ifu" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="structure-of-the-ifu"><span class="header-section-number">8.4</span> Structure of the IFU</h2>
+<div id="fig-ifu" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ifu.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.3: The IFU: the PC loop (<code>pcmux</code>, <code>pcreg</code>, <code>pcadd4</code>), the instruction register (<code>instrreg</code>) and the controller (<code>ifuctrl</code>).
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ifu" class="quarto-xref">Figure&nbsp;<span>8.3</span></a> shows the IFU. It has three parts.</p>
+<p>The <strong>PC loop</strong> updates the program counter. The multiplexer <code>pcmux</code> chooses the next PC, <code>PCNextF</code>: the sequential <code>PCPlus4F</code> when <code>PCSrcE</code> is 0, and the jump target <code>PCTargetE</code> when it is 1. The register <code>pcreg</code> holds the current PC, <code>PCF</code>. It has an enable, <code>PCEnF</code>, driven by the controller, so the PC changes only when the controller allows it. The adder <code>pcadd4</code> computes <code>PCF + 4</code>. The current PC is also the address of the memory read, so <code>ObiAddrF</code> is simply <code>PCF</code>.</p>
+<p>The <strong>instruction register</strong> <code>instrreg</code> stores the fetched instruction. Its input is the memory data <code>ObiRdataF</code>, and its enable, <code>InstrEnF</code>, is also driven by the controller: the register must capture <code>ObiRdataF</code> in exactly the cycle in which <code>ObiRvalidF</code> says that it is valid.</p>
+<p>The <strong>controller</strong> <code>ifuctrl</code> manages the flow through the unit: it watches the memory, Decode and Execute, and drives the two enables, the memory request and <code>ValidF</code>. It is the subject of <a href="#sec-ifu-ctrl" class="quarto-xref"><span>Section 8.5</span></a>.</p>
+<section id="the-building-blocks" class="level3" data-number="8.4.1">
+<h3 data-number="8.4.1" class="anchored" data-anchor-id="the-building-blocks"><span class="header-section-number">8.4.1</span> The building blocks</h3>
+<p>The datapath uses three generic modules from <code>rtl/generic</code>, which we met in the chapter on <a href="../chapters/05-sv-design.html">designing with SystemVerilog</a>. All three are parameterized by <code>WIDTH</code>, and the IFU uses them with 32 bits.</p>
+<p><code>flopenr</code> is a register with a synchronous reset and an enable. At a rising edge it clears to zero if <code>reset</code> is high, otherwise it loads <code>D</code> if <code>en</code> is high, and otherwise it keeps its value. The missing <code>else</code> branch is what makes it hold. The reset value zero is also the reset vector of HIPV: after reset, the first instruction is fetched from address 0.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> flopenr #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span>             clk, reset, en,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Q);</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) Q &lt;= '<span class="dv">0</span>;</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (en) Q &lt;= D;</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>mux2</code> is a two-input multiplexer: <code>Y</code> is <code>D1</code> when <code>S</code> is 1 and <code>D0</code> when it is 0. It is purely combinational, one continuous assignment with the conditional operator.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux2 #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D0, D1,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span>             S,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Y = S ? D1 : D0;</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>adder</code> adds two numbers. The result has the same width as the operands, so the carry out is dropped. For the PC this is the intended behavior: the address wraps around from <code>0xFFFFFFFC</code> to 0.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> adder #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] A, B,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Y = A + B;</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-ifu-in-systemverilog" class="level3" data-number="8.4.2">
+<h3 data-number="8.4.2" class="anchored" data-anchor-id="the-ifu-in-systemverilog"><span class="header-section-number">8.4.2</span> The IFU in SystemVerilog</h3>
+<p>The body of <code>ifu</code> is purely structural: it is <a href="#fig-ifu" class="quarto-xref">Figure&nbsp;<span>8.3</span></a> written as code, one instance per block, with the ports connected by name. The only internal signals are the next PC and the two enables.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCNextF;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>        PCEnF, InstrEnF;</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// fetch control FSM</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  ifuctrl ctrl<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .ObiGntF</span>(ObiGntF),<span class="dt"> .ObiRvalidF</span>(ObiRvalidF),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>               .ReadyD(ReadyD),<span class="dt"> .PCSrcE</span>(PCSrcE),<span class="dt"> .ObiReqF</span>(ObiReqF),<span class="dt"> .PCEnF</span>(PCEnF),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>               .InstrEnF(InstrEnF),<span class="dt"> .ValidF</span>(ValidF));</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next PC selection: sequential or redirect from Execute</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>)    pcmux<span class="dt">(.D0</span>(PCPlus4F),<span class="dt"> .D1</span>(PCTargetE),<span class="dt"> .S</span>(PCSrcE),<span class="dt"> .Y</span>(PCNextF));</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="co">// PC register</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(PCEnF),<span class="dt"> .D</span>(PCNextF),<span class="dt"> .Q</span>(PCF));</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sequential PC</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  adder #(<span class="dv">32</span>)   pcadd4<span class="dt">(.A</span>(PCF),<span class="dt"> .B</span>(<span class="bn">32'd4</span>),<span class="dt"> .Y</span>(PCPlus4F));</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// fetched instruction register</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) instrreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(InstrEnF),<span class="dt"> .D</span>(ObiRdataF),<span class="dt"> .Q</span>(InstrF));</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">// the OBI address is the current PC</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiAddrF = PCF;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note that the select of <code>pcmux</code> is <code>PCSrcE</code> directly, not a signal of the controller. The controller only decides <em>when</em> the PC changes, through <code>PCEnF</code>, and the multiplexer decides <em>to what</em>.</p>
+</section>
+</section>
+<section id="sec-ifu-ctrl" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="sec-ifu-ctrl"><span class="header-section-number">8.5</span> The IFU controller</h2>
+<p>The controller <code>ifuctrl</code> manages the flow of instructions through the IFU. It has three tasks:</p>
+<ol type="1">
+<li>generate the internal enables <code>InstrEnF</code> and <code>PCEnF</code>, which decide when the instruction register and the PC register are loaded;</li>
+<li>issue the memory requests through the OBI port, with <code>ObiReqF</code>;</li>
+<li>tell Decode that the IFU has finished fetching an instruction, with <code>ValidF</code>.</li>
+</ol>
+<p>Why do we need a controller at all, when the datapath looks so simple? For three reasons. First, fetching an instruction does not happen in one cycle. The memory needs time to grant the request and more time to respond, and the controller must watch <code>ObiGntF</code> and <code>ObiRvalidF</code> to know where the transaction is. Second, a jump can arrive at any time. The IFU must then restart fetching from the new address and, if an instruction from the old address is still on its way from memory, throw it away when it arrives. Third, Decode may not be ready to accept the instruction, and then the IFU must freeze, with its outputs stable, until it is.</p>
+<p>All three depend on what has happened before: whether a request has been granted, whether an instruction has arrived, whether it has been handed over. The controller must remember this, so it is a finite state machine.</p>
+<section id="the-states" class="level3" data-number="8.5.1">
+<h3 data-number="8.5.1" class="anchored" data-anchor-id="the-states"><span class="header-section-number">8.5.1</span> The states</h3>
+<div id="fig-ifuctrl-fsm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifuctrl-fsm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ifuctrl-fsm.svg" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifuctrl-fsm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.4: The IFU controller as a state diagram, with the transitions only.
+</figcaption>
+</figure>
+</div>
+<p>A fetch goes through three steps, and each becomes a state:</p>
+<ul>
+<li><code>REQUEST</code>: the IFU initiates the fetch. It sends a request to the memory and waits for the memory to accept it.</li>
+<li><code>WAIT_RESP</code>: the request has been accepted, and the IFU waits for the response, the instruction.</li>
+<li><code>DONE</code>: the instruction has arrived and sits in the instruction register. The IFU offers it to Decode and waits until Decode takes it.</li>
+</ul>
+<p>In SystemVerilog, the states are an enumerated type, encoded in two bits. Following the FSM pattern of the <a href="../chapters/05b-fsm.html">previous chapter</a>, the controller has a current-state and a next-state signal. It also has a second current/next pair, <code>DiscardF</code> and <code>NextDiscardF</code>, which we explain next.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {REQUEST, WAIT_RESP, DONE} statetype;</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>statetype State, NextState;</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span>     DiscardF, NextDiscardF;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><a href="#fig-ifuctrl-fsm" class="quarto-xref">Figure&nbsp;<span>8.4</span></a> shows the states and the transitions between them. The following sections derive the transitions one state at a time.</p>
+</section>
+<section id="sec-ifu-discard" class="level3" data-number="8.5.2">
+<h3 data-number="8.5.2" class="anchored" data-anchor-id="sec-ifu-discard"><span class="header-section-number">8.5.2</span> The discard flag</h3>
+<p>Besides the state, the controller keeps one more bit, <code>DiscardF</code>, a pending request to discard the instruction that is on its way. Consider a jump that arrives after the memory has granted a request, but before it has responded. The response will come, because a granted transaction cannot be cancelled, and it will carry the instruction from the old address, which is now on the wrong path. The IFU must not hand that instruction to Decode, and it must not start the fetch from the new address before the stale response has arrived. Otherwise it would take the stale response as the answer to the new request, since responses carry no tag.</p>
+<p>The difficulty is time. <code>PCSrcE</code> is high for a single cycle, but on a slow memory the stale response may arrive many cycles later, when <code>PCSrcE</code> is long gone. So the controller needs one bit of memory that says “the response I am waiting for belongs to the wrong path”: <code>DiscardF</code>. It is set when <code>PCSrcE</code> arrives while a transaction is outstanding, which is in <code>WAIT_RESP</code>, or in <code>REQUEST</code> in the very cycle the grant arrives. It is cleared when the awaited response arrives, and that response is dropped instead of captured.</p>
+</section>
+<section id="transitions" class="level3" data-number="8.5.3">
+<h3 data-number="8.5.3" class="anchored" data-anchor-id="transitions"><span class="header-section-number">8.5.3</span> Transitions</h3>
+<div id="fig-ifuctrl-asm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifuctrl-asm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ifuctrl-asm.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifuctrl-asm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.5: ASM chart of the IFU controller: the transitions and the updates of <code>DiscardF</code>. Where no box is shown, <code>DiscardF</code> keeps its value.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ifuctrl-asm" class="quarto-xref">Figure&nbsp;<span>8.5</span></a> shows the transitions as an ASM chart, one column per state, together with the updates of <code>DiscardF</code> in the rounded conditional boxes. Let us go through it state by state.</p>
+<p><strong>From <code>REQUEST</code>.</strong> First, we ask whether the memory has accepted our request, by checking <code>ObiGntF</code>. If not, we stay in <code>REQUEST</code> and keep asking. If it has, the transaction is committed and we move to <code>WAIT_RESP</code>. Before we go, we check whether a jump has occurred in this same cycle (<code>PCSrcE</code>). If so, the response that will come belongs to the old PC, and we raise <code>DiscardF</code> to 1. A jump in <code>REQUEST</code> without the grant needs no flag: nothing has been committed yet, the PC is loaded with the target in this cycle, and the request simply continues with the new address.</p>
+<p><strong>From <code>WAIT_RESP</code>.</strong> First, we ask whether the instruction has arrived from memory, by checking <code>ObiRvalidF</code>. If not, we keep waiting in <code>WAIT_RESP</code>. While we wait, a jump may occur, so we check <code>PCSrcE</code> and, if it is 1, raise <code>DiscardF</code>: the response we are waiting for is now stale. If the instruction has arrived, we check whether we must discard it, by reading <code>DiscardF</code> and <code>PCSrcE</code>. <code>DiscardF</code> covers a jump in an earlier cycle, and <code>PCSrcE</code> a jump in this very cycle. If either is 1, we drop the instruction, clear the pending discard, and restart the fetch by moving to <code>REQUEST</code>. Otherwise, the instruction is good, and we proceed to <code>DONE</code>.</p>
+<p><strong>From <code>DONE</code>.</strong> We have the instruction, and now we must finish with it. There are two ways out. In the normal one, <code>ReadyD</code> is 1: Decode takes the instruction, and we can fetch the next one. In the other, a jump has occurred, the instruction we hold is on the wrong path, and we must restart the fetch from the target. If either condition is met, we move to <code>REQUEST</code>; otherwise we stay in <code>DONE</code>. No transaction is outstanding in <code>DONE</code>, so <code>DiscardF</code> does not change here.</p>
+<p>The flag is cleared only in <code>WAIT_RESP</code>, because that is the only state in which a response can arrive. On the path to <code>DONE</code>, the flag is already 0, so no box is needed there.</p>
+</section>
+<section id="the-controller-in-systemverilog" class="level3" data-number="8.5.4">
+<h3 data-number="8.5.4" class="anchored" data-anchor-id="the-controller-in-systemverilog"><span class="header-section-number">8.5.4</span> The controller in SystemVerilog</h3>
+<p>The code follows the chart column by column. <code>State</code> and <code>DiscardF</code> are updated in the same register block, with a synchronous reset to <code>REQUEST</code> and no pending discard:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// state register</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) <span class="kw">begin</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>      State    &lt;= REQUEST;</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      DiscardF &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span> <span class="kw">else</span> <span class="kw">begin</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>      State    &lt;= NextState;</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      DiscardF &lt;= NextDiscardF;</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The next-state logic computes both next values in one <code>always_comb</code> block. It starts with the defaults, hold the state and hold the flag, and each branch of the <code>case</code> overrides only what changes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next state logic</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    NextState    = State;  <span class="co">// defaults: hold</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    NextDiscardF = DiscardF;</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (State)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      <span class="co">// the grant commits the transaction on this edge, so a redirect</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>      <span class="co">// in the same cycle already has a wrong-path response coming</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      REQUEST:   <span class="kw">begin</span> NextState    = ObiGntF ? WAIT_RESP : REQUEST;</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                       NextDiscardF = ObiGntF &amp; PCSrcE; <span class="kw">end</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>      <span class="co">// the awaited response clears the flag; with no response yet, a</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      <span class="co">// redirect makes the outstanding one stale</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      WAIT_RESP: <span class="kw">if</span> (ObiRvalidF) <span class="kw">begin</span> NextState    = (DiscardF | PCSrcE) ? REQUEST : DONE;</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>                                       NextDiscardF = <span class="bn">1'b0</span>; <span class="kw">end</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">else</span> NextDiscardF = DiscardF | PCSrcE;</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>      DONE:      <span class="kw">if</span> (PCSrcE | ReadyD) NextState = REQUEST;</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:   NextState = REQUEST;</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keeping <code>DiscardF</code> in the same current/next pattern as <code>State</code> matters in <code>WAIT_RESP</code>. When the response arrives, the decision <code>(DiscardF | PCSrcE)</code> reads the <em>current</em> <code>DiscardF</code>, while the clear goes to <code>NextDiscardF</code> and only takes effect at the next edge. The flag is therefore still valid in the cycle in which the stale response is examined. In <code>REQUEST</code> the flag is always 0, so <code>NextDiscardF = ObiGntF &amp; PCSrcE</code> is the same as “set it on a jump in the cycle of the grant”.</p>
+<div id="fig-ifuctrl-discard" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifuctrl-discard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ifuctrl-discard.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifuctrl-discard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.6: The <code>NextDiscardF</code> logic drawn as hardware. The two priority multiplexers clear the flag on a response and set it on a jump during an outstanding transaction; otherwise the register holds its value. Since a response arrives only in <code>WAIT_RESP</code>, this is the same function as the <code>case</code> in the code.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ifuctrl-discard" class="quarto-xref">Figure&nbsp;<span>8.6</span></a> shows what the <code>DiscardF</code> lines become in hardware: one flip-flop and two multiplexers. The first sets the flag when <code>PCSrcE</code> arrives while a transaction is outstanding; the second, which has priority, clears it when the response arrives. If neither applies, the flip-flop gets its own output back, and holds.</p>
+</section>
+<section id="the-outputs" class="level3" data-number="8.5.5">
+<h3 data-number="8.5.5" class="anchored" data-anchor-id="the-outputs"><span class="header-section-number">8.5.5</span> The outputs</h3>
+<p>The four outputs are combinational functions of the state, the flag and the inputs:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// outputs</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiReqF  = (State == REQUEST);</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> PCEnF    = PCSrcE | ((State == DONE) &amp; ReadyD);</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> InstrEnF = (State == WAIT_RESP) &amp; ObiRvalidF &amp; ~DiscardF &amp; ~PCSrcE;</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidF   = (State == DONE) &amp; ~PCSrcE;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>ObiReqF</code> is high in <code>REQUEST</code>. It depends only on the state, so it is a Moore output. The request stays high until the grant moves the FSM to <code>WAIT_RESP</code>, exactly as the OBI address phase requires.</li>
+<li><code>PCEnF</code> lets the PC change in two cases. On a jump, the PC loads the target immediately, in any state, because <code>pcmux</code> selects <code>PCTargetE</code> whenever <code>PCSrcE</code> is 1. In <code>DONE</code>, when Decode takes the instruction (<code>ReadyD</code>), the PC advances to <code>PCPlus4F</code>. The PC must not advance earlier, because <code>PCF</code> is a stage output that belongs to the instruction that Decode has not taken yet.</li>
+<li><code>InstrEnF</code> loads the instruction register in the cycle the response arrives (<code>WAIT_RESP</code> and <code>ObiRvalidF</code>), unless the response is stale (<code>DiscardF</code>) or a jump arrives in the same cycle (<code>PCSrcE</code>). Both are exactly the conditions under which the FSM returns to <code>REQUEST</code> instead of going to <code>DONE</code>.</li>
+<li><code>ValidF</code> is high in <code>DONE</code>, while the instruction waits for Decode. A jump turns it off at once, in the same cycle, so that Decode never takes an instruction from the wrong path.</li>
+</ul>
+<p>All outputs except <code>ObiReqF</code> also depend on the inputs, so they are Mealy outputs: they react in the same cycle, without waiting for a state change. That is what lets the IFU take a jump in the very cycle <code>PCSrcE</code> is high.</p>
+</section>
+<section id="the-controller-in-the-waveform" class="level3" data-number="8.5.6">
+<h3 data-number="8.5.6" class="anchored" data-anchor-id="the-controller-in-the-waveform"><span class="header-section-number">8.5.6</span> The controller in the waveform</h3>
+<div id="fig-ifu-fetch" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifu-fetch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/ifu_fetch.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifu-fetch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.7: Two fetches. Each passes through <code>REQUEST</code>, <code>WAIT_RESP</code> and <code>DONE</code>. <code>InstrEnF</code> follows <code>ObiRvalidF</code>, and <code>PCEnF</code> rises only when Decode takes the instruction: in cycle 6 for the first one, after two cycles of <code>ReadyD = 0</code>.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ifu-fetch" class="quarto-xref">Figure&nbsp;<span>8.7</span></a> shows the controller at work, on a memory that grants after one wait cycle and responds one cycle after the grant. In cycle 2 the grant arrives, and the FSM moves to <code>WAIT_RESP</code>. In cycle 3 the response arrives; <code>InstrEnF</code> is high, so at the end of the cycle the instruction register captures <code>I0</code>, and the FSM moves to <code>DONE</code>. From cycle 4, <code>ValidF</code> offers <code>I0</code> to Decode, but Decode is busy for two cycles. In cycle 6 <code>ReadyD</code> rises, <code>PCEnF</code> follows it, and at the end of the cycle the PC advances to <code>0x4</code> and the FSM starts the next fetch.</p>
+<p>Each instruction spends at least one cycle in each state, so the IFU fetches at most one instruction every three cycles, even with an ideal memory that grants at once. This is a deliberate simplification that keeps the controller small. A faster IFU would issue the next request before the previous response arrives, and keep the extra instructions in a small buffer.</p>
+<div id="fig-ifu-discard" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ifu-discard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/ifu_discard.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ifu-discard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8.8: A redirect while a transaction is outstanding. The jump in cycle 2 sets <code>DiscardF</code> and loads the PC with the target <code>T</code>. The response for the old PC <code>A</code> arrives in cycle 4 and is dropped; the fetch restarts from <code>T</code> in cycle 5.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ifu-discard" class="quarto-xref">Figure&nbsp;<span>8.8</span></a> shows the discard flag at work, on a memory that takes three cycles to respond. In cycle 1 the request for address <code>A</code> is granted. In cycle 2, while the IFU waits for the response, Execute resolves a jump to <code>T</code>: <code>PCSrcE</code> is high, so <code>PCEnF</code> loads <code>T</code> into the PC, and <code>NextDiscardF</code> is 1. In cycle 4 the response for <code>A</code> arrives. <code>DiscardF</code> is 1, so <code>InstrEnF</code> stays low, the instruction register keeps its old value, and the FSM returns to <code>REQUEST</code> while the flag clears. From cycle 5 on, the IFU fetches from <code>T</code> as usual, and in cycle 9 it offers <code>I(T)</code> to Decode.</p>
+<p>Without the flag, the FSM in cycle 4 would capture <code>I(A)</code> and offer it to Decode together with <code>PCF = T</code>: the wrong instruction, with the address of another one.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="summary"><span class="header-section-number">8.6</span> Summary</h2>
+<p>The IFU is a small datapath, the PC loop and the instruction register, built from the generic blocks <code>flopenr</code>, <code>mux2</code> and <code>adder</code>, and a controller that decides when each of them acts. The controller is a three-state FSM with one extra bit of memory, the discard flag, which remembers a jump for as long as a stale instruction is on its way from memory.</p>
+<p>The design makes two deliberate simplifications. It keeps one memory transaction in flight at a time, which limits it to one instruction every three cycles. And a jump in <code>REQUEST</code>, before the grant, changes <code>ObiAddrF</code> while <code>ObiReqF</code> is high. Strict OBI requires the address to stay stable during the address phase, but simple memories, which take the address only in the cycle of the grant, tolerate the change. Both are natural extensions for later in the course.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/06-pipeline-structure.html" class="pagination-link" aria-label="Five-Stage Pipeline — Structure">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/07-pipeline-hazards.html" class="pagination-link" aria-label="Five-Stage Pipeline — Hazards">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

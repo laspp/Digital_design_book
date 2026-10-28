@@ -26,41 +26,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 /* CSS for citations */
 div.csl-bib-body { }
 div.csl-entry {
@@ -90,7 +55,7 @@ div.csl-indent {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/07-pipeline-hazards.html" rel="next">
+<link href="../chapters/06b-ifu.html" rel="next">
 <link href="../chapters/05b-fsm.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -220,26 +185,32 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -255,12 +226,14 @@ div.csl-indent {
   <li><a href="#sec-pipeline-structure" id="toc-sec-pipeline-structure" class="nav-link active" data-scroll-target="#sec-pipeline-structure">Five-stage pipeline</a>
   <ul class="collapse">
   <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">7.1</span> Goal for this week</a></li>
-  <li><a href="#modules-for-this-week" id="toc-modules-for-this-week" class="nav-link" data-scroll-target="#modules-for-this-week"><span class="header-section-number">7.2</span> Modules for this week</a></li>
-  <li><a href="#example-pipeline_pkg.sv" id="toc-example-pipeline_pkg.sv" class="nav-link" data-scroll-target="#example-pipeline_pkg.sv"><span class="header-section-number">7.3</span> Example: <code>pipeline_pkg.sv</code></a>
-  <ul class="collapse">
-  <li><a href="#why-a-struct-instead-of-individual-signals" id="toc-why-a-struct-instead-of-individual-signals" class="nav-link" data-scroll-target="#why-a-struct-instead-of-individual-signals"><span class="header-section-number">7.3.1</span> Why a struct instead of individual signals</a></li>
-  </ul></li>
-  <li><a href="#next-step" id="toc-next-step" class="nav-link" data-scroll-target="#next-step"><span class="header-section-number">7.4</span> Next step</a></li>
+  <li><a href="#levels-of-abstraction" id="toc-levels-of-abstraction" class="nav-link" data-scroll-target="#levels-of-abstraction"><span class="header-section-number">7.2</span> Levels of abstraction</a></li>
+  <li><a href="#system-level" id="toc-system-level" class="nav-link" data-scroll-target="#system-level"><span class="header-section-number">7.3</span> System level</a></li>
+  <li><a href="#algorithmic-level" id="toc-algorithmic-level" class="nav-link" data-scroll-target="#algorithmic-level"><span class="header-section-number">7.4</span> Algorithmic level</a></li>
+  <li><a href="#register-transfer-level" id="toc-register-transfer-level" class="nav-link" data-scroll-target="#register-transfer-level"><span class="header-section-number">7.5</span> Register-transfer level</a></li>
+  <li><a href="#gate-level" id="toc-gate-level" class="nav-link" data-scroll-target="#gate-level"><span class="header-section-number">7.6</span> Gate level</a></li>
+  <li><a href="#transistor-level" id="toc-transistor-level" class="nav-link" data-scroll-target="#transistor-level"><span class="header-section-number">7.7</span> Transistor level</a></li>
+  <li><a href="#material-level" id="toc-material-level" class="nav-link" data-scroll-target="#material-level"><span class="header-section-number">7.8</span> Material level</a></li>
+  <li><a href="#moving-between-the-levels" id="toc-moving-between-the-levels" class="nav-link" data-scroll-target="#moving-between-the-levels"><span class="header-section-number">7.9</span> Moving between the levels</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -292,65 +265,99 @@ div.csl-indent {
 <section id="goal-for-this-week" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">7.1</span> Goal for this week</h2>
 <ul>
+<li>Place the HIPV SoC on the levels of abstraction, from the system down to the silicon, and know at which level we design</li>
 <li>Translate the well-known pipeline theory (IF/ID/EX/MEM/WB) into SystemVerilog</li>
 <li>Apply SystemVerilog syntax immediately on a real, motivating example</li>
 <li>Treat memory (for now) as an interface — the implementation follows next week</li>
 </ul>
 <p>We implement pipeline registers as separate modules for two reasons. First, pedagogically: each such register is a direct, visible example of a D flip-flop (DFF) in the context of a real processor, which was an explicit goal of the second part of the course. Second, practically: separate modules with a fixed interface (see <code>pipeline_pkg.sv</code>) allow us to substitute an individual stage with a reference (“golden”) implementation in the jigsaw testing methodology — discussed in more detail in the verification chapter. This five-stage IF/ID/EX/MEM/WB structure follows the classic pipelined datapath described by <span class="citation" data-cites="patterson2017comporg">Patterson and Hennessy (<a href="#ref-patterson2017comporg" role="doc-biblioref">2017</a>)</span>.</p>
 </section>
-<section id="modules-for-this-week" class="level2" data-number="7.2">
-<h2 data-number="7.2" class="anchored" data-anchor-id="modules-for-this-week"><span class="header-section-number">7.2</span> Modules for this week</h2>
-<ul>
-<li><code>if_stage</code>, <code>if_id_reg</code></li>
-<li><code>id_stage</code> (<code>regfile</code>, <code>imm_gen</code>, <code>decoder</code>)</li>
-<li><code>id_ex_reg</code></li>
-<li><code>ex_stage</code> (<code>alu</code>)</li>
-<li>(<code>mem_stage</code>, <code>wb_stage</code> — interface only for now, implementation next week)</li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="../images/pipeline-modules.svg" class="img-fluid figure-img"></p>
-<figcaption>Modular pipeline structure</figcaption>
+<section id="levels-of-abstraction" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="levels-of-abstraction"><span class="header-section-number">7.2</span> Levels of abstraction</h2>
+<div id="fig-abstraction-levels" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-abstraction-levels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/abstraction-levels.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-abstraction-levels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.1: The HIPV SoC at six levels of abstraction. We design at the register-transfer level; the tools, the FPGA vendor and the foundry take care of the levels below.
+</figcaption>
 </figure>
 </div>
+<p>Before we build the pipeline, it helps to step back and look at what we are building from a distance. The HIPV SoC is a single system, but it can be described at very different levels of detail: as a handful of blocks connected by buses, as an algorithm that executes instructions, as a set of registers and the logic between them, as a netlist of gates, as a circuit of transistors, or as structures in doped silicon. These are the <strong>levels of abstraction</strong> of digital design (<a href="#fig-abstraction-levels" class="quarto-xref">Figure&nbsp;<span>7.1</span></a>).</p>
+<p>Each level describes the same system, but with fewer details than the level below it. A description at a higher level is shorter and easier to reason about, because it <em>hides</em> how its parts are built: at the system level the core is a box, and we do not care whether its adder is a ripple-carry chain or a carry-lookahead tree. A description at a lower level is closer to the real hardware, and much larger. Moving down a level means adding implementation decisions; moving up means leaving them out.</p>
+<p>The earlier chapters of this book have already visited most of these levels, bottom-up: silicon and the p-n junction, CMOS transistors and gates, programmable devices and the FPGA, and finally SystemVerilog at the register-transfer level. In this chapter we start working top-down, the way a design is actually made, and we use HIPV as the example at every level.</p>
 </section>
-<section id="example-pipeline_pkg.sv" class="level2" data-number="7.3">
-<h2 data-number="7.3" class="anchored" data-anchor-id="example-pipeline_pkg.sv"><span class="header-section-number">7.3</span> Example: <code>pipeline_pkg.sv</code></h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> pipeline_pkg;</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] {</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    ALU_ADD, ALU_SUB, ALU_AND, ALU_OR, ALU_XOR,</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ALU_SLL, ALU_SRL, ALU_SRA, ALU_SLT, ALU_SLTU</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  } alu_ctrl_t;</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">struct</span> <span class="kw">packed</span> {</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> mem_read;</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> mem_write;</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] mem_size;</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> mem_unsigned;</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  } mem_ctrl_t;</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">struct</span> <span class="kw">packed</span> {</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> reg_write;</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] wb_sel;</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  } wb_ctrl_t;</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="why-a-struct-instead-of-individual-signals" class="level3" data-number="7.3.1">
-<h3 data-number="7.3.1" class="anchored" data-anchor-id="why-a-struct-instead-of-individual-signals"><span class="header-section-number">7.3.1</span> Why a struct instead of individual signals</h3>
-<p><code>typedef struct packed</code> is standard synthesizable SystemVerilog <span class="citation" data-cites="ieee1800sv">(<a href="#ref-ieee1800sv" role="doc-biblioref">IEEE 2017</a>)</span>, so this pattern is portable across the tools you will use this semester.</p>
-<p>An alternative to the approach above would be for each control signal (<code>mem_read</code>, <code>mem_write</code>, <code>reg_write</code>, …) to travel through the pipeline as a separate wire and a separate field in every pipeline register. This quickly becomes unwieldy as the number of control signals grows — every new signal requires a port change on every intermediate register. Using a <code>typedef struct packed</code> instead, we define a single type that a pipeline register carries as a whole; adding a new field to the struct does not require changing the register’s ports.</p>
+<section id="system-level" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="system-level"><span class="header-section-number">7.3</span> System level</h2>
+<p>At the <strong>system level</strong>, a design is a set of blocks and the connections between them. The HIPV SoC (<code>rtl/top/hipv_soc.sv</code>) consists of:</p>
+<ul>
+<li>the RISC-V core, <code>hipv_core</code>, with two OBI master ports, one for instructions and one for data;</li>
+<li>an OBI crossbar that connects the two masters to five slaves;</li>
+<li>a 64 KiB RAM that holds both the program and the data;</li>
+<li>three peripherals: a UART, a timer and a GPIO block.</li>
+</ul>
+<p>Nothing at this level says <em>how</em> any block works. The decisions made here are about the system as a whole: which blocks there are, what bus connects them and with which protocol, where each block sits in the address map, and how fast the clock runs. For HIPV, the bus is OBI, the address map gives every slave its own window, and the clock is 50 MHz on the Nexys A7-100T board.</p>
 </section>
+<section id="algorithmic-level" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="algorithmic-level"><span class="header-section-number">7.4</span> Algorithmic level</h2>
+<p>At the <strong>algorithmic level</strong>, a block is described by <em>what</em> it computes, as an algorithm, without any notion of a clock or of the hardware that will carry it out. For the HIPV core, that algorithm is the RV32I instruction set: a loop that fetches the instruction at the program counter, decodes it, and executes it:</p>
+<pre class="text"><code>PC = 0
+forever:
+  instr = mem[PC]                               # fetch
+  op, rd, rs1, rs2, imm = decode(instr)         # decode
+  a = x[rs1];  b = x[rs2]
+  case op:                                      # execute, memory, write back
+    ALU:    x[rd] = alu(op, a, b or imm);  PC = PC + 4
+    LOAD:   x[rd] = mem[a + imm];          PC = PC + 4
+    STORE:  mem[a + imm] = b;              PC = PC + 4
+    BRANCH: PC = taken(op, a, b) ? PC + imm : PC + 4
+    JAL:    x[rd] = PC + 4;                PC = PC + imm
+    JALR:   x[rd] = PC + 4;                PC = (a + imm) &amp; ~1</code></pre>
+<p>Here <code>x</code> is the array of 32 registers (with <code>x[0]</code> always 0) and <code>mem</code> is the memory. Every instruction is finished before the next one starts, and how long each step takes is not part of the description. This is the level of the RISC-V specification, and of an instruction-set simulator such as Spike, which runs programs exactly according to this loop. It is the reference against which every implementation is judged: whatever the pipeline does internally, the registers and the memory must end up as the loop says.</p>
 </section>
-<section id="next-step" class="level2" data-number="7.4">
-<h2 data-number="7.4" class="anchored" data-anchor-id="next-step"><span class="header-section-number">7.4</span> Next step</h2>
-<p>The next chapter covers the hazards that arise from this pipeline structure: data hazards (resolved via forwarding or stalling) and control hazards caused by resolving branches in the EX stage, which requires flushing two instructions on a misprediction.</p>
+<section id="register-transfer-level" class="level2" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="register-transfer-level"><span class="header-section-number">7.5</span> Register-transfer level</h2>
+<div id="fig-hipv-rtl" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hipv-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/hipv-pipeline.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hipv-rtl-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7.2: The HIPV core at the register-transfer level: five pipeline stages with their handshakes, the redirect and write-back feedback, the two OBI ports and the hazard unit.
+</figcaption>
+</figure>
+</div>
+<p>At the <strong>register-transfer level</strong> (RTL), the algorithm is mapped onto clocked hardware: a set of registers, and the combinational logic that computes their next values at every clock edge. This is where time appears. The loop of the algorithmic level is cut into five steps, fetch, decode, execute, memory and write back, and each step becomes a pipeline stage with its own registers, so that five instructions can be in progress at once (<a href="#fig-hipv-rtl" class="quarto-xref">Figure&nbsp;<span>7.2</span></a>). The price is that instructions now overlap, and the RTL must handle what the algorithm never had to think about: an instruction that needs a result its predecessor has not yet written (forwarding, in the hazard unit), and instructions fetched after a jump that must be thrown away (the redirect from Execute).</p>
+<p>This is the level of <code>hipv_core.sv</code> and of everything we have written in SystemVerilog so far: the leaf cells (<code>flopenr</code>, <code>mux2</code>, <code>mux3</code>, <code>adder</code>) in behavioral style, the stages assembled from them structurally, and the control FSMs. It is the lowest level at which we still make the design decisions ourselves, and the highest level that tools can turn into hardware automatically. That is why almost all digital design is done here, and why the rest of this course works at this level.</p>
+</section>
+<section id="gate-level" class="level2" data-number="7.6">
+<h2 data-number="7.6" class="anchored" data-anchor-id="gate-level"><span class="header-section-number">7.6</span> Gate level</h2>
+<p>At the <strong>gate level</strong>, the design is a <strong>netlist</strong>: a list of cells and of the wires that connect them. It is produced from the RTL by <strong>synthesis</strong>, and nobody writes it by hand. What the cells are depends on the target. For an ASIC, they are the gates and flip-flops of a standard-cell library. For HIPV on the Xilinx xc7a100t FPGA, they are the primitives of the 7-series fabric that we met in the FPGA chapter:</p>
+<ul>
+<li>every register bit of <code>flopenr</code> becomes an <code>FDRE</code>, a flip-flop with a clock enable and a synchronous reset, which is exactly what <code>flopenr</code> describes;</li>
+<li>the multiplexers, decoders and the ALU logic become <code>LUT6</code> look-up tables;</li>
+<li>the adders use the <code>CARRY4</code> fast-carry chains of the slices;</li>
+<li>the 64 KiB RAM becomes 16 <code>RAMB36E1</code> block RAMs.</li>
+</ul>
+<p>The schematics drawn by Yosys in the chapter on designing with SystemVerilog are small examples of this level. The netlist is also the level at which timing is checked: only when we know which cells and wires a path goes through can the tools tell whether it fits in the 20 ns clock period of 50 MHz.</p>
+</section>
+<section id="transistor-level" class="level2" data-number="7.7">
+<h2 data-number="7.7" class="anchored" data-anchor-id="transistor-level"><span class="header-section-number">7.7</span> Transistor level</h2>
+<p>At the <strong>transistor level</strong>, each cell is a circuit of NMOS and PMOS transistors, the CMOS circuits from the first chapters. On an FPGA, the transistor-level design is fixed and was done once, by the vendor, for the whole family. A <code>LUT6</code> is 64 SRAM cells that hold its truth table, followed by a tree of pass-transistor multiplexers selected by the six inputs. Every programmable routing switch is a pass transistor controlled by another SRAM cell. Flip-flops and the carry chain are hard-wired CMOS circuits. Our HIPV design does not change a single transistor: it only sets the configuration cells that decide what the existing transistors do.</p>
+<p>For an ASIC, this level is where the standard cells come from: each cell of the library is designed and characterized once at the transistor level, and synthesis then uses it as a black box with known delay and power.</p>
+</section>
+<section id="material-level" class="level2" data-number="7.8">
+<h2 data-number="7.8" class="anchored" data-anchor-id="material-level"><span class="header-section-number">7.8</span> Material level</h2>
+<p>At the bottom, at the <strong>material level</strong>, a transistor is a physical structure: regions of n-type and p-type silicon created by doping, a thin oxide, a polysilicon or metal gate, and layers of metal wiring on top, produced by photolithography. The behavior of the p-n junction and of the MOSFET channel, described in the first chapter, is determined here. The Artix-7 xc7a100t on our board is manufactured in a 28 nm process, and the layout and process decisions at this level belong to the foundry and to the FPGA vendor.</p>
+</section>
+<section id="moving-between-the-levels" class="level2" data-number="7.9">
+<h2 data-number="7.9" class="anchored" data-anchor-id="moving-between-the-levels"><span class="header-section-number">7.9</span> Moving between the levels</h2>
+<p>A design is made <strong>top-down</strong>. We start at the system level (which blocks, which bus), specify the behavior at the algorithmic level (the RV32I instruction set), and write the RTL by hand. From there on, the tools take over: synthesis produces the gate-level netlist, and place and route maps it onto the transistors and wires of the FPGA, which the vendor and the foundry designed at the two lowest levels.</p>
+<p><strong>Verification</strong> connects the levels in the opposite direction. We simulate the RTL and compare its results with what the higher level says must happen: the HIPV core testbenches run small programs and check that the data memory ends up exactly as the algorithmic loop above predicts. Each level is thus both the specification for the level below and the reference for checking it.</p>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">
-<div id="ref-ieee1800sv" class="csl-entry" role="listitem">
-IEEE. 2017. <em>IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language</em>.
-</div>
 <div id="ref-patterson2017comporg" class="csl-entry" role="listitem">
 Patterson, David A., and John L. Hennessy. 2017. <em>Computer Organization and Design RISC-v Edition: The Hardware Software Interface</em>. Morgan Kaufmann.
 </div>
@@ -766,8 +773,8 @@ Patterson, David A., and John L. Hennessy. 2017. <em>Computer Organization and D
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/07-pipeline-hazards.html" class="pagination-link" aria-label="Five-Stage Pipeline — Hazards">
-        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/06b-ifu.html" class="pagination-link" aria-label="Instruction fetch unit">
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
