@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>9&nbsp; Instruction decode unit – Designing a RISC-V SoC</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/06d-ieu.html" rel="next">
+<link href="../chapters/06b-ifu.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06c-idu.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06c-idu.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06d-ieu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-idu" id="toc-sec-idu" class="nav-link active" data-scroll-target="#sec-idu">Instruction decode unit</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">9.1</span> Goal for this week</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">9.2</span> Introduction</a></li>
+  <li><a href="#interface-of-the-idu" id="toc-interface-of-the-idu" class="nav-link" data-scroll-target="#interface-of-the-idu"><span class="header-section-number">9.3</span> Interface of the IDU</a></li>
+  <li><a href="#structure-of-the-idu" id="toc-structure-of-the-idu" class="nav-link" data-scroll-target="#structure-of-the-idu"><span class="header-section-number">9.4</span> Structure of the IDU</a></li>
+  <li><a href="#sec-handshake" id="toc-sec-handshake" class="nav-link" data-scroll-target="#sec-handshake"><span class="header-section-number">9.5</span> The valid/ready handshake</a>
+  <ul class="collapse">
+  <li><a href="#two-signals" id="toc-two-signals" class="nav-link" data-scroll-target="#two-signals"><span class="header-section-number">9.5.1</span> Two signals</a></li>
+  <li><a href="#four-cases" id="toc-four-cases" class="nav-link" data-scroll-target="#four-cases"><span class="header-section-number">9.5.2</span> Four cases</a></li>
+  <li><a href="#rules-of-the-handshake" id="toc-rules-of-the-handshake" class="nav-link" data-scroll-target="#rules-of-the-handshake"><span class="header-section-number">9.5.3</span> Rules of the handshake</a></li>
+  </ul></li>
+  <li><a href="#handshake-logic-of-the-idu" id="toc-handshake-logic-of-the-idu" class="nav-link" data-scroll-target="#handshake-logic-of-the-idu"><span class="header-section-number">9.6</span> Handshake logic of the IDU</a></li>
+  <li><a href="#pipeline-registers" id="toc-pipeline-registers" class="nav-link" data-scroll-target="#pipeline-registers"><span class="header-section-number">9.7</span> Pipeline registers</a></li>
+  <li><a href="#instruction-fields" id="toc-instruction-fields" class="nav-link" data-scroll-target="#instruction-fields"><span class="header-section-number">9.8</span> Instruction fields</a></li>
+  <li><a href="#the-control-decoder" id="toc-the-control-decoder" class="nav-link" data-scroll-target="#the-control-decoder"><span class="header-section-number">9.9</span> The control decoder</a>
+  <ul class="collapse">
+  <li><a href="#the-hipv-package" id="toc-the-hipv-package" class="nav-link" data-scroll-target="#the-hipv-package"><span class="header-section-number">9.9.1</span> The HIPV package</a></li>
+  <li><a href="#the-control-word" id="toc-the-control-word" class="nav-link" data-scroll-target="#the-control-word"><span class="header-section-number">9.9.2</span> The control word</a></li>
+  <li><a href="#the-main-decoder" id="toc-the-main-decoder" class="nav-link" data-scroll-target="#the-main-decoder"><span class="header-section-number">9.9.3</span> The main decoder</a></li>
+  <li><a href="#the-alu-decoder" id="toc-the-alu-decoder" class="nav-link" data-scroll-target="#the-alu-decoder"><span class="header-section-number">9.9.4</span> The ALU decoder</a></li>
+  </ul></li>
+  <li><a href="#immediate-extension" id="toc-immediate-extension" class="nav-link" data-scroll-target="#immediate-extension"><span class="header-section-number">9.10</span> Immediate extension</a></li>
+  <li><a href="#register-file" id="toc-register-file" class="nav-link" data-scroll-target="#register-file"><span class="header-section-number">9.11</span> Register file</a>
+  <ul class="collapse">
+  <li><a href="#storage-an-array-of-registers" id="toc-storage-an-array-of-registers" class="nav-link" data-scroll-target="#storage-an-array-of-registers"><span class="header-section-number">9.11.1</span> Storage: an array of registers</a></li>
+  <li><a href="#writing-and-reading" id="toc-writing-and-reading" class="nav-link" data-scroll-target="#writing-and-reading"><span class="header-section-number">9.11.2</span> Writing and reading</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9.12</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-idu" class="level1 unnumbered">
+<h1 class="unnumbered">Instruction decode unit</h1>
+<section id="goal-for-this-week" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">9.1</span> Goal for this week</h2>
+<ul>
+<li>Know what the instruction decode unit (IDU) does, and which other parts of the core it talks to</li>
+<li>Understand the valid/ready handshake that connects all stages of HIPV, and how the IDU implements it</li>
+<li>Build the control decoder: from opcode, <code>funct3</code> and <code>funct7</code> to control signals</li>
+<li>Build the immediate extension and the register file</li>
+</ul>
+</section>
+<section id="introduction" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">9.2</span> Introduction</h2>
+<p>The instruction decode unit is the second stage of the HIPV pipeline. It is the place where hardware and software meet. Up to this point, an instruction is just 32 bits that Fetch has brought from memory; from here on, it is a set of control signals that tell the rest of the core what to do. The choice of the instruction set, RV32I, has a greater impact on this stage than on any other. Its formats decide where the register numbers sit in the instruction, how the immediate is scattered over the bits, and which opcodes exist. If you wanted to add a new instruction to HIPV, this is where you would start: give it an opcode in the decoder, and define the control signals it needs.</p>
+<p>The IDU has three tasks:</p>
+<ul>
+<li><strong>Decode</strong> the instruction: produce the control signals that steer the later stages, and hand them on together with the operands to the Execute stage.</li>
+<li><strong>Extend</strong> the immediate: collect the immediate bits from the instruction and extend them to a 32-bit value.</li>
+<li><strong>Access the register file</strong>: read the two source registers, which the later stages (the IEU and the Memory stage) use as operands. The register file is also written here, but the write comes from the Writeback stage, at the other end of the pipeline.</li>
+</ul>
+</section>
+<section id="interface-of-the-idu" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="interface-of-the-idu"><span class="header-section-number">9.3</span> Interface of the IDU</h2>
+<p>The ports of the IDU fall into five groups: the handshake with Fetch and the data coming from it, the jump from Execute, the handshake with Execute, the write port of the register file driven by Writeback, and the stage outputs.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Fetch stage</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ValidF,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ReadyD,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] InstrF, PCF, PCPlus4F,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="co">// flush on taken branch/jump resolved in Execute</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        PCSrcE,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Execute stage</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ValidD,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ReadyE,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="co">// write port from the Writeback stage</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        RegWriteW,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  RdW,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ResultW,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="co">// stage outputs to Execute</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RD1D, RD2D, ImmExtD, PCD, PCPlus4D,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  Rs1D, Rs2D, RdD,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  Funct3D,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcD, ALUSrcAD,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ALUSrcBD,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ALUControlD);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Handshake with Fetch and data from Fetch.</strong> <code>ValidF</code> and <code>ReadyD</code> agree on each transfer. The data is the instruction <code>InstrF</code> and its two addresses, <code>PCF</code> and <code>PCPlus4F</code>.</li>
+<li><strong>Jump from Execute.</strong> When <code>PCSrcE</code> is high, Execute has taken a branch or a jump, and the instruction held in Decode was fetched from the wrong path. The IDU throws it away.</li>
+<li><strong>Handshake with Execute.</strong> <code>ValidD</code> and <code>ReadyE</code>, the same pair one stage further down.</li>
+<li><strong>Write port, from Writeback.</strong> <code>RegWriteW</code>, <code>RdW</code> and <code>ResultW</code> write a result into the register file. They belong to a different instruction, the one that is finishing in Writeback.</li>
+<li><strong>Stage outputs.</strong> The operands read from the register file (<code>RD1D</code>, <code>RD2D</code>) and the immediate (<code>ImmExtD</code>); the register numbers to read and to write (<code>Rs1D</code>, <code>Rs2D</code>, <code>RdD</code>); the two addresses (<code>PCD</code>, <code>PCPlus4D</code>); <code>Funct3D</code>, which later stages still need to choose the branch condition and the memory access size; and the control signals.</li>
+</ul>
+</section>
+<section id="structure-of-the-idu" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="structure-of-the-idu"><span class="header-section-number">9.4</span> Structure of the IDU</h2>
+<div id="fig-idu" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-idu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/idu.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-idu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.1: The IDU: the handshake logic and the F/D pipeline registers, the control decoder (<code>idudec</code>), the immediate extension (<code>extend</code>) and the register file (<code>regfile</code>).
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-idu" class="quarto-xref">Figure&nbsp;<span>9.1</span></a> shows the IDU. It has five parts: the handshake logic, which decides when the stage takes a new instruction from Fetch; the pipeline registers, which hold that instruction; and three blocks that work on it in parallel: the control decoder <code>idudec</code>, the immediate extension <code>extend</code>, and the register file <code>regfile</code>. The register numbers and <code>funct3</code> need no block at all: they are fixed bit fields of the instruction, and the IDU simply wires them out.</p>
+</section>
+<section id="sec-handshake" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="sec-handshake"><span class="header-section-number">9.5</span> The valid/ready handshake</h2>
+<p>In the simplest pipeline, every stage hands its result to the next stage at every clock edge. That works only if every stage always finishes its work in exactly one cycle. HIPV is not like that. Fetch and the Memory stage talk to memories that answer when they are ready, which can take any number of cycles. Two things can therefore happen:</p>
+<ul>
+<li>A <strong>later stage is busy.</strong> A load in the Memory stage waits for its data, and the instruction behind it in Execute cannot move on. If Execute handed over its result anyway, the instruction in the Memory stage would be overwritten. The stages behind a busy stage must wait: this is a <strong>stall</strong>.</li>
+<li>An <strong>earlier stage has nothing to send.</strong> Fetch is still waiting for the instruction memory, so in this cycle Decode receives nothing. The empty slot that travels down the pipeline is a <strong>bubble</strong>.</li>
+</ul>
+<p>The pipeline handles both with a <strong>handshake</strong>, a universal agreement between every two neighbouring stages: data moves from one stage to the next only when the sender has something to send <em>and</em> the receiver is able to take it. Each stage makes this decision locally, with its two neighbours, and does not need to know what is going on anywhere else.</p>
+<section id="two-signals" class="level3" data-number="9.5.1">
+<h3 data-number="9.5.1" class="anchored" data-anchor-id="two-signals"><span class="header-section-number">9.5.1</span> Two signals</h3>
+<p>The handshake uses two control signals next to the data:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Driven by</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>valid</code></td>
+<td>sender</td>
+<td>The data output carries a real item, not leftovers from an earlier one or random bits after reset.</td>
+</tr>
+<tr class="even">
+<td><code>ready</code></td>
+<td>receiver</td>
+<td>The receiver can accept an item at the next clock edge.</td>
+</tr>
+<tr class="odd">
+<td><code>data</code></td>
+<td>sender</td>
+<td>The item itself: an instruction with its operands and controls. It is meaningful only while <code>valid</code> is 1.</td>
+</tr>
+</tbody>
+</table>
+<p>An item is <strong>transferred</strong> at a rising clock edge where <code>valid</code> and <code>ready</code> are both 1. In HIPV the names carry the stage suffix: between Fetch and Decode the pair is <code>ValidF</code> and <code>ReadyD</code>, between Decode and Execute it is <code>ValidD</code> and <code>ReadyE</code>, and so on down the pipeline.</p>
+</section>
+<section id="four-cases" class="level3" data-number="9.5.2">
+<h3 data-number="9.5.2" class="anchored" data-anchor-id="four-cases"><span class="header-section-number">9.5.2</span> Four cases</h3>
+<div id="fig-handshake-cases" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-handshake-cases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/handshake_cases.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-handshake-cases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: The four combinations of <code>valid</code> and <code>ready</code>. An item is transferred in each cycle where both are high (<code>transfer</code>). In cycles 3 and 4 the receiver stalls, and the sender holds <code>B</code> until the transfer in cycle 5.
+</figcaption>
+</figure>
+</div>
+<p>The two signals give four cases, and <a href="#fig-handshake-cases" class="quarto-xref">Figure&nbsp;<span>9.2</span></a> shows all of them:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>valid</code></th>
+<th><code>ready</code></th>
+<th>Name</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0</td>
+<td>idle</td>
+<td>The sender has nothing, and the receiver has no room. Nothing happens.</td>
+</tr>
+<tr class="even">
+<td>0</td>
+<td>1</td>
+<td>bubble</td>
+<td>The receiver could take an item, but there is none. At the edge the receiver records that it has received nothing: an empty slot moves down the pipeline.</td>
+</tr>
+<tr class="odd">
+<td>1</td>
+<td>0</td>
+<td>stall</td>
+<td>The sender has an item, but the receiver cannot take it. The sender keeps its item and its outputs unchanged, and tries again in the next cycle.</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>1</td>
+<td>transfer</td>
+<td>The item moves to the receiver at the clock edge. In the next cycle the sender may offer a new item.</td>
+</tr>
+</tbody>
+</table>
+<p>The transfer case can repeat in every cycle, as in cycles 5 and 6 of the figure: when both sides are always ready, the handshake costs nothing, and the pipeline moves one item per cycle as if the handshake were not there.</p>
+</section>
+<section id="rules-of-the-handshake" class="level3" data-number="9.5.3">
+<h3 data-number="9.5.3" class="anchored" data-anchor-id="rules-of-the-handshake"><span class="header-section-number">9.5.3</span> Rules of the handshake</h3>
+<p>For the handshake to work, both sides follow four rules:</p>
+<ol type="1">
+<li><strong>Once <code>valid</code> is set, it holds until the transfer.</strong> The sender may not withdraw an item, or change it, while waiting for <code>ready</code>. Otherwise the receiver could take a value that changes under it.</li>
+<li><strong><code>valid</code> must not depend on <code>ready</code>.</strong> The sender decides on its own whether it has something to offer. If <code>valid</code> waited for <code>ready</code>, and the receiver in turn made <code>ready</code> wait for <code>valid</code>, neither would ever move. Combinational paths between the two would form a loop. The opposite direction is allowed: <code>ready</code> may depend on <code>valid</code>.</li>
+<li><strong><code>data</code> is meaningful only while <code>valid</code> is 1.</strong> In between, the data lines may hold anything, and the receiver ignores them.</li>
+<li><strong>A transfer happens at one clock edge, and moves one item.</strong> If both signals stay high in the next cycle, that is a new transfer of the next item.</li>
+</ol>
+<p>HIPV breaks rule 1 on purpose, in exactly one place. When Execute takes a jump, the instruction offered by Decode belongs to the wrong path, and Decode withdraws it by dropping <code>ValidD</code>, as we will see shortly. This is safe because at the same moment, everything behind the jump is being thrown away.</p>
+</section>
+</section>
+<section id="handshake-logic-of-the-idu" class="level2" data-number="9.6">
+<h2 data-number="9.6" class="anchored" data-anchor-id="handshake-logic-of-the-idu"><span class="header-section-number">9.6</span> Handshake logic of the IDU</h2>
+<div id="fig-idu-handshake" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-idu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/idu-handshake.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-idu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch that Decode can take a new instruction, <code>EnFD</code> loads the F/D registers, <code>validreg</code> remembers whether the stage holds a valid instruction, and <code>PCSrcE</code> hides it from Execute on a jump.
+</figcaption>
+</figure>
+</div>
+<p>The handshake logic of the IDU is a few lines of code (<a href="#fig-idu-handshake" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D handshake: accept when the stage is empty or being drained</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyD = ~ValidDReg | ReadyE;</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnFD   = ValidF &amp; ReadyD;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidD = ValidDReg &amp; ~PCSrcE;</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D valid bit</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) ValidDReg &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyD) ValidDReg &lt;= ValidF;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The most important signal is <strong><code>EnFD</code></strong>, the transfer between Fetch and Decode: Fetch offers an instruction (<code>ValidF</code>) and Decode accepts it (<code>ReadyD</code>). It is the enable of the pipeline registers, so it is the moment the instruction enters Decode.</p>
+<p><strong><code>ReadyD</code></strong> says that Decode can accept a new instruction. That is true in two situations:</p>
+<ul>
+<li><strong>The stage is empty</strong>, <code>~ValidDReg</code>: it holds no valid instruction, so there is nothing to lose.</li>
+<li><strong>The stage is being drained</strong>, <code>ReadyE</code>: Execute takes the instruction that Decode holds at this very edge, so its place is freed and can be refilled at the same edge. This is what lets the pipeline move one instruction per cycle. When Execute stalls, <code>ReadyE</code> is 0, and with a valid instruction in Decode, <code>ReadyD</code> is 0 too: the stall propagates backwards, to Fetch.</li>
+</ul>
+<p><strong><code>ValidDReg</code></strong> is the valid bit of the stage, a one-bit register that says whether the pipeline registers hold a real instruction. It is a delayed copy of <code>ValidF</code>: whenever the stage can accept something (<code>ReadyD</code>), it stores <code>ValidF</code>, so it becomes 1 when an instruction arrives and 0 when a bubble arrives.</p>
+<p>Why keep a register for it, instead of using <code>ValidF</code> directly? Because the valid signal must travel through the pipeline at the same pace as the data it labels. <code>ValidF</code> describes <code>InstrF</code>, the instruction on the output of Fetch in this cycle. After the edge, that instruction sits in <code>InstrD</code>, and Fetch may already be working on the next one, with a different <code>ValidF</code>. The label must therefore be stored at the same edge, and in a register next to the data, so that <code>ValidDReg</code> always describes what is in <code>InstrD</code>. The same happens in every stage: each pipeline register has its valid bit, and an instruction and its valid bit always move together.</p>
+<p>Note the small difference between the two enables. The data registers load on <code>EnFD</code>, only when an instruction actually arrives. The valid bit loads on <code>ReadyD</code>, also when a bubble arrives. In that case the data registers keep the old instruction, which has already moved to Execute, and the valid bit becomes 0 to mark it as stale. Rule 3 of the handshake makes this safe: nobody looks at the data while the valid bit is 0.</p>
+<p><strong><code>ValidD</code></strong> offers the instruction to Execute. It is the valid bit, with one exception: when <code>PCSrcE</code> is high, Execute has taken a jump, and the instruction in Decode is the one fetched after the jump, on the wrong path. <code>ValidD</code> drops at once, in the same cycle, so Execute never takes it. At the following edge the valid bit is cleared as well. This needs no extra logic: on a jump, Fetch also drops <code>ValidF</code>, and since the jump leaves Execute at this edge (<code>PCSrcE</code> implies <code>ReadyE</code>), <code>ReadyD</code> is 1, and the valid bit loads the 0 from <code>ValidF</code>. The instruction has become a bubble, which is called a <strong>flush</strong>.</p>
+</section>
+<section id="pipeline-registers" class="level2" data-number="9.7">
+<h2 data-number="9.7" class="anchored" data-anchor-id="pipeline-registers"><span class="header-section-number">9.7</span> Pipeline registers</h2>
+<p>The F/D pipeline registers store the instruction and its two addresses. They are three instances of the generic <code>flopenr</code>, all with the same enable, <code>EnFD</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D pipeline registers</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) instrreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(InstrF),<span class="dt"> .Q</span>(InstrD));</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(PCF),<span class="dt"> .Q</span>(PCD));</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(PCPlus4F),<span class="dt"> .Q</span>(PCPlus4D));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each register does one of two things at a clock edge:</p>
+<ul>
+<li><strong>update</strong>: when <code>EnFD</code> is 1, it stores the new value from Fetch;</li>
+<li><strong>hold</strong>: when <code>EnFD</code> is 0, it keeps its current value.</li>
+</ul>
+<p>The enable is the key component that makes the pipeline elastic. Without it, the register would load a new value at every edge, and a stall would lose the instruction. With it, the instruction in Decode simply stays where it is, with all the outputs computed from it stable, for as long as Execute is not ready to take it.</p>
+<p>The IDU stores only three values. Everything else it produces (the control signals, the immediate, the register operands) is computed from <code>InstrD</code> by combinational logic, in the cycle the instruction is in Decode, and stored only in the next pipeline register, at the entry to Execute.</p>
+</section>
+<section id="instruction-fields" class="level2" data-number="9.8">
+<h2 data-number="9.8" class="anchored" data-anchor-id="instruction-fields"><span class="header-section-number">9.8</span> Instruction fields</h2>
+<p>RV32I is designed so that decoding is easy. In every format that has them, the register numbers and <code>funct3</code> sit at the same bit positions, so the IDU can extract them with plain wiring, before it even knows what kind of instruction it holds:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// instruction fields</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Rs1D    = InstrD[<span class="dv">19</span>:<span class="dv">15</span>];</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Rs2D    = InstrD[<span class="dv">24</span>:<span class="dv">20</span>];</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RdD     = InstrD[<span class="dv">11</span>:<span class="dv">7</span>];</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Funct3D = InstrD[<span class="dv">14</span>:<span class="dv">12</span>];</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The six RV32I formats differ only in which of these fields they use and how they place the immediate:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Format</th>
+<th>31:25</th>
+<th>24:20</th>
+<th>19:15</th>
+<th>14:12</th>
+<th>11:7</th>
+<th>6:0</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>R</td>
+<td><code>funct7</code></td>
+<td><code>rs2</code></td>
+<td><code>rs1</code></td>
+<td><code>funct3</code></td>
+<td><code>rd</code></td>
+<td><code>opcode</code></td>
+</tr>
+<tr class="even">
+<td>I</td>
+<td><code>imm[11:5]</code></td>
+<td><code>imm[4:0]</code></td>
+<td><code>rs1</code></td>
+<td><code>funct3</code></td>
+<td><code>rd</code></td>
+<td><code>opcode</code></td>
+</tr>
+<tr class="odd">
+<td>S</td>
+<td><code>imm[11:5]</code></td>
+<td><code>rs2</code></td>
+<td><code>rs1</code></td>
+<td><code>funct3</code></td>
+<td><code>imm[4:0]</code></td>
+<td><code>opcode</code></td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td><code>imm[12,10:5]</code></td>
+<td><code>rs2</code></td>
+<td><code>rs1</code></td>
+<td><code>funct3</code></td>
+<td><code>imm[4:1,11]</code></td>
+<td><code>opcode</code></td>
+</tr>
+<tr class="odd">
+<td>U</td>
+<td><code>imm[31:25]</code></td>
+<td><code>imm[24:20]</code></td>
+<td><code>imm[19:15]</code></td>
+<td><code>imm[14:12]</code></td>
+<td><code>rd</code></td>
+<td><code>opcode</code></td>
+</tr>
+<tr class="even">
+<td>J</td>
+<td><code>imm[20,10:5]</code></td>
+<td><code>imm[4:1,11]</code></td>
+<td><code>imm[19:15]</code></td>
+<td><code>imm[14:12]</code></td>
+<td><code>rd</code></td>
+<td><code>opcode</code></td>
+</tr>
+</tbody>
+</table>
+<p>For an instruction that does not use a field, the extracted value is meaningless. For a store, <code>RdD</code> holds immediate bits. That is harmless, because the control signals say which fields count: a store has <code>RegWriteD = 0</code>, so its <code>RdD</code> is never used to write a register.</p>
+</section>
+<section id="the-control-decoder" class="level2" data-number="9.9">
+<h2 data-number="9.9" class="anchored" data-anchor-id="the-control-decoder"><span class="header-section-number">9.9</span> The control decoder</h2>
+<p>The task of the decoder, <code>idudec</code>, is to generate the control signals for the instruction. It looks at three parts of the instruction:</p>
+<ul>
+<li>the <strong>opcode</strong>, bits 6:0, which says what kind of instruction it is: a register–register operation, a load, a branch, …;</li>
+<li><strong><code>funct3</code></strong>, bits 14:12, which distinguishes the ALU operations within one opcode (<code>add</code>, <code>xor</code>, <code>sll</code>, …), and, for branches and memory accesses, the condition and the size;</li>
+<li><strong><code>funct7[5]</code></strong>, bit 30 of the instruction, called <code>Funct7b5D</code>, which distinguishes the two pairs of operations that share <code>funct3</code>: <code>add</code> from <code>sub</code> and <code>srl</code> from <code>sra</code>.</li>
+</ul>
+<p>From them it produces the control signals for every later part of the core:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Width</th>
+<th>For</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ALUControlD</code></td>
+<td>4</td>
+<td>ALU</td>
+<td>which of the ten operations</td>
+</tr>
+<tr class="even">
+<td><code>ALUSrcAD</code></td>
+<td>2</td>
+<td>ALU</td>
+<td>operand A: register, PC or zero</td>
+</tr>
+<tr class="odd">
+<td><code>ALUSrcBD</code></td>
+<td>1</td>
+<td>ALU</td>
+<td>operand B: register or immediate</td>
+</tr>
+<tr class="even">
+<td><code>BranchD</code></td>
+<td>1</td>
+<td>Execute</td>
+<td>a conditional branch</td>
+</tr>
+<tr class="odd">
+<td><code>JumpD</code>, <code>JalrD</code></td>
+<td>1</td>
+<td>Execute</td>
+<td><code>jal</code>, <code>jalr</code></td>
+</tr>
+<tr class="even">
+<td><code>MemWriteD</code></td>
+<td>1</td>
+<td>Memory</td>
+<td>a store</td>
+</tr>
+<tr class="odd">
+<td><code>ResultSrcD</code></td>
+<td>2</td>
+<td>Writeback</td>
+<td>what to write back: ALU result, loaded data, or <code>PC + 4</code></td>
+</tr>
+<tr class="even">
+<td><code>RegWriteD</code></td>
+<td>1</td>
+<td>Writeback</td>
+<td>the instruction writes <code>rd</code></td>
+</tr>
+<tr class="odd">
+<td><code>ImmSrcD</code></td>
+<td>3</td>
+<td><code>extend</code> (here)</td>
+<td>the immediate format</td>
+</tr>
+</tbody>
+</table>
+<p>Only <code>ImmSrcD</code> is used in Decode itself. All other signals travel down the pipeline with the instruction, and each is used in the stage named in the table.</p>
+<section id="the-hipv-package" class="level3" data-number="9.9.1">
+<h3 data-number="9.9.1" class="anchored" data-anchor-id="the-hipv-package"><span class="header-section-number">9.9.1</span> The HIPV package</h3>
+<p>The decoder produces encoded signals, such as <code>ALUControlD = 4'b0001</code> for a subtraction, and the IEU must interpret them in exactly the same way. If each module wrote its own numbers, a change on one side would silently break the other. HIPV therefore keeps all encodings in one place, a <strong>package</strong>. A package is a named collection of declarations (constants, types, functions) that does not describe hardware by itself, but can be used by any module. The HIPV package, <code>config/hipv_pkg.sv</code>, defines the encodings of all control signals and the RV32I opcodes as <code>localparam</code> constants. For example, the immediate formats and the opcodes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> hipv_pkg;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// immediate format select (ImmSrc)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_I = <span class="bn">3'b000</span>;</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_S = <span class="bn">3'b001</span>;</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_B = <span class="bn">3'b010</span>;</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_J = <span class="bn">3'b011</span>;</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_U = <span class="bn">3'b100</span>;</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  ...</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// RV32I opcodes</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_RTYPE  = <span class="bn">7'b0110011</span>;</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_IALU   = <span class="bn">7'b0010011</span>;</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_LOAD   = <span class="bn">7'b0000011</span>;</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_STORE  = <span class="bn">7'b0100011</span>;</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_BRANCH = <span class="bn">7'b1100011</span>;</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_JAL    = <span class="bn">7'b1101111</span>;</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_JALR   = <span class="bn">7'b1100111</span>;</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_LUI    = <span class="bn">7'b0110111</span>;</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_AUIPC  = <span class="bn">7'b0010111</span>;</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A module that needs the constants imports the package at the top of its body:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idudec (...);</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> hipv_pkg::*;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>hipv_pkg::*</code> makes every name of the package visible in the module, so the code can write <code>OP_LOAD</code> instead of <code>7'b0000011</code>. The decoder (<code>idudec</code>), the extension unit (<code>extend</code>), the ALU (<code>alu</code>) and the IEU all import the same package, so they always agree on the encodings. The code also becomes readable: <code>ResultSrcD = RESULT_MEM</code> says what it means, while <code>ResultSrcD = 2'b01</code> does not. The package must be compiled before the modules that import it, which is why it comes first in the file lists of the simulation and synthesis scripts.</p>
+</section>
+<section id="the-control-word" class="level3" data-number="9.9.2">
+<h3 data-number="9.9.2" class="anchored" data-anchor-id="the-control-word"><span class="header-section-number">9.9.2</span> The control word</h3>
+<p>The decoder has a dozen output signals, and each opcode must set all of them. Rather than assigning each signal separately in every branch, the decoder collects them into one vector, the <strong>control word</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">14</span>:<span class="dv">0</span>] ControlsD;</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ALUOpD;</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD, ResultSrcD,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>          BranchD, JumpD, JalrD, ALUOpD} = ControlsD;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the concatenation operator on the left-hand side of an assignment, which we met in the <a href="../chapters/04-sv-basics.html">SystemVerilog basics</a> to catch the carry of an adder: <code>assign {carry_out, sum} = a + b;</code>. On the right of an assignment, <code>{}</code> joins signals into one vector. On the left, it does the reverse: it splits a vector into pieces and assigns each piece to one signal, from the most significant bit down. The widths add up to 15:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th><code>RegWriteD</code></th>
+<th><code>ImmSrcD</code></th>
+<th><code>ALUSrcAD</code></th>
+<th><code>ALUSrcBD</code></th>
+<th><code>MemWriteD</code></th>
+<th><code>ResultSrcD</code></th>
+<th><code>BranchD</code></th>
+<th><code>JumpD</code></th>
+<th><code>JalrD</code></th>
+<th><code>ALUOpD</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Width</td>
+<td>1</td>
+<td>3</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>Bits of <code>ControlsD</code></td>
+<td>14</td>
+<td>13:11</td>
+<td>10:9</td>
+<td>8</td>
+<td>7</td>
+<td>6:5</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td>1:0</td>
+</tr>
+</tbody>
+</table>
+<p>The assignment is pure wiring, without any gates. Its benefit is in the code that drives <code>ControlsD</code>: each opcode needs just one line, and that line reads like a row of a table.</p>
+</section>
+<section id="the-main-decoder" class="level3" data-number="9.9.3">
+<h3 data-number="9.9.3" class="anchored" data-anchor-id="the-main-decoder"><span class="header-section-number">9.9.3</span> The main decoder</h3>
+<p>The main decoder is one <code>case</code> on the opcode, inside <code>always_comb</code>. Each branch assigns the whole control word, using the package names for the encoded fields:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// main decoder</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">//                        RegWrite ImmSrc SrcA       SrcB  MemWrite ResultSrc   Branch Jump  Jalr  ALUOp</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (OpD)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>      OP_RTYPE:  ControlsD = {<span class="bn">1'b1</span>, IMM_I, SRCA_RF,   <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b10</span>};</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      OP_IALU:   ControlsD = {<span class="bn">1'b1</span>, IMM_I, SRCA_RF,   <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b10</span>};</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>      OP_LOAD:   ControlsD = {<span class="bn">1'b1</span>, IMM_I, SRCA_RF,   <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_MEM, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      OP_STORE:  ControlsD = {<span class="bn">1'b0</span>, IMM_S, SRCA_RF,   <span class="bn">1'b1</span>, <span class="bn">1'b1</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>      OP_BRANCH: ControlsD = {<span class="bn">1'b0</span>, IMM_B, SRCA_RF,   <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b01</span>};</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>      OP_JAL:    ControlsD = {<span class="bn">1'b1</span>, IMM_J, SRCA_RF,   <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, RESULT_PC4, <span class="bn">1'b0</span>, <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      OP_JALR:   ControlsD = {<span class="bn">1'b1</span>, IMM_I, SRCA_RF,   <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_PC4, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b1</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      OP_LUI:    ControlsD = {<span class="bn">1'b1</span>, IMM_U, SRCA_ZERO, <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>      OP_AUIPC:  ControlsD = {<span class="bn">1'b1</span>, IMM_U, SRCA_PC,   <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:   ControlsD = <span class="bn">15'b0</span>;  <span class="co">// unimplemented opcode: nop</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each row is the complete recipe for one kind of instruction. Read the load row from left to right: it writes a register; its immediate has the I format; the ALU adds the register <code>rs1</code> and the immediate, which gives the address; it does not write memory; the value written back is the loaded data; and it is neither a branch nor a jump. A store differs in the immediate format (S), in writing memory, and in not writing a register.</p>
+<p>Some fields do not matter for some instructions, and the table simply fills them with a harmless value. An R-type instruction has no immediate, so its <code>ImmSrcD</code> is arbitrary. A store or branch does not write back, so its <code>ResultSrcD</code> is arbitrary. A few choices are worth noting:</p>
+<ul>
+<li><code>jal</code> and <code>jalr</code> write the return address, so their <code>ResultSrcD</code> is <code>RESULT_PC4</code>. Their targets are computed in Execute: <code>jal</code> uses the dedicated <code>PC + imm</code> adder, while <code>jalr</code> uses the ALU to add <code>rs1</code> and the immediate, which is why only <code>jalr</code> sets <code>ALUSrcBD</code>.</li>
+<li><code>lui</code> and <code>auipc</code> both add the U immediate in the ALU. They differ only in operand A: zero for <code>lui</code>, the PC for <code>auipc</code>.</li>
+<li>Opcodes that HIPV does not implement, such as <code>fence</code> and the system instructions, fall into <code>default</code> and get an all-zero control word. It writes nothing, stores nothing, and does not jump, so the instruction passes through the pipeline as a no-op.</li>
+</ul>
+<p><code>ALUOpD</code> is not a final ALU operation, but a hint for the second part of the decoder: <code>10</code> means “the operation is given by <code>funct3</code> and <code>funct7</code>”, and <code>00</code> means “just add”.</p>
+</section>
+<section id="the-alu-decoder" class="level3" data-number="9.9.4">
+<h3 data-number="9.9.4" class="anchored" data-anchor-id="the-alu-decoder"><span class="header-section-number">9.9.4</span> The ALU decoder</h3>
+<p>The ALU decoder turns <code>ALUOpD</code>, <code>funct3</code> and <code>funct7[5]</code> into the final <code>ALUControlD</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sub only exists as an R-type encoding (addi has no subi)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RtypeSubD = Funct7b5D &amp; OpD[<span class="dv">5</span>];</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ALU decoder</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (ALUOpD == <span class="bn">2'b10</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">case</span> (Funct3D)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b000</span>:  ALUControlD = RtypeSubD ? ALU_SUB : ALU_ADD;</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b001</span>:  ALUControlD = ALU_SLL;</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b010</span>:  ALUControlD = ALU_SLT;</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b011</span>:  ALUControlD = ALU_SLTU;</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b100</span>:  ALUControlD = ALU_XOR;</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b101</span>:  ALUControlD = Funct7b5D ? ALU_SRA : ALU_SRL;</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b110</span>:  ALUControlD = ALU_OR;</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">default</span>: ALUControlD = ALU_AND;</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">endcase</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> ALUControlD = ALU_ADD;  <span class="co">// address / target computation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For the arithmetic instructions (<code>ALUOpD = 10</code>), <code>funct3</code> selects the operation directly, and it does so in the same way for the R-type and the I-type form: <code>add</code> and <code>addi</code> both have <code>funct3 = 000</code>, <code>xor</code> and <code>xori</code> both <code>100</code>. For every other instruction, the ALU adds: a load or store computes its address, <code>jalr</code> its target, <code>lui</code> and <code>auipc</code> their results. A branch has <code>ALUOpD = 01</code>, but it also gets <code>ADD</code>. Its condition is evaluated by the branch comparator, so the ALU result is not used.</p>
+<p>Two values of <code>funct3</code> need bit 30 as well. For <code>funct3 = 101</code>, it separates the arithmetic shift <code>sra</code>/<code>srai</code> from the logical shift <code>srl</code>/<code>srli</code>. This works for both forms, because in <code>srai</code> the immediate’s upper bits are a fixed <code>funct7</code> pattern, with bit 30 set. For <code>funct3 = 000</code> it separates <code>sub</code> from <code>add</code>, but only for R-type instructions. In <code>addi</code>, bit 30 is an ordinary immediate bit, and <code>addi x1, x1, -1024</code> has it set, yet must still add. <code>OpD[5]</code> is 1 for the R-type opcode <code>0110011</code> and 0 for the I-type <code>0010011</code>, so <code>RtypeSubD = Funct7b5D &amp; OpD[5]</code> selects <code>sub</code> only where it exists.</p>
+</section>
+</section>
+<section id="immediate-extension" class="level2" data-number="9.10">
+<h2 data-number="9.10" class="anchored" data-anchor-id="immediate-extension"><span class="header-section-number">9.10</span> Immediate extension</h2>
+<p>The datapath of HIPV is 32 bits wide, but an immediate in an instruction has at most 20 bits, and it is split across the instruction differently in each format. The extension unit <code>extend</code> collects the bits of the immediate and extends them to a 32-bit value. The decoder tells it which format to use, with <code>ImmSrcD</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> extend (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">7</span>] InstrD,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>               <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  ImmSrcD,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>               <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ImmExtD);</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> hipv_pkg::*;</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (ImmSrcD)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      IMM_I:   ImmExtD = {{<span class="dv">20</span>{InstrD[<span class="dv">31</span>]}}, InstrD[<span class="dv">31</span>:<span class="dv">20</span>]};</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      IMM_S:   ImmExtD = {{<span class="dv">20</span>{InstrD[<span class="dv">31</span>]}}, InstrD[<span class="dv">31</span>:<span class="dv">25</span>], InstrD[<span class="dv">11</span>:<span class="dv">7</span>]};</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      IMM_B:   ImmExtD = {{<span class="dv">20</span>{InstrD[<span class="dv">31</span>]}}, InstrD[<span class="dv">7</span>], InstrD[<span class="dv">30</span>:<span class="dv">25</span>], InstrD[<span class="dv">11</span>:<span class="dv">8</span>], <span class="bn">1'b0</span>};</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      IMM_J:   ImmExtD = {{<span class="dv">12</span>{InstrD[<span class="dv">31</span>]}}, InstrD[<span class="dv">19</span>:<span class="dv">12</span>], InstrD[<span class="dv">20</span>], InstrD[<span class="dv">30</span>:<span class="dv">21</span>], <span class="bn">1'b0</span>};</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      IMM_U:   ImmExtD = {InstrD[<span class="dv">31</span>:<span class="dv">12</span>], <span class="bn">12'b0</span>};</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ImmExtD = <span class="bn">32'b0</span>;</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each line is a concatenation that follows the format table from the section on instruction fields:</p>
+<ul>
+<li><strong>I</strong> (arithmetic immediates, loads, <code>jalr</code>): the 12 bits 31:20.</li>
+<li><strong>S</strong> (stores): the same 12-bit immediate, but split in two, because bits 11:7 hold <code>rd</code> in other formats and <code>rs2</code> takes bits 24:20. The two pieces are joined again.</li>
+<li><strong>B</strong> (branches): a 13-bit offset whose lowest bit is always 0, because instructions start at even addresses. That bit is not stored; the code appends <code>1'b0</code>. The other bits are scattered so that most of them sit where they sit in the S format.</li>
+<li><strong>J</strong> (<code>jal</code>): a 21-bit offset, also with bit 0 appended as 0.</li>
+<li><strong>U</strong> (<code>lui</code>, <code>auipc</code>): the upper 20 bits of a 32-bit value. They are placed at the top and the lower 12 bits are filled with zeros, so there is nothing to extend.</li>
+</ul>
+<p>All the other immediates are <strong>sign-extended</strong>: they are two’s-complement numbers, so <code>addi x1, x1, -1</code> and a backward branch work. Sign extension copies the sign bit into all the new upper bits, and the replication operator <code>{20{InstrD[31]}}</code> does exactly that. The sign bit is always bit 31 of the instruction, in every format. RISC-V placed it there on purpose: the extension can start replicating the sign before it even knows the format.</p>
+<p>The input is <code>InstrD[31:7]</code>, because the opcode bits 6:0 never contain any part of an immediate. The scrambled bit order in B and J looks strange in the code, but in hardware it costs nothing: each output bit is a wire from one input bit, chosen by a multiplexer of at most five inputs.</p>
+</section>
+<section id="register-file" class="level2" data-number="9.11">
+<h2 data-number="9.11" class="anchored" data-anchor-id="register-file"><span class="header-section-number">9.11</span> Register file</h2>
+<p>The register file holds the 32 registers <code>x0</code> to <code>x31</code> of RV32I, each 32 bits wide. It has two read ports, because an instruction reads up to two source registers, and one write port, because it writes at most one destination register:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> regfile (<span class="kw">input</span>  <span class="kw">logic</span>        clk,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span>        WE3,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  A1, A2, A3,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] WD3,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RD1, RD2);</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RF[<span class="dv">31</span>:<span class="dv">0</span>];</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">// synchronous write port (writes to x0 are ignored)</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (WE3 &amp; (A3 != <span class="bn">5'b0</span>)) RF[A3] &lt;= WD3;</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">// combinational read ports with write-first bypass</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RD1 = (A1 == <span class="bn">5'b0</span>) ? <span class="bn">32'b0</span> : (WE3 &amp; (A1 == A3)) ? WD3 : RF[A1];</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RD2 = (A2 == <span class="bn">5'b0</span>) ? <span class="bn">32'b0</span> : (WE3 &amp; (A2 == A3)) ? WD3 : RF[A2];</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>In the IDU, the read addresses are the register numbers of the instruction in Decode, and the write port is connected to the Writeback stage:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  regfile rf<span class="dt">(.clk</span>(clk),<span class="dt"> .WE3</span>(RegWriteW),<span class="dt"> .A1</span>(Rs1D),<span class="dt"> .A2</span>(Rs2D),<span class="dt"> .A3</span>(RdW),</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>             .WD3(ResultW),<span class="dt"> .RD1</span>(RD1D),<span class="dt"> .RD2</span>(RD2D));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="storage-an-array-of-registers" class="level3" data-number="9.11.1">
+<h3 data-number="9.11.1" class="anchored" data-anchor-id="storage-an-array-of-registers"><span class="header-section-number">9.11.1</span> Storage: an array of registers</h3>
+<p>The registers are declared as an <strong>array</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RF[<span class="dv">31</span>:<span class="dv">0</span>];</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The range before the name, <code>[31:0]</code>, is the width of one element: a 32-bit vector, as in every declaration so far. The range after the name is new: it makes 32 such elements, <code>RF[0]</code> to <code>RF[31]</code>. In hardware, this is 32 registers of 32 flip-flops each, 1024 flip-flops in total. The array is not reset, so after power-up the registers hold unknown values. Software must write a register before it reads it, as it must on any processor.</p>
+<p>The array is indexed with a <strong>signal</strong>, not a constant: <code>RF[A1]</code> is the register whose number is the current value of <code>A1</code>. This is relative addressing: the code does not name a register, but says “the one that <code>A1</code> points to”. In hardware there is no addressing logic as in memory; the synthesis tool turns <code>RF[A1]</code> into a 32-to-1 multiplexer with all 32 registers as inputs and <code>A1</code> as the select. Each read port is one such multiplexer, 32 bits wide.</p>
+</section>
+<section id="writing-and-reading" class="level3" data-number="9.11.2">
+<h3 data-number="9.11.2" class="anchored" data-anchor-id="writing-and-reading"><span class="header-section-number">9.11.2</span> Writing and reading</h3>
+<p><strong>Writing</strong> is synchronous. The <code>always_ff</code> block stores <code>WD3</code> in register <code>A3</code> at the rising clock edge, if the write enable <code>WE3</code> is 1. The extra condition <code>A3 != 0</code> protects <code>x0</code>, which RISC-V defines as constant zero: an instruction may name <code>x0</code> as its destination, but the result is discarded. <code>addi x0, x0, 0</code>, the canonical no-op, relies on it.</p>
+<p><strong>Reading</strong> is asynchronous, that is, combinational: <code>RD1</code> and <code>RD2</code> follow <code>A1</code> and <code>A2</code> within the same cycle, with no clock involved. As soon as an instruction enters Decode, its register numbers select the operands, and they are ready by the end of the cycle, in time to be stored in the D/E pipeline register. Each read port checks two special cases before it reads the array:</p>
+<ul>
+<li>If the address is 0, the result is 0. Since <code>x0</code> is never written, its array entry would hold an unknown value from power-up; the check makes sure that <code>x0</code> reads as zero.</li>
+<li>If the register is being written in this very cycle (<code>WE3 &amp; (A1 == A3)</code>), the result is the value being written, <code>WD3</code>, rather than the old value in the array. This is called <strong>write-first</strong> behavior.</li>
+</ul>
+<p>The write-first bypass solves a timing problem of the pipeline. The register file is written at the end of the cycle, at the clock edge, but it is read during the cycle. Without the bypass, an instruction in Decode that reads a register written by an instruction in Writeback in the same cycle would get the old value:</p>
+<pre><code>add  x5, x1, x2    # in Writeback: writes x5 at the end of this cycle
+sub  x6, x7, x8
+or   x9, x6, x0
+and  x3, x5, x4    # in Decode: reads x5 in the same cycle</code></pre>
+<p>The instructions between them are three apart, too far for forwarding in Execute, which reaches only the Memory and Writeback stages. With the bypass, <code>and</code> receives the new value of <code>x5</code> straight from <code>ResultW</code>. Together with forwarding, this covers every distance between a producer and its consumer.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="9.12">
+<h2 data-number="9.12" class="anchored" data-anchor-id="summary"><span class="header-section-number">9.12</span> Summary</h2>
+<p>The IDU turns the 32 bits of an instruction into everything the later stages need: control signals, a 32-bit immediate, and two register operands. Most of it is combinational logic that works in parallel on the instruction held in the F/D register: field extraction by wiring, the decoder, the extension unit, and the read ports of the register file.</p>
+<p>The decoder has two levels: the main decoder maps the opcode to a control word in a single table-like <code>case</code>, and the ALU decoder refines the ALU operation from <code>funct3</code> and bit 30. All encodings come from the shared package <code>hipv_pkg</code>, so Decode and Execute always agree on them.</p>
+<p>The IDU is also the first stage that receives instructions over the valid/ready handshake. This mechanism connects every pair of stages in HIPV: a sender offers an item with <code>valid</code>, a receiver accepts it with <code>ready</code>, and the item moves at the edge where both are high. A valid bit travels with each instruction, a stall propagates backwards through <code>ready</code>, and a jump turns the instruction in Decode into a bubble.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/06b-ifu.html" class="pagination-link" aria-label="Instruction fetch unit">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/06d-ieu.html" class="pagination-link" aria-label="Integer execution unit">
+        <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

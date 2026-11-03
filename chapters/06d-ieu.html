@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>10&nbsp; Integer execution unit – Designing a RISC-V SoC</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/07-pipeline-hazards.html" rel="next">
+<link href="../chapters/06c-idu.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06d-ieu.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06c-idu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06d-ieu.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-ieu" id="toc-sec-ieu" class="nav-link active" data-scroll-target="#sec-ieu">Integer execution unit</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">10.1</span> Goal for this week</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">10.2</span> Introduction</a></li>
+  <li><a href="#interface-of-the-ieu" id="toc-interface-of-the-ieu" class="nav-link" data-scroll-target="#interface-of-the-ieu"><span class="header-section-number">10.3</span> Interface of the IEU</a>
+  <ul class="collapse">
+  <li><a href="#handshake-with-decode" id="toc-handshake-with-decode" class="nav-link" data-scroll-target="#handshake-with-decode"><span class="header-section-number">10.3.1</span> Handshake with Decode</a></li>
+  <li><a href="#signals-from-decode" id="toc-signals-from-decode" class="nav-link" data-scroll-target="#signals-from-decode"><span class="header-section-number">10.3.2</span> Signals from Decode</a></li>
+  <li><a href="#forwarding-inputs" id="toc-forwarding-inputs" class="nav-link" data-scroll-target="#forwarding-inputs"><span class="header-section-number">10.3.3</span> Forwarding inputs</a></li>
+  <li><a href="#redirect-to-fetch-and-decode" id="toc-redirect-to-fetch-and-decode" class="nav-link" data-scroll-target="#redirect-to-fetch-and-decode"><span class="header-section-number">10.3.4</span> Redirect to Fetch and Decode</a></li>
+  <li><a href="#handshake-and-outputs-to-memory" id="toc-handshake-and-outputs-to-memory" class="nav-link" data-scroll-target="#handshake-and-outputs-to-memory"><span class="header-section-number">10.3.5</span> Handshake and outputs to Memory</a></li>
+  </ul></li>
+  <li><a href="#structure-of-the-ieu" id="toc-structure-of-the-ieu" class="nav-link" data-scroll-target="#structure-of-the-ieu"><span class="header-section-number">10.4</span> Structure of the IEU</a></li>
+  <li><a href="#sec-ieu-handshake" id="toc-sec-ieu-handshake" class="nav-link" data-scroll-target="#sec-ieu-handshake"><span class="header-section-number">10.5</span> Handshake logic and pipeline registers</a>
+  <ul class="collapse">
+  <li><a href="#the-de-pipeline-registers" id="toc-the-de-pipeline-registers" class="nav-link" data-scroll-target="#the-de-pipeline-registers"><span class="header-section-number">10.5.1</span> The D/E pipeline registers</a></li>
+  </ul></li>
+  <li><a href="#forwarding" id="toc-forwarding" class="nav-link" data-scroll-target="#forwarding"><span class="header-section-number">10.6</span> Forwarding</a>
+  <ul class="collapse">
+  <li><a href="#sec-ieu-refresh" id="toc-sec-ieu-refresh" class="nav-link" data-scroll-target="#sec-ieu-refresh"><span class="header-section-number">10.6.1</span> Refreshing the operands with forwarded values</a></li>
+  <li><a href="#the-refresh-loop-in-systemverilog" id="toc-the-refresh-loop-in-systemverilog" class="nav-link" data-scroll-target="#the-refresh-loop-in-systemverilog"><span class="header-section-number">10.6.2</span> The refresh loop in SystemVerilog</a></li>
+  </ul></li>
+  <li><a href="#the-alu" id="toc-the-alu" class="nav-link" data-scroll-target="#the-alu"><span class="header-section-number">10.7</span> The ALU</a>
+  <ul class="collapse">
+  <li><a href="#operands-of-the-alu" id="toc-operands-of-the-alu" class="nav-link" data-scroll-target="#operands-of-the-alu"><span class="header-section-number">10.7.1</span> Operands of the ALU</a></li>
+  <li><a href="#the-alu-in-systemverilog" id="toc-the-alu-in-systemverilog" class="nav-link" data-scroll-target="#the-alu-in-systemverilog"><span class="header-section-number">10.7.2</span> The ALU in SystemVerilog</a></li>
+  </ul></li>
+  <li><a href="#jump-mechanism" id="toc-jump-mechanism" class="nav-link" data-scroll-target="#jump-mechanism"><span class="header-section-number">10.8</span> Jump mechanism</a>
+  <ul class="collapse">
+  <li><a href="#conditional-branches-branchcmp" id="toc-conditional-branches-branchcmp" class="nav-link" data-scroll-target="#conditional-branches-branchcmp"><span class="header-section-number">10.8.1</span> Conditional branches: <code>branchcmp</code></a></li>
+  <li><a href="#jump-targets-targetadd-and-targetmux" id="toc-jump-targets-targetadd-and-targetmux" class="nav-link" data-scroll-target="#jump-targets-targetadd-and-targetmux"><span class="header-section-number">10.8.2</span> Jump targets: <code>targetadd</code> and <code>targetmux</code></a></li>
+  <li><a href="#the-redirect-pcsrce" id="toc-the-redirect-pcsrce" class="nav-link" data-scroll-target="#the-redirect-pcsrce"><span class="header-section-number">10.8.3</span> The redirect: <code>PCSrcE</code></a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">10.9</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-ieu" class="level1 unnumbered">
+<h1 class="unnumbered">Integer execution unit</h1>
+<section id="goal-for-this-week" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">10.1</span> Goal for this week</h2>
+<ul>
+<li>Know what the integer execution unit (IEU) does, and which instructions it executes</li>
+<li>Read the IEU interface: the handshake with Decode and Memory, the operands and controls from Decode, the forwarding inputs and the redirect</li>
+<li>Build the IEU from generic blocks: the D/E pipeline registers, the forwarding and operand multiplexers, the ALU and the branch logic</li>
+<li>Understand why the operand registers must be refreshed with forwarded values while the stage waits</li>
+</ul>
+</section>
+<section id="introduction" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">10.2</span> Introduction</h2>
+<p>The execution stage is the heart of every CPU. It is the place where an instruction actually does its work: two numbers are added, compared or shifted, a memory address is computed, a branch decides where the program goes next. The stages before it only prepare this moment. Fetch brings the instruction, Decode works out what it means and reads its operands. The stages after it only finish the job. Memory performs the access whose address Execute has computed, and Writeback stores the result in the register file.</p>
+<p>HIPV implements the base integer instruction set of RISC-V, <strong>RV32I</strong>. It has no multiplication and division (the M extension) and no floating point, so every operation the IEU performs is simple enough to finish in a single clock cycle. The IEU handles three kinds of work:</p>
+<ul>
+<li><strong>Arithmetic and logic.</strong> The register–register instructions <code>add</code>, <code>sub</code>, <code>sll</code>, <code>slt</code>, <code>sltu</code>, <code>xor</code>, <code>srl</code>, <code>sra</code>, <code>or</code> and <code>and</code>, and their register–immediate forms <code>addi</code>, <code>slli</code>, <code>slti</code>, <code>sltiu</code>, <code>xori</code>, <code>srli</code>, <code>srai</code>, <code>ori</code> and <code>andi</code>. The two upper-immediate instructions <code>lui</code> and <code>auipc</code> are also additions in the ALU.</li>
+<li><strong>Address calculation.</strong> Loads and stores address memory as <code>rs1 + imm</code>. The IEU computes this sum, and the Memory stage uses it.</li>
+<li><strong>Control flow.</strong> The six conditional branches <code>beq</code>, <code>bne</code>, <code>blt</code>, <code>bge</code>, <code>bltu</code> and <code>bgeu</code>, and the two jumps <code>jal</code> and <code>jalr</code>. The IEU decides whether the branch is taken, computes the target, and tells Fetch to continue from there.</li>
+</ul>
+</section>
+<section id="interface-of-the-ieu" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="interface-of-the-ieu"><span class="header-section-number">10.3</span> Interface of the IEU</h2>
+<p>The ports of the IEU fall into five groups: the handshake with Decode together with everything Decode has produced, the forwarding inputs, the redirect to Fetch and Decode, and the handshake with the Memory stage together with the stage outputs. As before, the suffix of each name says which stage the signal belongs to.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> ieu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Decode stage</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ValidD,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ReadyE,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="co">// inputs from Decode</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RD1D, RD2D, ImmExtD, PCD, PCPlus4D,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  Rs1D, Rs2D, RdD,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  Funct3D,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcD, ALUSrcAD,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ALUSrcBD,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ALUControlD,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="co">// forwarding (from the hazard unit and later stages)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ForwardAE, ForwardBE,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ForwardDataM, ResultW,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            <span class="co">// redirect to Fetch/Decode</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        PCSrcE,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCTargetE,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Memory stage</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ValidE,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ReadyM,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="co">// stage outputs to Memory</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ALUResultE, WriteDataE, PCPlus4E,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  RdE,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  Rs1E, Rs2E,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  Funct3E,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        RegWriteE, MemWriteE,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcE);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="handshake-with-decode" class="level3" data-number="10.3.1">
+<h3 data-number="10.3.1" class="anchored" data-anchor-id="handshake-with-decode"><span class="header-section-number">10.3.1</span> Handshake with Decode</h3>
+<p>The IEU receives instructions from Decode over the same valid/ready handshake that connects Fetch and Decode (<a href="06c-idu.html#sec-handshake" class="quarto-xref"><span>Section 9.5</span></a>). <code>ValidD</code> says that Decode offers a decoded instruction, and <code>ReadyE</code> says that Execute can accept it. The instruction moves into Execute at a clock edge where both are high. How <code>ReadyE</code> is computed is the subject of <a href="#sec-ieu-handshake" class="quarto-xref"><span>Section 10.5</span></a>.</p>
+</section>
+<section id="signals-from-decode" class="level3" data-number="10.3.2">
+<h3 data-number="10.3.2" class="anchored" data-anchor-id="signals-from-decode"><span class="header-section-number">10.3.2</span> Signals from Decode</h3>
+<p>Decode hands the IEU everything the instruction needs, already worked out. The signals fall into five groups:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Group</th>
+<th>Signals</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ALU operation</td>
+<td><code>ALUControlD</code>, <code>ALUSrcAD</code>, <code>ALUSrcBD</code></td>
+<td>what the ALU computes, and from which operands</td>
+</tr>
+<tr class="even">
+<td>Branches and jumps</td>
+<td><code>BranchD</code>, <code>JumpD</code>, <code>JalrD</code>, <code>Funct3D</code></td>
+<td>whether to redirect, and where</td>
+</tr>
+<tr class="odd">
+<td>Later stages</td>
+<td><code>MemWriteD</code>, <code>ResultSrcD</code>, <code>RegWriteD</code>, <code>RdD</code></td>
+<td>not used here, passed on to Memory and Writeback</td>
+</tr>
+<tr class="even">
+<td>Operands</td>
+<td><code>RD1D</code>, <code>RD2D</code>, <code>ImmExtD</code>, <code>PCD</code>, <code>PCPlus4D</code></td>
+<td>the data to compute with</td>
+</tr>
+<tr class="odd">
+<td>Register numbers</td>
+<td><code>Rs1D</code>, <code>Rs2D</code></td>
+<td>the forwarding decision in the hazard unit</td>
+</tr>
+</tbody>
+</table>
+<p><code>Funct3D</code> serves two purposes. For a branch it selects the condition (<code>beq</code>, <code>blt</code>, …), and for a load or store it selects the access size, which is why it also travels on to the Memory stage. The control signals for later stages pass through the IEU unchanged: Execute stores them in its pipeline registers and hands them on together with its result.</p>
+</section>
+<section id="forwarding-inputs" class="level3" data-number="10.3.3">
+<h3 data-number="10.3.3" class="anchored" data-anchor-id="forwarding-inputs"><span class="header-section-number">10.3.3</span> Forwarding inputs</h3>
+<p>An operand read from the register file in Decode can be out of date. The instruction that produces it may still be in the Memory or Writeback stage, with its result computed but not yet written to the register file. The IEU therefore receives the two newest results in the pipeline:</p>
+<ul>
+<li><code>ForwardDataM</code>, the result of the instruction in the Memory stage. For a load this is the loaded data, otherwise the ALU result.</li>
+<li><code>ResultW</code>, the result of the instruction in the Writeback stage.</li>
+</ul>
+<p>The hazard unit decides which of the values the IEU should use, and tells it with two 2-bit selects, <code>ForwardAE</code> for operand A and <code>ForwardBE</code> for operand B. For that decision it needs to know which registers the instruction in Execute reads, so the IEU exports <code>Rs1E</code> and <code>Rs2E</code>.</p>
+</section>
+<section id="redirect-to-fetch-and-decode" class="level3" data-number="10.3.4">
+<h3 data-number="10.3.4" class="anchored" data-anchor-id="redirect-to-fetch-and-decode"><span class="header-section-number">10.3.4</span> Redirect to Fetch and Decode</h3>
+<p>Branches and jumps are resolved here, so the IEU drives the redirect that we met from the receiving side in the <a href="../chapters/06b-ifu.html">IFU chapter</a>: <code>PCSrcE</code> says that a jump or a taken branch has occurred, and <code>PCTargetE</code> carries the target address. Fetch loads its PC with the target, and Decode throws away the instruction it holds, which was fetched from the wrong path.</p>
+</section>
+<section id="handshake-and-outputs-to-memory" class="level3" data-number="10.3.5">
+<h3 data-number="10.3.5" class="anchored" data-anchor-id="handshake-and-outputs-to-memory"><span class="header-section-number">10.3.5</span> Handshake and outputs to Memory</h3>
+<p>Towards the Memory stage, the IEU is the sender: <code>ValidE</code> says that its outputs hold a valid instruction, and <code>ReadyM</code> says that the Memory stage can take it. The outputs are the ALU result <code>ALUResultE</code>, which is either the result of an arithmetic instruction or the address of a load or store, the store data <code>WriteDataE</code>, the return address <code>PCPlus4E</code> for <code>jal</code> and <code>jalr</code>, and the controls that the later stages still need.</p>
+</section>
+</section>
+<section id="structure-of-the-ieu" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="structure-of-the-ieu"><span class="header-section-number">10.4</span> Structure of the IEU</h2>
+<div id="fig-ieu" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ieu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ieu.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ieu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.1: The IEU: the handshake logic and the D/E pipeline registers, the forwarding multiplexers (<code>fwdamux</code>, <code>fwdbmux</code>), the operand multiplexers (<code>srcamux</code>, <code>srcbmux</code>), the ALU, and the branch logic (<code>branchcmp</code>, <code>targetadd</code>, <code>targetmux</code>) that drives the redirect.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-ieu" class="quarto-xref">Figure&nbsp;<span>10.1</span></a> shows the IEU. Data flows from left to right through four parts, and the rest of the chapter takes them one at a time:</p>
+<ol type="1">
+<li>the <strong>handshake logic and the pipeline registers</strong>, which accept the instruction from Decode and hold it while it executes;</li>
+<li>the <strong>forwarding multiplexers</strong>, which replace an out-of-date register operand with a newer value from the Memory or Writeback stage;</li>
+<li>the <strong>ALU</strong> with its two operand multiplexers, which computes the result;</li>
+<li>the <strong>jump mechanism</strong>, which evaluates the branch condition, computes the target and drives the redirect.</li>
+</ol>
+</section>
+<section id="sec-ieu-handshake" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="sec-ieu-handshake"><span class="header-section-number">10.5</span> Handshake logic and pipeline registers</h2>
+<div id="fig-ieu-handshake" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ieu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/ieu-handshake.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ieu-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.2: The handshake logic of the IEU. <code>ReadyE</code> tells Decode that Execute can take a new instruction, <code>EnDE</code> loads the D/E registers, and <code>validreg</code> remembers whether the stage holds a valid instruction.
+</figcaption>
+</figure>
+</div>
+<p>The handshake logic is the same as in Decode (<a href="06c-idu.html#fig-idu-handshake" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>), with one difference: Decode also listens to <code>PCSrcE</code> and flushes its instruction on a redirect, while Execute is never flushed. A branch is resolved in Execute, so everything that is wrong about it lies <em>behind</em> it, in Fetch and Decode. The branch itself is correct and continues to the Memory stage like any other instruction.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// D/E handshake: accept when the stage is empty or being drained</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyE = ~ValidEReg | ReadyM;</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnDE   = ValidD &amp; ReadyE;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidE = ValidEReg;</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// D/E valid bit</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) ValidEReg &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyE) ValidEReg &lt;= ValidD;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Three signals make up the handshake (<a href="#fig-ieu-handshake" class="quarto-xref">Figure&nbsp;<span>10.2</span></a>):</p>
+<ul>
+<li><code>ValidEReg</code> is the <strong>valid bit</strong> of the stage, a one-bit register that says whether the stage holds a valid instruction or a bubble. It is reset to 0, an empty stage. Whenever the stage can accept a new instruction, it takes over <code>ValidD</code>: it becomes 1 if Decode delivers an instruction, and 0, a bubble, if Decode has nothing to offer. It is also the stage output <code>ValidE</code>.</li>
+<li><code>ReadyE</code> tells Decode that Execute can accept a new instruction. That is the case when the stage is empty (<code>~ValidEReg</code>), or when the instruction it holds leaves at this very edge because the Memory stage is ready to take it (<code>ReadyM</code>). The second term is what lets the pipeline move one instruction per cycle: the place is freed and refilled at the same edge. When the Memory stage stalls, <code>ReadyE</code> drops, and the stall propagates backwards to Decode and Fetch.</li>
+<li><code>EnDE</code> is the transfer itself: Decode offers an instruction (<code>ValidD</code>) and Execute accepts it (<code>ReadyE</code>). It is the enable of the pipeline registers.</li>
+</ul>
+<section id="the-de-pipeline-registers" class="level3" data-number="10.5.1">
+<h3 data-number="10.5.1" class="anchored" data-anchor-id="the-de-pipeline-registers"><span class="header-section-number">10.5.1</span> The D/E pipeline registers</h3>
+<p>The pipeline registers store everything Decode has produced for the instruction, and they are loaded at the transfer, on <code>EnDE</code>. Between transfers they hold their value, so the instruction stays in Execute, with all its operands and controls stable, for as long as the Memory stage makes it wait. All of them are the generic <code>flopenr</code>, with the width of the signals they store:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rd1reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE | HoldE),<span class="dt"> .D</span>(RD1NextE),<span class="dt"> .Q</span>(RD1E));</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rd2reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE | HoldE),<span class="dt"> .D</span>(RD2NextE),<span class="dt"> .Q</span>(RD2E));</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) immreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),<span class="dt"> .D</span>(ImmExtD),<span class="dt"> .Q</span>(ImmExtE));</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),<span class="dt"> .D</span>(PCD),<span class="dt"> .Q</span>(PCE));</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),<span class="dt"> .D</span>(PCPlus4D),<span class="dt"> .Q</span>(PCPlus4E));</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">15</span>) regsreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                        .D({Rs1D, Rs2D, RdD}),<span class="dt"> .Q</span>({Rs1E, Rs2E, RdE}));</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">3</span>)  funct3reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),<span class="dt"> .D</span>(Funct3D),<span class="dt"> .Q</span>(Funct3E));</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">14</span>) ctrlreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                        .D({RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ResultSrcD,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                            ALUSrcAD, ALUSrcBD, ALUControlD}),</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                        .Q({RegWriteE, MemWriteE, BranchE, JumpE, JalrE, ResultSrcE,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                            ALUSrcAE, ALUSrcBE, ALUControlE}));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Signals that belong together share one register: the three register numbers in <code>regsreg</code>, and all fourteen control bits in <code>ctrlreg</code>. The concatenation <code>{…}</code> packs them into one vector on the input and unpacks them on the output. Only the two register operands, in <code>rd1reg</code> and <code>rd2reg</code>, have a different input and enable. They are the subject of <a href="#sec-ieu-refresh" class="quarto-xref"><span>Section 10.6.1</span></a>.</p>
+</section>
+</section>
+<section id="forwarding" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="forwarding"><span class="header-section-number">10.6</span> Forwarding</h2>
+<div id="fig-ieu-forwarding" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ieu-forwarding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/forwarding.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ieu-forwarding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.3: Forwarding for operand A. The hazard unit compares the register numbers and drives <code>ForwardAE</code>; <code>fwdamux</code> in the IEU selects the value, <code>FwdAE</code>.
+</figcaption>
+</figure>
+</div>
+<p>The two register operands pass through a forwarding multiplexer each, <code>fwdamux</code> for operand A (<code>rs1</code>) and <code>fwdbmux</code> for operand B (<code>rs2</code>). Both are three-input multiplexers, the generic <code>mux3</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux3 #(<span class="kw">parameter</span> WIDTH = <span class="dv">8</span>) (</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] D0, D1, D2,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]       S,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [WIDTH<span class="dv">-1</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Y = (S == <span class="bn">2'b10</span>) ? D2 : (S == <span class="bn">2'b01</span>) ? D1 : D0;</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The nested conditional operator checks <code>S</code> against the two encodings of <code>D2</code> and <code>D1</code>, and falls back to <code>D0</code> for everything else, including the unused <code>11</code>. In the IEU, the two instances choose between three versions of the same register:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding muxes: register operand / ResultW / ForwardDataM</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  mux3 #(<span class="dv">32</span>) fwdamux<span class="dt">(.D0</span>(RD1E),<span class="dt"> .D1</span>(ResultW),<span class="dt"> .D2</span>(ForwardDataM),<span class="dt"> .S</span>(ForwardAE),<span class="dt"> .Y</span>(FwdAE));</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  mux3 #(<span class="dv">32</span>) fwdbmux<span class="dt">(.D0</span>(RD2E),<span class="dt"> .D1</span>(ResultW),<span class="dt"> .D2</span>(ForwardDataM),<span class="dt"> .S</span>(ForwardBE),<span class="dt"> .Y</span>(WriteDataE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>D0</code> is the value from the D/E pipeline register, <code>RD1E</code> or <code>RD2E</code>, as it was read from the register file in Decode;</li>
+<li><code>D1</code> is <code>ResultW</code>, the result of the instruction in the Writeback stage;</li>
+<li><code>D2</code> is <code>ForwardDataM</code>, the result of the instruction in the Memory stage.</li>
+</ul>
+<p>The selects come from the hazard unit (<a href="#fig-ieu-forwarding" class="quarto-xref">Figure&nbsp;<span>10.3</span></a>). Their three values are named in the package <code>hipv_pkg</code>, so that the code says what a select means rather than which bits it has:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding select (ForwardAE / ForwardBE, from the hazard unit)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] FWD_RF  = <span class="bn">2'b00</span>;  <span class="co">// register operand from D/E register</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] FWD_WB  = <span class="bn">2'b01</span>;  <span class="co">// ResultW from the Writeback stage</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] FWD_MEM = <span class="bn">2'b10</span>;  <span class="co">// ForwardDataM from the Memory stage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The hazard unit selects <code>FWD_MEM</code> when the instruction in the Memory stage writes the register the operand reads, <code>FWD_WB</code> when the instruction in Writeback does, and <code>FWD_RF</code> otherwise. If both match, the Memory stage wins, because it holds the younger instruction and therefore the newer value. The details of that decision belong to the <a href="../chapters/07-pipeline-hazards.html">chapter on hazards</a>. The IEU only carries it out.</p>
+<p>The outputs of the two multiplexers are the true values of <code>rs1</code> and <code>rs2</code>, and every later block in the IEU uses them instead of <code>RD1E</code> and <code>RD2E</code>. <code>FwdAE</code> goes to the ALU operand multiplexer and to the branch comparator. <code>WriteDataE</code> goes to the same two places, and on to the Memory stage as the store data, which is where its name comes from.</p>
+<section id="sec-ieu-refresh" class="level3" data-number="10.6.1">
+<h3 data-number="10.6.1" class="anchored" data-anchor-id="sec-ieu-refresh"><span class="header-section-number">10.6.1</span> Refreshing the operands with forwarded values</h3>
+<p>Forwarding as described so far has a gap. An instruction does not always spend just one cycle in Execute. When the Memory stage is busy with a slow load or store, <code>ReadyM</code> is low, and the instruction in Execute has to wait. The forwarded value, however, is available only as long as its producer is in the Memory or Writeback stage. If the producer leaves Writeback while the consumer is still waiting, nothing forwards the value any more. The operand in the pipeline register does not help either: it was read from the register file in Decode, <em>before</em> the producer wrote it, so it is stale.</p>
+<p>Consider this sequence on a slow data memory:</p>
+<pre><code>lw   x5, 0(x10)    # slow memory: the next instructions bunch up
+addi x1, x0, 77    # producer of x1
+sw   x5, 4(x10)    # holds the Memory stage
+add  x3, x1, x0    # waits in Execute; x1 forwarded from W for one cycle only</code></pre>
+<p>When <code>addi</code> reaches Writeback, <code>sw</code> is in the Memory stage and <code>add</code> in Execute. The hazard unit sees that <code>add</code> reads <code>x1</code> and <code>addi</code> writes it, and selects <code>FWD_WB</code>. But <code>sw</code> holds the Memory stage for several cycles, so <code>add</code> cannot leave Execute. In the next cycle <code>addi</code> has left the pipeline, the hazard unit falls back to <code>FWD_RF</code>, and <code>fwdamux</code> delivers <code>RD1E</code>, the old value of <code>x1</code> read in Decode. When <code>add</code> finally executes, it computes with the wrong operand.</p>
+<p>The solution is to not let the forwarded value go: as long as the instruction waits, the operand register is reloaded with the output of the forwarding multiplexer. This is a feedback loop from <code>fwdamux</code> back to the input of <code>rd1reg</code>, and the same from <code>fwdbmux</code> to <code>rd2reg</code>.</p>
+</section>
+<section id="the-refresh-loop-in-systemverilog" class="level3" data-number="10.6.2">
+<h3 data-number="10.6.2" class="anchored" data-anchor-id="the-refresh-loop-in-systemverilog"><span class="header-section-number">10.6.2</span> The refresh loop in SystemVerilog</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// While an instruction waits in E, refresh its register operands with</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// the forwarded values: the producer can retire from W (and stop being</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarded) before this instruction leaves E.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> HoldE = ValidEReg &amp; ~ReadyM;</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) rd1mux<span class="dt">(.D0</span>(FwdAE),<span class="dt"> .D1</span>(RD1D),<span class="dt"> .S</span>(EnDE),<span class="dt"> .Y</span>(RD1NextE));</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) rd2mux<span class="dt">(.D0</span>(WriteDataE),<span class="dt"> .D1</span>(RD2D),<span class="dt"> .S</span>(EnDE),<span class="dt"> .Y</span>(RD2NextE));</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rd1reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE | HoldE),<span class="dt"> .D</span>(RD1NextE),<span class="dt"> .Q</span>(RD1E));</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rd2reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnDE | HoldE),<span class="dt"> .D</span>(RD2NextE),<span class="dt"> .Q</span>(RD2E));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This code describes the datapath in <a href="#fig-ieu-holde" class="quarto-xref">Figure&nbsp;<span>10.4</span></a>, shown for operand A. Operand B is built the same way, with <code>rd2mux</code>, <code>rd2reg</code> and <code>fwdbmux</code>.</p>
+<div id="fig-ieu-holde" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ieu-holde-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/holde.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ieu-holde-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10.4: The refresh loop for operand A. <code>rd1mux</code> chooses between the operand from Decode and the forwarded value <code>FwdAE</code>; <code>rd1reg</code> is loaded on a transfer (<code>EnDE</code>) and in every cycle the instruction waits (<code>HoldE</code>).
+</figcaption>
+</figure>
+</div>
+<p>The datapath has three parts:</p>
+<ul>
+<li><strong><code>rd1mux</code></strong> chooses what will be stored in <code>rd1reg</code>.
+<ul>
+<li>When <code>EnDE = 1</code>, a new instruction enters Execute, and the register stores its operand from Decode, <code>RD1D</code>.</li>
+<li>When <code>EnDE = 0</code>, no instruction enters, and the register stores the output of the forwarding multiplexer, <code>FwdAE</code>.</li>
+</ul></li>
+<li><strong><code>rd1reg</code></strong> stores the operand. Its enable is <code>EnDE | HoldE</code>, so it loads in two situations: at the transfer from Decode, and in every cycle in which the stage is on hold. <code>HoldE = ValidEReg &amp; ~ReadyM</code> says that the stage holds a valid instruction, but the Memory stage is not ready to take it, so the instruction has to wait.</li>
+<li><strong><code>fwdamux</code></strong> is the same forwarding multiplexer as before. Through the loop it also decides what <code>rd1reg</code> stores while the stage is on hold: <code>ForwardDataM</code>, <code>ResultW</code>, or, with <code>FWD_RF</code>, the register’s own value, which simply keeps it.</li>
+</ul>
+<p><code>HoldE</code> and <code>EnDE</code> are never high at the same time. Substituting <code>ReadyE</code> shows that <code>HoldE</code> is exactly its complement, <code>ValidEReg &amp; ~ReadyM = ~(~ValidEReg | ReadyM) = ~ReadyE</code>: the stage is on hold precisely when it cannot accept a new instruction, and then <code>EnDE</code> is 0. The register therefore never has to choose between a new operand and a refresh, and <code>EnDE</code> alone is a sufficient select for <code>rd1mux</code>. When both are 0, the stage is empty, or its instruction is leaving without a successor, and the register keeps a value that nobody uses.</p>
+<p>Back to the example. In the cycle in which <code>addi</code> is in Writeback, <code>add</code> is on hold, and <code>fwdamux</code> delivers <code>ResultW = 77</code>. At the end of the cycle <code>rd1reg</code> stores 77. In the next cycle <code>addi</code> is gone and the hazard unit selects <code>FWD_RF</code>, but <code>RD1E</code> now <em>is</em> 77, and the loop keeps it there until <code>add</code> leaves Execute.</p>
+<p>The refresh is harmless when the forwarded value is not ready yet. If the producer is a load still waiting for its data, <code>ForwardDataM</code> carries garbage, and <code>rd1reg</code> stores it. But while the load is in the Memory stage, <code>ReadyM</code> is low, so the consumer is on hold and does not use the garbage. When the data is there, <code>ReadyM</code> rises, <code>ForwardDataM</code> carries the loaded value, and the consumer leaves Execute computing with it, straight from <code>fwdamux</code>. This is why HIPV needs no special load-use stall: the elastic handshake and the refresh loop together cover that case.</p>
+</section>
+</section>
+<section id="the-alu" class="level2" data-number="10.7">
+<h2 data-number="10.7" class="anchored" data-anchor-id="the-alu"><span class="header-section-number">10.7</span> The ALU</h2>
+<p>The arithmetic-logic unit (ALU) is the workhorse of every CPU. It is a purely combinational block: it takes two operands, computes one of a fixed set of operations on them, and produces a result, all within one clock cycle and without any state of its own. Which operation it computes is chosen by a control input. Most instructions of a program pass through it, not only the arithmetic ones. A load or store uses it for the address, and <code>jalr</code> for the jump target.</p>
+<p>The ALU of HIPV has two 32-bit operands, <code>A</code> and <code>B</code>, a 4-bit control <code>ALUControl</code>, and a 32-bit result <code>Y</code>. It implements the ten operations that RV32I needs. Inside, it is simply a separate circuit for each operation (an adder, a subtractor, a shifter, a comparator, the bitwise gates), followed by a large multiplexer that selects one result.</p>
+<section id="operands-of-the-alu" class="level3" data-number="10.7.1">
+<h3 data-number="10.7.1" class="anchored" data-anchor-id="operands-of-the-alu"><span class="header-section-number">10.7.1</span> Operands of the ALU</h3>
+<p>The operands of the ALU come from two multiplexers, one per operand:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ALU operand selection: A = rs1/PC/zero, B = rs2/immediate</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  mux3 #(<span class="dv">32</span>) srcamux<span class="dt">(.D0</span>(FwdAE),<span class="dt"> .D1</span>(PCE),<span class="dt"> .D2</span>(<span class="bn">32'b0</span>),<span class="dt"> .S</span>(ALUSrcAE),<span class="dt"> .Y</span>(SrcAE));</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) srcbmux<span class="dt">(.D0</span>(WriteDataE),<span class="dt"> .D1</span>(ImmExtE),<span class="dt"> .S</span>(ALUSrcBE),<span class="dt"> .Y</span>(SrcBE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Operand A, <code>SrcAE</code>, is selected by <code>ALUSrcAE</code> from three sources:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>ALUSrcAE</code></th>
+<th><code>SrcAE</code></th>
+<th>Used by</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>00</code> <code>SRCA_RF</code></td>
+<td><code>FwdAE</code>, the forwarded <code>rs1</code></td>
+<td>almost all instructions</td>
+<td><code>add x3, x1, x2</code>; <code>lw x3, 8(x1)</code></td>
+</tr>
+<tr class="even">
+<td><code>01</code> <code>SRCA_PC</code></td>
+<td><code>PCE</code>, the address of the instruction</td>
+<td><code>auipc</code></td>
+<td><code>auipc x5, 0x12</code> gives <code>x5 = PC + 0x12000</code></td>
+</tr>
+<tr class="odd">
+<td><code>10</code> <code>SRCA_ZERO</code></td>
+<td>0</td>
+<td><code>lui</code></td>
+<td><code>lui x5, 0x12</code> gives <code>x5 = 0 + 0x12000</code></td>
+</tr>
+</tbody>
+</table>
+<p>Selecting zero for <code>lui</code> is a small trick. <code>lui</code> only has to copy its immediate into the destination register, and adding it to zero does that with the ALU’s ordinary <code>ADD</code>, without a separate path to the output.</p>
+<p>Operand B, <code>SrcBE</code>, is selected by <code>ALUSrcBE</code> from two sources:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>ALUSrcBE</code></th>
+<th><code>SrcBE</code></th>
+<th>Used by</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td><code>WriteDataE</code>, the forwarded <code>rs2</code></td>
+<td>register–register instructions</td>
+<td><code>add x3, x1, x2</code></td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td><code>ImmExtE</code>, the extended immediate</td>
+<td>register–immediate, loads, stores, <code>lui</code>, <code>auipc</code>, <code>jalr</code></td>
+<td><code>addi x3, x1, 5</code>; <code>sw x3, 8(x1)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Both multiplexers come after the forwarding multiplexers, so whenever the ALU uses a register, it uses its forwarded value.</p>
+</section>
+<section id="the-alu-in-systemverilog" class="level3" data-number="10.7.2">
+<h3 data-number="10.7.2" class="anchored" data-anchor-id="the-alu-in-systemverilog"><span class="header-section-number">10.7.2</span> The ALU in SystemVerilog</h3>
+<p>The ALU is one of the few behavioral blocks of the core. It is a single <code>case</code> over <code>ALUControl</code>, inside <code>always_comb</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> alu (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] A, B,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ALUControl,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] Y);</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> hipv_pkg::*;</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (ALUControl)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      ALU_ADD:  Y = A + B;</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      ALU_SUB:  Y = A - B;</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      ALU_SLL:  Y = A &lt;&lt; B[<span class="dv">4</span>:<span class="dv">0</span>];</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      ALU_SLT:  Y = {<span class="bn">31'b0</span>, <span class="kw">$signed</span>(A) &lt; <span class="kw">$signed</span>(B)};</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      ALU_SLTU: Y = {<span class="bn">31'b0</span>, A &lt; B};</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      ALU_XOR:  Y = A ^ B;</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      ALU_SRL:  Y = A &gt;&gt; B[<span class="dv">4</span>:<span class="dv">0</span>];</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      ALU_SRA:  Y = <span class="kw">$unsigned</span>(<span class="kw">$signed</span>(A) &gt;&gt;&gt; B[<span class="dv">4</span>:<span class="dv">0</span>]);</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      ALU_OR:   Y = A | B;</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      ALU_AND:  Y = A &amp; B;</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:  Y = <span class="bn">32'b0</span>;</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The operation codes <code>ALU_ADD</code> to <code>ALU_AND</code> are the constants 0 to 9 from <code>hipv_pkg</code>, imported at the top of the module. Decode produces the same names, so the two ends always agree on the encoding. A few lines deserve a closer look:</p>
+<ul>
+<li><strong>Shifts</strong> use only the lowest five bits of <code>B</code>, because a 32-bit value can be shifted by at most 31 places. This also makes the immediate shifts work: in <code>srai</code>, bit 10 of the immediate distinguishes it from <code>srli</code>, but it lies outside <code>B[4:0]</code> and does not disturb the shift amount.</li>
+<li><strong>Signed and unsigned.</strong> SystemVerilog treats a <code>logic</code> vector as unsigned. <code>slt</code> and <code>sltu</code> compare the same bits, but <code>slt</code> first reinterprets them with <code>$signed</code>, so that <code>0xFFFFFFFF</code> counts as −1 and not as 4 294 967 295. The comparison gives one bit, and <code>{31'b0, …}</code> extends it to the 32-bit result 0 or 1.</li>
+<li><strong>Arithmetic shift.</strong> <code>&gt;&gt;&gt;</code> fills the vacated bits with copies of the sign bit only if its operand is signed, so <code>A</code> is converted with <code>$signed</code>, and the result is converted back with <code>$unsigned</code> before it is assigned to <code>Y</code>.</li>
+<li><strong><code>default</code></strong> covers the six unused codes 10 to 15. Without it, <code>Y</code> would not be assigned for them, and <code>always_comb</code> would infer a latch (see the chapter on <a href="../chapters/05-sv-design.html">designing with SystemVerilog</a>).</li>
+</ul>
+<p>In the IEU, the ALU is a single instance, and its result is the stage output <code>ALUResultE</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  alu alu<span class="dt">(.A</span>(SrcAE),<span class="dt"> .B</span>(SrcBE),<span class="dt"> .ALUControl</span>(ALUControlE),<span class="dt"> .Y</span>(ALUResultE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>You have built this block before. In the second lab exercise you implemented a “dummy” 4-bit ALU with a 3-bit <code>alu_control</code>, using operators, intermediate signals and nested conditionals. The ALU of HIPV is the same idea at full size. The operands are 32 bits instead of 4, the control selects ten operations instead of eight, and the selection is written as a <code>case</code> in <code>always_comb</code> instead of a chain of <code>? :</code>. The two describe the same multiplexer, but the <code>case</code> stays readable with ten branches. The lab operations also map onto the core:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Lab ALU (<code>alu_control</code>)</th>
+<th>In HIPV</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>addition, subtraction</td>
+<td><code>ALU_ADD</code>, <code>ALU_SUB</code></td>
+</tr>
+<tr class="even">
+<td>bitwise AND, OR, XOR</td>
+<td><code>ALU_AND</code>, <code>ALU_OR</code>, <code>ALU_XOR</code></td>
+</tr>
+<tr class="odd">
+<td>compare (equal)</td>
+<td><code>beq</code>/<code>bne</code> in <code>branchcmp</code>, not in the ALU</td>
+</tr>
+<tr class="even">
+<td>pass-through <code>b</code></td>
+<td><code>lui</code>: <code>0 + imm</code>, through <code>ALU_ADD</code> with <code>SRCA_ZERO</code></td>
+</tr>
+<tr class="odd">
+<td>pass-through <code>a</code></td>
+<td>not needed</td>
+</tr>
+</tbody>
+</table>
+<p>New in HIPV are the shifts and the signed/unsigned comparisons <code>slt</code> and <code>sltu</code>, and these are where the typical mistakes lie. The IEU testbench in the HIPV repository, <code>tb/unit/ieu/test_ieu.py</code>, checks exactly these. Its first test, <code>test_alu_ops</code>, runs all ten operations, including a signed and an unsigned compare on the same operands and an arithmetic shift of a negative value. Run it with <code>make</code> in <code>tb/unit/ieu</code>.</p>
+</section>
+</section>
+<section id="jump-mechanism" class="level2" data-number="10.8">
+<h2 data-number="10.8" class="anchored" data-anchor-id="jump-mechanism"><span class="header-section-number">10.8</span> Jump mechanism</h2>
+<p>The last part of the IEU decides whether the program continues sequentially or jumps. It answers three questions, each with its own block: is the branch condition true (<code>branchcmp</code>), where does the jump go (<code>targetadd</code> and <code>targetmux</code>), and should Fetch be redirected now (<code>PCSrcE</code>).</p>
+<section id="conditional-branches-branchcmp" class="level3" data-number="10.8.1">
+<h3 data-number="10.8.1" class="anchored" data-anchor-id="conditional-branches-branchcmp"><span class="header-section-number">10.8.1</span> Conditional branches: <code>branchcmp</code></h3>
+<p>The branch comparator evaluates the condition of the six RV32I branches, selected by <code>Funct3E</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> branchcmp (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] A, B,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  Funct3E,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">output</span> <span class="kw">logic</span>        TakenE);</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (Funct3E)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b000</span>:  TakenE = (A == B);                    <span class="co">// beq</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b001</span>:  TakenE = (A != B);                    <span class="co">// bne</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b100</span>:  TakenE = (<span class="kw">$signed</span>(A) &lt; <span class="kw">$signed</span>(B));   <span class="co">// blt</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b101</span>:  TakenE = (<span class="kw">$signed</span>(A) &gt;= <span class="kw">$signed</span>(B));  <span class="co">// bge</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b110</span>:  TakenE = (A &lt; B);                     <span class="co">// bltu</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b111</span>:  TakenE = (A &gt;= B);                    <span class="co">// bgeu</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: TakenE = <span class="bn">1'b0</span>;                        <span class="co">// reserved encodings</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It is connected to the forwarded register operands, not to the ALU operands:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  branchcmp bcmp<span class="dt">(.A</span>(FwdAE),<span class="dt"> .B</span>(WriteDataE),<span class="dt"> .Funct3E</span>(Funct3E),<span class="dt"> .TakenE</span>(TakenE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A branch compares two registers, <code>rs1</code> and <code>rs2</code>, so it needs the same forwarded values as any other instruction. Many processors compare with the ALU, by subtracting and checking the result. HIPV uses a separate comparator, which costs a little more hardware, but keeps the ALU free and the two jobs independent. <code>TakenE</code> is meaningful only for branches. For every other instruction it is computed from whatever <code>Funct3E</code> and the operands happen to be, and ignored, because <code>BranchE</code> is 0.</p>
+</section>
+<section id="jump-targets-targetadd-and-targetmux" class="level3" data-number="10.8.2">
+<h3 data-number="10.8.2" class="anchored" data-anchor-id="jump-targets-targetadd-and-targetmux"><span class="header-section-number">10.8.2</span> Jump targets: <code>targetadd</code> and <code>targetmux</code></h3>
+<p>RV32I has two kinds of targets. Branches and <code>jal</code> are <strong>PC-relative</strong>: the target is the address of the instruction plus the immediate. <code>jalr</code> is <strong>register-relative</strong>: the target is <code>rs1 + imm</code>, which is how a function returns (<code>jalr x0, 0(x1)</code>, written <code>ret</code>) and how a program jumps through a table of addresses.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// branch/jump target: PC + imm for branch/jal, ALU (rs1 + imm) for jalr</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  adder #(<span class="dv">32</span>) targetadd<span class="dt">(.A</span>(PCE),<span class="dt"> .B</span>(ImmExtE),<span class="dt"> .Y</span>(PCTargetBaseE));</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> JalrTargetE = {ALUResultE[<span class="dv">31</span>:<span class="dv">1</span>], <span class="bn">1'b0</span>};</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) targetmux<span class="dt">(.D0</span>(PCTargetBaseE),<span class="dt"> .D1</span>(JalrTargetE),<span class="dt"> .S</span>(JalrE),<span class="dt"> .Y</span>(PCTargetE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The PC-relative target has its own adder, <code>targetadd</code>, the same generic <code>adder</code> that increments the PC in the IFU. The register-relative target needs no new hardware: for <code>jalr</code>, Decode sets up the ALU to compute <code>rs1 + imm</code>, as for a load. The ISA requires the lowest bit of the <code>jalr</code> target to be cleared, which costs nothing in hardware, only wiring: <code>{ALUResultE[31:1], 1'b0}</code>. The multiplexer <code>targetmux</code> then selects the ALU path for <code>jalr</code> and the adder for everything else.</p>
+<p>The ALU result of a <code>jal</code> or <code>jalr</code> is not what the instruction writes to its destination register. Both write the return address, <code>PC + 4</code>, which is why <code>PCPlus4E</code> travels on to Writeback with them.</p>
+</section>
+<section id="the-redirect-pcsrce" class="level3" data-number="10.8.3">
+<h3 data-number="10.8.3" class="anchored" data-anchor-id="the-redirect-pcsrce"><span class="header-section-number">10.8.3</span> The redirect: <code>PCSrcE</code></h3>
+<p>The last line of the IEU decides whether to redirect:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// redirect, qualified with the valid bit and gated to the retire cycle</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> PCSrcE = ValidEReg &amp; ReadyM &amp; (JumpE | JalrE | (BranchE &amp; TakenE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The term in parentheses is the RV32I rule: a jump (<code>jal</code>, <code>jalr</code>) always changes the PC, a branch only if its condition is true. The two qualifiers in front make it safe in the elastic pipeline:</p>
+<ul>
+<li><strong><code>ValidEReg</code></strong>: a bubble must never redirect. When the stage is empty, its pipeline registers still hold the controls of the last instruction, and without the valid bit an old branch could fire a second time.</li>
+<li><strong><code>ReadyM</code></strong>: the redirect fires only in the cycle in which the instruction leaves Execute. This has two reasons. First, it makes <code>PCSrcE</code> a one-cycle pulse, which is what the IFU expects. Second, while the instruction waits, its operands may not be final. A branch that depends on a load still in the Memory stage compares garbage until the data arrives. The refresh loop will correct its operands, but a redirect issued from the garbage could not be taken back. Waiting for <code>ReadyM</code> means the branch decides only with its final operands.</li>
+</ul>
+<p>Note what does <em>not</em> happen: the branch itself is not flushed. It leaves Execute normally at the same edge, and the redirect removes only the instructions behind it, in Fetch and Decode.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="10.9">
+<h2 data-number="10.9" class="anchored" data-anchor-id="summary"><span class="header-section-number">10.9</span> Summary</h2>
+<p>The IEU executes every RV32I instruction in a single cycle. Like the IFU, most of it is structural, built from <code>flopenr</code>, <code>mux2</code>, <code>mux3</code> and <code>adder</code>. Only the two leaf cells that compute, the ALU and the branch comparator, are behavioral.</p>
+<p>Its four parts follow the flow of an instruction. The handshake logic and the D/E pipeline registers accept the instruction from Decode and hold it while it waits. The forwarding multiplexers replace out-of-date register operands with newer values from the Memory and Writeback stages, and the refresh loop keeps those values in the operand registers when the stage stalls, so that a forwarded value is never lost. The ALU computes the result, or the address of a load or store. The jump mechanism compares the branch operands, computes the target, and redirects Fetch exactly once, in the cycle a taken branch or jump leaves Execute.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/06c-idu.html" class="pagination-link" aria-label="Instruction decode unit">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/07-pipeline-hazards.html" class="pagination-link" aria-label="Five-Stage Pipeline — Hazards">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Hazards</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
