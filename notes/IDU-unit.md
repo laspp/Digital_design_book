@@ -1,0 +1,108 @@
+# Instruction decode unit
+
+- The second stage of HIPV core is IDU
+  - This is were hardware and software means and this very selected ISA has largest impact
+  - if you want to introduce new instruction you need to set them here 
+  - The role of this stage is:
+    - decode instructions to produce control signals, operands to Exe stage
+    - extend immediates 
+    - read and write to register  file  
+      - read - used by subsuquent stages IEU and Mem stage
+      - write is written by writeback stage
+
+- Interface: 
+    - handshake with IFU and data comming from IFU
+    - Jump occurence from IEU
+    - handshake with execute 
+    - inputs from WB when writting into register file 
+    - stage outputs 
+      - operands and its adress for writing and reading 
+      - opcodes 
+      - control signals 
+      - 
+- Main elements of IDU are:
+  - CLAUDE: insert diagram of IDU stage
+  - Handshake logic 
+  - pipeline register 
+  - decoder datapath
+  - register file 
+  
+- Handshake logic 
+  - we are used to simple pipeline in which data is passed from one stage to the next in a single clock cycle
+  - however, in a more complex pipeline, we need to ensure that data is passed correctly between stages
+    - memory stage may take multiple cycles to complete, so we need to ensure that the next instruction is not fetched until the previous instruction has completed
+    - later stages can busy  (a stall )
+    - an earlier stage may have nothing to send (a buble
+  - Hanshake an universal agreement between two neighbouring blocks
+    - - data is only sents when sender has somenthing to send and receiver can take the data when it is ready 
+  - two signal paradigm 
+    - CLAUDE create table explaining following signals:
+        - valid 
+        - ready 
+        - data 
+        - Header should be signal name, driven, meaning 
+    - CLAUDE: generate wave diagram, i think the is one generated. look in the history 
+    - CLAUDE: explain four cases:
+      - valid=ready=0, valid=0 ready=1, valid=1 ready=0, valid=ready=1
+      - what happens for each case 
+    - Rules:
+      - when valid is set it should hold is value until handshake occurs 
+      - valid must not depend on ready
+      - dati is meaninfugul only when valid is equal to 1
+      - Transfer occures on handshake and last one cycle 
+  - Handshake implementation in IDU:
+    - CLAUDE insert snippet of code related to the handshake
+    - The mosgt important one is EnFD signal wihich enables storing data coming from IFU into pipelin registers. It occurs when handshake
+    - how to generate IDUs handshake signals
+      - ReadyD:
+        - it is ready when the IDU is drained, other words, the subsequent stage IEU accepts the outputs of IDU stages
+          - this occurs on IDU/IEU handshake
+        - or the IDU is empty, other words, the IFU did produced results, denoted by signal ValidDReg
+          - what is ValidDReg
+            - delayed version of ValidF, why:
+              - in the pipeline the validsignals shoudld propagat through pipeline in the same tempo as data that they were labeling
+                - CLAUDE: add more clarification
+        - ValidD:
+          - when the data is valid is IDU stage ValidDreg
+          - and there is no jump PCSrcE 
+
+- Pipeline register
+  - Only store new data when the EnFD is high (update operation)
+  - or data is retained the same (refresh operation)
+  - key component register enable 
+  - CLAUDE: show code snippet
+
+- Decoder datapath 
+  - The task of decode is to generate appropriate control signals based on:
+    - Opcode
+    - Func7b5D - 5 bit of Func7 segment 
+      - distinguishes R-type operations.
+    - Funct3:
+      - distinguishes ALU operations 
+    - generates control signal to:
+      - to ALU
+      - to indetify branch instructions
+      - memory access 
+      - CLAUDE: finish the role of decoder
+  - HIPV package:
+    - CLAUDE: explain code importing package, explain role and show couple of lines that show one group of signals related to the IDU stage
+  - complex signal assingment 
+    -  assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD, ResultSrcD,
+          BranchD, JumpD, JalrD, ALUOpD} = ControlsD;
+        - explain this line and link to the sv basics in previous chapter if we have this example. If not please create it and explain it in the chapter
+   - always_comb that implements decode 
+     - based on OPCODE the decode generates the 
+
+- Extender module 
+  - role of extending immediate operands to 32-bit datapath based on selected operation
+
+
+- Register file
+  - synchronous write 
+  - read asynchronous 
+  - Register file defined as array of 32-bit FFs
+  - process of writing
+    - cannot write to X0 register 
+  - process for reading 
+  - relative addressing
+    -  RF[A1] explain what it is 

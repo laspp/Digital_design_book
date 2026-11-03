@@ -4,15 +4,15 @@ Each arrow is labelled condition / outputs that are 1 on that transition.
 """
 from schemdraw import flow
 from schemdraw import elements as elm
-from _style import new_drawing, FILL, ACCENT
+from _style import new_drawing, FILL, RED
 
 
 def draw():
     d = new_drawing()
     up = d.add(flow.State(r=1.1).at((0, 0)).anchor("center").label("UP")
-               .fill(FILL).color(ACCENT))
+               .fill(FILL).color(RED))
     down = d.add(flow.State(r=1.1).at((8, 0)).anchor("center").label("DOWN")
-                 .fill(FILL).color(ACCENT))
+                 .fill(FILL).color(RED))
     d.add(flow.Arc2(k=0.35, arrow="->").at(up.NE).to(down.NW)
           .label("Button = 1 / Push = 1", "top", ofst=0.2))
     d.add(flow.Arc2(k=0.35, arrow="->").at(down.SW).to(up.SE)

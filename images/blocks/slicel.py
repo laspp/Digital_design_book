@@ -3,12 +3,11 @@ FF/latch + FF-only registers per lane. Ported from the hand-drawn SVG, so all
 coordinates below are in that drawing's pixels; P() converts them to schemdraw units.
 """
 from schemdraw import elements as elm
-from _style import new_drawing, block, line, RED, RED_FILL, GREY
+from _style import new_drawing, block, line, INK, RED, RED_DARK, RED_FILL, GREY
 
 K = 1 / 80          # pixels -> schemdraw units
 FS = 0.62           # original font px -> schemdraw pt, tuned so text fits the boxes
 LW = 1.1
-INK = "#1f2937"
 
 
 def P(x, y):
@@ -95,5 +94,5 @@ def draw():
     # ---- INIT / SR callout ----
     d.add(elm.Line().at(P(530, 700)).to(P(560, 855)).linestyle("--").color(RED).linewidth(1.2))
     box(d, 150, 855, 700, 50, "each of the 8 flip-flops also has its own INIT (init value) "
-        "+ SR (set/reset) config bits", None, 11.2, RED_FILL, RED, "#7a2a1c")
+        "+ SR (set/reset) config bits", None, 11.2, RED_FILL, RED, RED_DARK)
     return d

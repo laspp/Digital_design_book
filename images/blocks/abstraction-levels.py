@@ -2,7 +2,7 @@
 RTL, the level this course designs at, is highlighted."""
 from schemdraw import flow
 from schemdraw import elements as elm
-from _style import new_drawing, block, ACCENT, FILL, GREY
+from _style import new_drawing, block, ACCENT, FILL, GREY, RED
 
 LEVELS = [
     ("System", "HIPV SoC: core, OBI crossbar, RAM, UART, timer, GPIO"),
@@ -23,13 +23,13 @@ def draw():
         y = -i * (BH + GAP)
         ys.append(y)
         rtl = name == "RTL"
-        d.add(block(flow.Box(w=BW, h=BH), fill=ACCENT if rtl else FILL)
+        d.add(block(flow.Box(w=BW, h=BH), fill=RED if rtl else FILL, edge=RED if rtl else ACCENT)
               .at((0, y)).anchor("W")
               .label(text, fontsize=11, color="white" if rtl else ACCENT))
         d.add(elm.Label().at((-0.3, y - 0.12)).label(f"$\\bf{{{name}}}$", halign="right",
                                                fontsize=12))
     d.add(elm.Label().at((BW + 0.3, ys[2])).label("this course", halign="left",
-                                                   fontsize=11, color=ACCENT))
+                                                   fontsize=11, color=RED))
 
     # left: abstraction grows upwards
     x_up = -3.6

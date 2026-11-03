@@ -1,7 +1,7 @@
 """The traffic-light system: a 1 ms tick generator enabling the traffic-light FSM."""
 from schemdraw import flow
 from schemdraw import elements as elm
-from _style import new_drawing, block, line, GREY
+from _style import new_drawing, block, line, GREY, INK
 
 
 def arrow(d, a, b):
@@ -9,7 +9,7 @@ def arrow(d, a, b):
 
 
 def lamp(d, xy, color):
-    d.add(flow.Circle(r=0.35).at(xy).anchor("center").fill(color).color("#2C3E50"))
+    d.add(flow.Circle(r=0.35).at(xy).anchor("center").fill(color).color(INK))
 
 
 def draw():

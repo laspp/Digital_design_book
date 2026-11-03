@@ -6,7 +6,7 @@ in a separate diagram.
 from schemdraw import flow
 from schemdraw import elements as elm
 from schemdraw.backends import svg, svgtext
-from _style import new_drawing, FILL, ACCENT
+from _style import new_drawing, FILL, RED
 
 # schemdraw's text-size estimate parses labels as XML and fails on '&';
 # measure with a same-width stand-in instead (the drawn text is unchanged).
@@ -22,7 +22,7 @@ svgtext.text_approx_size = svg.text_approx_size = _text_size_amp
 
 def state(d, xy, text):
     return d.add(flow.State(r=1.35).at(xy).anchor("center").label(text, fontsize=11)
-                 .fill(FILL).color(ACCENT))
+                 .fill(FILL).color(RED))
 
 
 def label(d, xy, text, **kw):

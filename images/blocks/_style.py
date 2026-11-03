@@ -1,17 +1,20 @@
-"""Shared look for the book's schemdraw figures: blue accent, light fill."""
+"""Shared look for the book's schemdraw figures, matched to the cover:
+warm concrete greys, near-black ink, and the cover red as the one highlight."""
 import schemdraw
 
-ACCENT = "#1A5276"     # same blue as the book's headings and links
-FILL = "#E8F0F7"
-RED = "#C0392B"        # configuration memory
-RED_FILL = "#FDEDEC"
-GREY = "#5D6D7E"
+INK = "#1E1D1B"        # lines and text (cover black)
+ACCENT = "#57534D"     # block outlines (cover concrete shadow)
+FILL = "#E6E1D8"       # block fill (light concrete)
+RED = "#C3262C"        # highlight: FSM states, configuration memory (cover red)
+RED_DARK = "#8E1A1F"   # red text on a red fill; book headings and links
+RED_FILL = "#F6E3E2"
+GREY = "#7A746B"       # notes and captions
 
 
 def new_drawing(**kw):
     schemdraw.theme("default")
     d = schemdraw.Drawing(**kw)
-    d.config(unit=2.5, fontsize=12, lw=1.6, color="#2C3E50")
+    d.config(unit=2.5, fontsize=12, lw=1.6, color=INK)
     return d
 
 

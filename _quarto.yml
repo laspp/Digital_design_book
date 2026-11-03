@@ -7,6 +7,8 @@ book:
   author: "Ratko Pilipović"
   date: today
   downloads: [pdf]
+  cover-image: images/cover/cover.png
+  cover-image-alt: "Book cover: the five pipeline stages as a brutalist concrete tower"
   chapters:
     - index.qmd
     - chapters/00-digital-design-intro.qmd
@@ -17,6 +19,8 @@ book:
     - chapters/05b-fsm.qmd
     - chapters/06-pipeline-structure.qmd
     - chapters/06b-ifu.qmd
+    - chapters/06c-idu.qmd
+    - chapters/06d-ieu.qmd
     - chapters/07-pipeline-hazards.qmd
     - chapters/08-memory.qmd
     - chapters/09-cocotb-verification.qmd
@@ -32,7 +36,7 @@ filters:
 format:
   html:
     theme:
-      light: cosmo
+      light: [cosmo, light.scss]
       dark: [darkly, dark.scss]
     respect-user-color-scheme: true   # follow the browser/OS setting; toggle in the navbar overrides it
     toc: true
@@ -60,11 +64,16 @@ format:
     include-in-header:
       text: |
         \usepackage{xcolor}
-        \definecolor{accent}{HTML}{1A5276}
+        \definecolor{accent}{HTML}{8E1A1F}
         \addtokomafont{disposition}{\sffamily\color{accent}}
         \usepackage{framed}
-        \definecolor{shadecolor}{HTML}{F0F0F0}
+        \definecolor{shadecolor}{HTML}{F2EFEA}
         \renewenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+        % full-page cover in front of the title page
+        \usepackage{pdfpages}
+        \AtBeginDocument{%
+          \let\origmaketitle\maketitle
+          \renewcommand{\maketitle}{\includepdf[pages=1]{images/cover/cover.pdf}\origmaketitle}}
     toc: true
     number-sections: true
     keep-tex: true
