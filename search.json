@@ -1020,43 +1020,353 @@
     ]
   },
   {
+    "objectID": "chapters/06e-lsu.html",
+    "href": "chapters/06e-lsu.html",
+    "title": "11  Load/store unit",
+    "section": "",
+    "text": "Load/store unit",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#goal-for-this-week",
+    "href": "chapters/06e-lsu.html#goal-for-this-week",
+    "title": "11  Load/store unit",
+    "section": "11.1 Goal for this week",
+    "text": "11.1 Goal for this week\n\nKnow what the load/store unit (LSU) does, and how it differs from the stages before it\nRead the LSU interface, in particular the OBI signals for writing to memory\nUnderstand how the stage holds a memory instruction until its transaction is finished\nDesign the LSU controller as an FSM, and process the data of byte and halfword accesses",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#introduction",
+    "href": "chapters/06e-lsu.html#introduction",
+    "title": "11  Load/store unit",
+    "section": "11.2 Introduction",
+    "text": "11.2 Introduction\nThe load/store unit is the fourth stage of the HIPV pipeline, the Memory stage. Its design closely resembles the stages we have seen so far: it has the same valid/ready handshake, the same kind of pipeline registers, and, like the IFU, an FSM that talks to a memory. What is new is mostly what it does with the memory.\nThe role of the LSU is to give the core access to the data memory, for the load and store instructions. That gives it four properties:\n\nIt communicates with the data memory through the OBI interface, the same protocol the IFU uses for the instruction memory.\nUnlike the IFU, which only reads instructions, the LSU also writes to memory, for the store instructions, alongside reading for the loads.\nIt does not need to access memory all the time. Only loads and stores use the memory. Every other instruction, an add or a jal, just passes through the stage to Writeback, in a single cycle.\nIt forwards its result back to the Execute stage, so that the next instruction can use it before it reaches the register file.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#interface-of-the-lsu",
+    "href": "chapters/06e-lsu.html#interface-of-the-lsu",
+    "title": "11  Load/store unit",
+    "section": "11.3 Interface of the LSU",
+    "text": "11.3 Interface of the LSU\nThe ports of the LSU fall into six groups:\nmodule lsu (input  logic        clk, reset,\n            // handshake with the Execute stage\n            input  logic        ValidE,\n            output logic        ReadyM,\n            // inputs from Execute\n            input  logic [31:0] ALUResultE, WriteDataE, PCPlus4E,\n            input  logic [4:0]  RdE,\n            input  logic [2:0]  Funct3E,\n            input  logic        RegWriteE, MemWriteE,\n            input  logic [1:0]  ResultSrcE,\n            // handshake with the Writeback stage\n            output logic        ValidM,\n            input  logic        ReadyW,\n            // stage outputs to Writeback\n            output logic [31:0] ALUResultM, ReadDataM, PCPlus4M,\n            output logic [4:0]  RdM,\n            output logic        RegWriteM,\n            output logic [1:0]  ResultSrcM,\n            // forwarding to Execute\n            output logic [31:0] ForwardDataM,\n            // OBI master port to data memory\n            output logic        ObiReqM,\n            input  logic        ObiGntM,\n            output logic [31:0] ObiAddrM,\n            output logic        ObiWeM,\n            output logic [3:0]  ObiBeM,\n            output logic [31:0] ObiWdataM,\n            input  logic        ObiRvalidM,\n            input  logic [31:0] ObiRdataM);\n\nHandshake with Execute: ValidE and ReadyM.\nInputs from Execute: ALUResultE, which is the address for a load or store and the result for any other instruction; WriteDataE, the data a store writes; PCPlus4E, the return address of jal and jalr; the destination register RdE; Funct3E, which gives the size of the access; and the controls RegWriteE, MemWriteE and ResultSrcE.\nHandshake with Writeback: ValidM and ReadyW.\nOutputs to Writeback: the three candidate results (ALUResultM, the loaded data ReadDataM, and PCPlus4M), the destination register RdM, the write enable RegWriteM, and ResultSrcM, which tells Writeback which of the three results to write.\nForwarding to Execute: ForwardDataM, the result of the instruction in this stage.\nOBI port to the data memory, described in Section 11.7.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#structure-of-the-lsu",
+    "href": "chapters/06e-lsu.html#structure-of-the-lsu",
+    "title": "11  Load/store unit",
+    "section": "11.4 Structure of the LSU",
+    "text": "11.4 Structure of the LSU\n\n\n\n\n\n\nFigure 11.1: The LSU: the handshake logic and valid bit, the E/M pipeline registers, the controller lsuctrl, the OBI address, byte enables and store data, the read path (rawreg, shift, sign/zero extension), and the forwarding multiplexer.\n\n\n\nFigure 11.1 shows the LSU. It has six parts, and the rest of the chapter takes them in this order:\n\nthe handshake logic, which accepts instructions from Execute and, for a memory instruction, holds it in the stage until the memory access is finished;\nthe E/M pipeline registers;\nthe FSM lsuctrl, which runs the OBI transaction;\nthe logic that generates the OBI signals: the word address, the byte enables and the store data;\nthe post-processing of loaded data: the register rawreg, which captures the word from memory, followed by a shift and a sign or zero extension;\nthe forwarding of the result to Execute, and the outputs to Writeback.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#sec-lsu-handshake",
+    "href": "chapters/06e-lsu.html#sec-lsu-handshake",
+    "title": "11  Load/store unit",
+    "section": "11.5 Handshake logic",
+    "text": "11.5 Handshake logic\nThe handshake logic of the LSU has the same shape as in Decode and Execute, with one addition: a memory instruction cannot be handed on until its memory access is finished.\n  // E/M handshake: a memory instruction holds the stage until done\n  assign MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);\n  assign ValidM = ValidMReg & (~MemOpM | DoneM);\n  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);\n  assign EnEM   = ValidE & ReadyM;\n\n  // E/M valid bit\n  always_ff @(posedge clk)\n    if (reset) ValidMReg &lt;= 1'b0;\n    else if (ReadyM) ValidMReg &lt;= ValidE;\nEnEM is the handshake between Execute and the LSU: Execute offers an instruction (ValidE) and the LSU accepts it (ReadyM). As in the other stages, it enables the pipeline registers, so it is the moment the instruction enters the Memory stage.\n\n11.5.1 When is the output valid?\nIn Decode and Execute, the output was valid as soon as the stage held a valid instruction. The LSU adds a condition:\n  assign ValidM = ValidMReg & (~MemOpM | DoneM);\nThe output is valid when the stage holds a valid instruction, and either it is not a memory instruction, or its memory transaction is done. The three terms:\n\nValidMReg is the valid bit of the stage. It says that the stage holds a valid instruction and not a bubble.\n~MemOpM says that the instruction is neither a load nor a store. Such an instruction has nothing to do here, so it is handed on to Writeback in the same cycle, without waiting for anything.\nDoneM says that the memory transaction of a load or store is finished. It is generated by the FSM (Section 11.7.1). Until it is 1, a memory instruction is not offered to Writeback.\n\nHow does the LSU know that it holds a memory instruction? From two controls that Decode generated, and that have travelled with the instruction through the pipeline registers:\n  assign MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);\n\nMemWriteM, the copy of MemWriteE in the E/M register, is 1 for a store.\nResultSrcM says which value Writeback will write into the register file. RESULT_MEM means that this value is the data read from memory, and only a load writes that. So ResultSrcM == RESULT_MEM identifies a load.\n\nNo separate “is a load” signal is needed: the two controls the later stages need anyway already carry the information.\n\n\n\n\n\n\nNoteReminder: why a valid register?\n\n\n\nValidMReg is a copy of ValidE delayed by one edge, loaded whenever the stage can accept something (ReadyM). It must be a register, because the valid bit has to move through the pipeline at the same pace as the instruction it labels. After the edge, the instruction from Execute sits in the E/M registers, and ValidE already describes the next one. Storing the valid bit at the same edge, next to the data, keeps the label with its instruction. The same holds for ValidDReg in Decode and ValidEReg in Execute.\n\n\n\n\n11.5.2 When can the stage accept?\nReadyM tells Execute that the LSU can accept a new instruction:\n  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);\nThere are two cases:\n\n~ValidMReg: the stage holds a bubble, so there is nothing to lose.\nValidM & ReadyW: the instruction in the stage is drained, handed over to Writeback at this very edge, so its place is free for the next one.\n\nCompare this with Execute, where the second term was just ReadyM. Here it includes ValidM, because a memory instruction that is still waiting for its transaction cannot leave, even if Writeback is ready. While a load waits for memory, ValidM is 0, so ReadyM is 0, and the stall propagates backwards: Execute holds its instruction, Decode holds its, and Fetch stops. This is the back-pressure that makes a separate load-use stall unnecessary (see the refresh loop in the IEU chapter).",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#em-pipeline-registers",
+    "href": "chapters/06e-lsu.html#em-pipeline-registers",
+    "title": "11  Load/store unit",
+    "section": "11.6 E/M pipeline registers",
+    "text": "11.6 E/M pipeline registers\nThe pipeline registers store what Execute has produced, and they are loaded on EnEM. While a memory instruction waits for its transaction, EnEM is 0, and they hold the address, the store data and the controls stable for as long as the transaction takes:\n  // E/M pipeline registers\n  flopenr #(32) alureg(.clk(clk), .reset(reset), .en(EnEM), .D(ALUResultE), .Q(ALUResultM));\n  flopenr #(32) wdreg(.clk(clk), .reset(reset), .en(EnEM), .D(WriteDataE), .Q(WriteDataM));\n  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnEM), .D(PCPlus4E), .Q(PCPlus4M));\n  flopenr #(5)  rdreg(.clk(clk), .reset(reset), .en(EnEM), .D(RdE), .Q(RdM));\n  flopenr #(3)  funct3reg(.clk(clk), .reset(reset), .en(EnEM), .D(Funct3E), .Q(Funct3M));\n  flopenr #(4)  ctrlreg(.clk(clk), .reset(reset), .en(EnEM),\n                        .D({RegWriteE, MemWriteE, ResultSrcE}),\n                        .Q({RegWriteMReg, MemWriteM, ResultSrcM}));\nThe register for RegWriteE drives RegWriteMReg, not RegWriteM directly. Before it leaves the stage, it is qualified with the valid bit (Section 11.10).",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#sec-lsu-obi",
+    "href": "chapters/06e-lsu.html#sec-lsu-obi",
+    "title": "11  Load/store unit",
+    "section": "11.7 Access to memory",
+    "text": "11.7 Access to memory\nLike the IFU, the LSU talks to its memory over OBI. The two phases of a transaction are the same as on the instruction port (Figure 8.2): in the address phase, the LSU holds ObiReqM and the request signals until the memory grants with ObiGntM; in the response phase, at least one cycle later, the memory raises ObiRvalidM to say that the access is complete.\nWhat the IFU never needed is writing. A store must tell the memory three more things: that it writes, which bytes it writes, and what it writes. That adds three signals to the address phase:\n\n\n\n\n\n\n\n\nSignal\nDir\nMeaning\n\n\n\n\nObiReqM\nout\nrequest: the LSU starts a transaction\n\n\nObiGntM\nin\ngrant: the memory has accepted the request\n\n\nObiAddrM\nout\naddress of the 32-bit word to access\n\n\nObiWeM\nout\nwrite enable: 1 for a write (store), 0 for a read (load)\n\n\nObiBeM\nout\nbyte enables, 4 bits: which bytes of the word take part\n\n\nObiWdataM\nout\nwrite data, each byte already in its position in the word\n\n\nObiRvalidM\nin\nresponse valid: the transaction is complete\n\n\nObiRdataM\nin\nread data, meaningful only for a read, while ObiRvalidM is 1\n\n\n\n\nObiWeM selects the direction of the transfer. It is simply MemWriteM, the store flag from Decode.\nObiBeM exists because a store does not always write a whole word. sb writes one byte and sh two, and the other bytes of the word must not change. Bit i of ObiBeM enables byte i of the word, so sb to byte 2 sends 0100, and the memory leaves bytes 0, 1 and 3 untouched.\nObiWdataM carries the data, but the memory takes byte i from bits 8i+7 : 8i of the bus. A byte stored at offset 2 must therefore travel on bits 23:16, not 7:0, and the LSU shifts it into place (Section 11.8).\n\nA store gets a response too. ObiRvalidM still comes, one or more cycles after the grant, and it tells the LSU that the write is complete. ObiRdataM is meaningless in that case and is ignored. Both loads and stores therefore follow the same sequence: request, grant, response.\n\n11.7.1 Why an FSM?\nA transaction lasts several cycles, and how many depends on the memory: the grant may come at once or after a few wait cycles, and the response may follow one cycle or many cycles later. The LSU must remember where the transaction is: has the request been granted, has the response arrived, has the instruction been handed on? That memory is the state of an FSM, the controller lsuctrl.\nIt is the counterpart of ifuctrl in the IFU, and it has the same three states. It is simpler, though, because nothing can interrupt it. A jump discards instructions in Fetch and Decode, but an instruction that has reached the Memory stage is older than any jump that is still being resolved, so it always completes. The LSU needs no discard flag.\n\n\n11.7.2 Interface of the controller\nmodule lsuctrl (input  logic clk, reset,\n                input  logic MemReqM,               // valid load/store in M\n                input  logic ObiGntM, ObiRvalidM,   // From OBI memory\n                input  logic ReadyW,                // From Writeback\n                output logic ObiReqM, CaptureM, DoneM);\nThe controller watches three sources and drives three outputs:\n\nMemReqM says that there is work to do: a valid instruction in the stage that is a load or store. The LSU computes it as MemReqM = ValidMReg & MemOpM, so a bubble or a non-memory instruction never starts a transaction.\nObiGntM and ObiRvalidM come from the memory and mark the end of the address and the response phase.\nReadyW says that Writeback takes the finished instruction.\nObiReqM is the OBI request.\nCaptureM loads the read data into the register rawreg, in the cycle in which it is valid on the bus.\nDoneM says that the transaction is finished. It opens ValidM in the handshake logic.\n\nIn the LSU it is instantiated with MemReqM computed next to it:\n  // OBI transaction control FSM: one outstanding request per instruction\n  assign MemReqM = ValidMReg & MemOpM;\n  lsuctrl ctrl(.clk(clk), .reset(reset), .MemReqM(MemReqM),\n               .ObiGntM(ObiGntM), .ObiRvalidM(ObiRvalidM), .ReadyW(ReadyW),\n               .ObiReqM(ObiReqM), .CaptureM(CaptureM), .DoneM(DoneM));\n\n\n11.7.3 States and transitions\n\n\n\n\n\n\nFigure 11.2: The LSU controller as a state diagram, with the transitions only.\n\n\n\nFigure 11.2 shows the three states:\n\nIDLE: no transaction is in progress. When a load or store is in the stage, the controller requests the memory and waits for the grant. When MemReqM and ObiGntM are both 1, the memory has accepted the request and the FSM moves to WAIT_RESP. A non-memory instruction never leaves IDLE: MemReqM is 0, and it passes through without the controller.\nWAIT_RESP: the request has been granted, and the controller waits for the response. When ObiRvalidM arrives, the access is complete, and the FSM moves to DONE.\nDONE: the transaction is finished, and the instruction is offered to Writeback. When Writeback takes it (ReadyW), the FSM returns to IDLE, ready for the next instruction.\n\nIn SystemVerilog the FSM follows the familiar pattern, a state register and a next-state case:\n  typedef enum logic [1:0] {IDLE, WAIT_RESP, DONE} statetype;\n  statetype State, NextState;\n\n  // state register\n  always_ff @(posedge clk)\n    if (reset) State &lt;= IDLE;\n    else       State &lt;= NextState;\n\n  // next state logic\n  always_comb begin\n    NextState = State;  // default: hold\n    case (State)\n      IDLE:      if (MemReqM & ObiGntM) NextState = WAIT_RESP;\n      WAIT_RESP: if (ObiRvalidM)        NextState = DONE;\n      DONE:      if (ReadyW)            NextState = IDLE;\n      default:   NextState = IDLE;\n    endcase\n  end\n\n\n11.7.4 The outputs\nThe three outputs are one line each:\n  assign ObiReqM  = (State == IDLE) & MemReqM;\n  assign CaptureM = (State == WAIT_RESP) & ObiRvalidM;\n  assign DoneM    = (State == DONE);\n\nObiReqM is high in IDLE while a load or store is in the stage. It depends on the input MemReqM, so it is a Mealy output, and that is intentional: the request goes out in the very first cycle in which the instruction is in the Memory stage, without waiting for a state change. It stays high until the grant moves the FSM to WAIT_RESP, as the address phase requires. The address, the byte enables and the write data come straight from the E/M registers, which hold still during that time.\nCaptureM is high in the one cycle in which the response arrives. That is the only cycle in which ObiRdataM is valid, so it is the enable of rawreg. For a store it captures meaningless data, which nobody uses.\nDoneM is high in DONE. It depends only on the state, a Moore output. It stays high until Writeback takes the instruction.\n\nIn HIPV, Writeback never stalls (ReadyW is always 1), so DONE lasts exactly one cycle. The controller does not rely on that: if a later version of Writeback could stall, the FSM would simply wait in DONE.\n\n\n11.7.5 The controller in the waveform\n\n\n\n\n\n\nFigure 11.3: A load (lw), a non-memory instruction (add) and a store (sw) in the Memory stage. The load waits one cycle for the grant and one for the response; the add passes through in one cycle; the store is granted at once.\n\n\n\nFigure 11.3 shows the controller at work on three instructions.\nThe load lw enters the stage in cycle 1. MemReqM is 1 and the FSM is in IDLE, so ObiReqM rises at once. The memory grants in cycle 2, and at the end of that cycle the FSM moves to WAIT_RESP. The response comes in cycle 4: CaptureM loads the word into rawreg, and the FSM moves to DONE. In cycle 5, DoneM makes ValidM high, Writeback takes the load, and ReadyM rises, so the next instruction moves in at the same edge. Throughout cycles 1 to 4, ReadyM is 0, and Execute waits.\nThe add in cycle 6 is not a memory instruction. MemOpM is 0, so ValidM is high at once, the FSM stays in IDLE, and the instruction leaves after one cycle, as if the LSU were a plain pipeline register.\nThe store sw in cycle 7 drives ObiWeM = 1 together with the request. The memory grants at once, responds in cycle 8, and in cycle 9 the store is done and passes on to Writeback, where it does nothing, because a store writes no register.\nEven with a memory that grants and responds as fast as OBI allows, a load or store spends three cycles in the Memory stage, one in each state. Like the one-transaction-at-a-time IFU, this is a simplification that keeps the controller small.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#sec-lsu-signals",
+    "href": "chapters/06e-lsu.html#sec-lsu-signals",
+    "title": "11  Load/store unit",
+    "section": "11.8 OBI signals: address, byte enables, write data",
+    "text": "11.8 OBI signals: address, byte enables, write data\nThe memory is organized in 32-bit words, but RISC-V addresses bytes. The LSU therefore splits the byte address from the ALU into a word address and a byte offset within the word:\n  // address phase: word-aligned address, byte enables from size and offset\n  assign AddrLsbM  = ALUResultM[1:0];\n  assign ObiAddrM  = {ALUResultM[31:2], 2'b00};\n  assign ObiWeM    = MemWriteM;\n  assign ObiWdataM = WriteDataM &lt;&lt; {AddrLsbM, 3'b000};\n\n  always_comb\n    case (Funct3M[1:0])\n      2'b00:   ObiBeM = 4'b0001 &lt;&lt; AddrLsbM;              // sb/lb\n      2'b01:   ObiBeM = AddrLsbM[1] ? 4'b1100 : 4'b0011;  // sh/lh\n      default: ObiBeM = 4'b1111;                          // sw/lw\n    endcase\n\nObiAddrM is the address with its two lowest bits cleared: the address of the word that contains the byte.\nAddrLsbM, the two lowest bits, is the offset of the byte within that word, 0 to 3.\nObiBeM depends on the size of the access, given by the two lowest bits of funct3: a byte (00) enables one byte at the offset, a halfword (01) the lower or the upper half, and a word all four.\nObiWdataM shifts the store data left by eight times the offset. {AddrLsbM, 3'b000} is a neat way to write 8 × AddrLsbM: appending three zero bits multiplies by 8. The byte to store, which rs2 holds in its lowest bits, lands in the byte lane that the byte enables select.\n\nAn example: sb x5, 2(x10) with x10 = 0x100 and x5 = 0x000000AB.\n\n\n\nSignal\nValue\n\n\n\n\nbyte address ALUResultM\n0x102\n\n\nObiAddrM\n0x100\n\n\nAddrLsbM\n2\n\n\nObiBeM\n0100\n\n\nObiWdataM\n0x00AB0000\n\n\n\nThe memory writes byte 2 of the word at 0x100 with 0xAB, and leaves the other three bytes unchanged. Loads use the same address and byte enables. A memory may ignore the byte enables for a read and return the whole word, so the LSU always selects the right bytes itself, on the way back.\nThe LSU does not check alignment. A halfword at offset 3 or a word at an offset other than 0 would cross into the next word. HIPV does not detect this, and such an access is silently truncated to the addressed word. RV32I allows a processor to trap on misaligned accesses, and the compiler never generates them for ordinary data, so this simplification costs little.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#capturing-and-processing-loaded-data",
+    "href": "chapters/06e-lsu.html#capturing-and-processing-loaded-data",
+    "title": "11  Load/store unit",
+    "section": "11.9 Capturing and processing loaded data",
+    "text": "11.9 Capturing and processing loaded data\nThe loaded data passes through three steps on its way out of the LSU.\nCapture. ObiRdataM is valid only in the cycle in which ObiRvalidM is 1, but the LSU hands the load on to Writeback one cycle later, in DONE. The register rawreg keeps the word in between. Its enable is CaptureM from the FSM:\n  // raw read data register\n  flopenr #(32) rawreg(.clk(clk), .reset(reset), .en(CaptureM), .D(ObiRdataM), .Q(ReadRawM));\nShift. The memory returns the whole word, with the wanted byte or halfword in its byte lane. Shifting right by eight times the offset brings it down to the lowest bits, the reverse of the store shift:\n  // read data alignment and sign/zero extension\n  assign ReadShiftM = ReadRawM &gt;&gt; {AddrLsbM, 3'b000};\nExtend. The final step depends on the load instruction, selected by funct3:\n  always_comb\n    case (Funct3M)\n      3'b000:  ReadDataM = {{24{ReadShiftM[7]}}, ReadShiftM[7:0]};    // lb\n      3'b001:  ReadDataM = {{16{ReadShiftM[15]}}, ReadShiftM[15:0]};  // lh\n      3'b100:  ReadDataM = {24'b0, ReadShiftM[7:0]};                  // lbu\n      3'b101:  ReadDataM = {16'b0, ReadShiftM[15:0]};                 // lhu\n      default: ReadDataM = ReadShiftM;                                // lw\n    endcase\n\n\n\nInstruction\nfunct3\nKeeps\nUpper bits\n\n\n\n\nlb\n000\nbits 7:0\ncopies of bit 7 (sign-extended)\n\n\nlh\n001\nbits 15:0\ncopies of bit 15 (sign-extended)\n\n\nlw\n010\nall 32 bits\nnone\n\n\nlbu\n100\nbits 7:0\nzeros (zero-extended)\n\n\nlhu\n101\nbits 15:0\nzeros (zero-extended)\n\n\n\nThe signed loads, lb and lh, treat the value as a two’s-complement number and copy its sign bit into the upper bits, with the same replication operator as the immediate extension in Decode. The unsigned loads, lbu and lhu, fill with zeros. funct3 encodes this neatly: its two lowest bits give the size (and drive ObiBeM above), and its highest bit says unsigned.\nFor example, if the word at 0x100 is 0x80FF1234, then lb from 0x103 shifts right by 24 to get 0x80, and sign-extends it to 0xFFFFFF80, which is −128, while lbu from the same address gives 0x00000080, which is 128.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#sec-lsu-forward",
+    "href": "chapters/06e-lsu.html#sec-lsu-forward",
+    "title": "11  Load/store unit",
+    "section": "11.10 Forwarding and outputs to Writeback",
+    "text": "11.10 Forwarding and outputs to Writeback\nThe last two lines of the LSU prepare its result for the two stages that use it:\n  // forwarding data for the Execute stage: load data or ALU result\n  assign ForwardDataM = (ResultSrcM == RESULT_MEM) ? ReadDataM : ALUResultM;\n\n  // register write indication, qualified with the stage valid bit\n  assign RegWriteM = RegWriteMReg & ValidMReg;\nForwardDataM goes back to the forwarding multiplexers in Execute (Figure 10.3). It is the value that the instruction in the Memory stage will write into the register file: the loaded data for a load, and the ALU result for everything else. This multiplexer makes the LSU, not the IEU, responsible for choosing the right value, so the IEU always receives the architecturally correct result. For a load still waiting for memory, ForwardDataM is garbage, but then ReadyM is 0 and the consumer in Execute waits (see the refresh loop in the IEU chapter). The one result it does not include is PCPlus4M, the return address of jal and jalr. It does not have to: a jump redirects Fetch, and by the time the first instruction from the target has been fetched and decoded, the jump has long left the Memory stage.\nThe outputs to Writeback are the three candidate results, ALUResultM, ReadDataM and PCPlus4M, together with ResultSrcM, which says which of them to write, and the destination register RdM.\nRegWriteM is the register write enable, qualified with the valid bit. This matters for the hazard unit, which compares RdM with the source registers in Execute whenever RegWriteM is 1. When the stage holds a bubble, its registers still contain the last instruction, and without the valid bit that old instruction would keep being forwarded. With it, a bubble never looks like it writes a register.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06e-lsu.html#summary",
+    "href": "chapters/06e-lsu.html#summary",
+    "title": "11  Load/store unit",
+    "section": "11.11 Summary",
+    "text": "11.11 Summary\nThe LSU has the same skeleton as the stages before it: a valid/ready handshake, a set of pipeline registers, and an FSM that talks to a memory. Its handshake adds one condition: a load or store is offered to Writeback only when its memory transaction is done, which stalls the pipeline behind it for as long as the memory needs. Every other instruction passes through in a single cycle.\nThe controller lsuctrl is a three-state FSM, simpler than the IFU controller because nothing can interrupt an instruction that has reached the Memory stage. Around it, combinational logic turns the byte address and the access size into the word address, the byte enables and the aligned write data for a store, and turns the returned word into a sign- or zero-extended value for a load. Finally, the LSU forwards its result to Execute and qualifies its register write with the valid bit, so that the hazard logic always sees the newest correct value.",
+    "crumbs": [
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Load/store unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html",
+    "href": "chapters/06f-wbu.html",
+    "title": "12  Writeback unit",
+    "section": "",
+    "text": "Writeback unit",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#goal-for-this-week",
+    "href": "chapters/06f-wbu.html#goal-for-this-week",
+    "title": "12  Writeback unit",
+    "section": "12.1 Goal for this week",
+    "text": "12.1 Goal for this week\n\nKnow what the writeback unit (WBU) does for each kind of instruction\nRead its interface: the handshake with the Memory stage and the outputs that go back to Decode and Execute\nUnderstand why Writeback never stalls, and why its register write is qualified with the valid bit",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#introduction",
+    "href": "chapters/06f-wbu.html#introduction",
+    "title": "12  Writeback unit",
+    "section": "12.2 Introduction",
+    "text": "12.2 Introduction\nThe writeback unit is the last stage of the HIPV pipeline. It is the place where an instruction retires: its result becomes part of the architectural state, the registers that a program can see, and the instruction leaves the pipeline for good. After Writeback, the core is in exactly the state that the algorithmic description of RV32I in the pipeline chapter prescribes.\nIt is also the simplest stage. It talks to no memory, needs no FSM, and computes nothing. Its one job is to write the result of the instruction into the register file, if the instruction has a result. What that result is depends on the instruction:\n\n\n\n\n\n\n\nInstructions\nWritten to rd\n\n\n\n\narithmetic and logic (add, addi, …), lui, auipc\nthe ALU result\n\n\nloads (lb, lh, lw, lbu, lhu)\nthe data read from memory\n\n\njumps (jal, jalr)\nthe return address, PC + 4\n\n\nstores, branches\nnothing: they have no destination register\n\n\n\nStores and branches pass through Writeback too. Their effects have already happened, a memory write in the Memory stage and a redirect in Execute, so in Writeback they do nothing except retire.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#interface-of-the-wbu",
+    "href": "chapters/06f-wbu.html#interface-of-the-wbu",
+    "title": "12  Writeback unit",
+    "section": "12.3 Interface of the WBU",
+    "text": "12.3 Interface of the WBU\nThe WBU has the handshake with the Memory stage, the inputs from it, and the writeback outputs:\nmodule wbu (input  logic        clk, reset,\n            // handshake with the Memory stage\n            input  logic        ValidM,\n            output logic        ReadyW,\n            // inputs from Memory\n            input  logic [31:0] ALUResultM, ReadDataM, PCPlus4M,\n            input  logic [4:0]  RdM,\n            input  logic        RegWriteM,\n            input  logic [1:0]  ResultSrcM,\n            // writeback outputs (to the register file and hazard unit)\n            output logic        ValidW,\n            output logic        RegWriteW,\n            output logic [4:0]  RdW,\n            output logic [31:0] ResultW);\n\nHandshake with the Memory stage: ValidM and ReadyW.\nInputs from the Memory stage: the three candidate results (ALUResultM, ReadDataM and PCPlus4M), the destination register RdM, the write enable RegWriteM, and ResultSrcM, which says which of the three results is the right one.\nWriteback outputs: RegWriteW, RdW and ResultW say whether to write, which register, and what. They travel back up the pipeline to two places:\n\nto the IDU, where they drive the write port of the register file;\nto the IEU and the hazard unit, where ResultW is one of the forwarded values, and RegWriteW and RdW decide when it is used.\n\nValidW marks the cycle in which an instruction retires. Nothing in the core uses it, because RegWriteW already carries the valid bit, but it is a useful marker in waveforms, and the natural place to attach an instruction trace later.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#structure-of-the-wbu",
+    "href": "chapters/06f-wbu.html#structure-of-the-wbu",
+    "title": "12  Writeback unit",
+    "section": "12.4 Structure of the WBU",
+    "text": "12.4 Structure of the WBU\n\n\n\n\n\n\nFigure 12.1: The WBU: the valid bit (with ReadyW tied to 1), the M/W pipeline registers, the result multiplexer resultmux, and the AND gate that qualifies RegWriteW with the valid bit.\n\n\n\nFigure 12.1 shows the WBU. It has three parts:\n\nthe handshake control, which is especially simple here;\nthe M/W pipeline registers, which store the instruction coming from the Memory stage;\nthe writeback logic: the result multiplexer and the generation of the register write enable.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#handshake-control",
+    "href": "chapters/06f-wbu.html#handshake-control",
+    "title": "12  Writeback unit",
+    "section": "12.5 Handshake control",
+    "text": "12.5 Handshake control\n  // writeback never stalls\n  assign ReadyW = 1'b1;\n  assign EnMW   = ValidM & ReadyW;\n\n  // M/W valid bit\n  always_ff @(posedge clk)\n    if (reset) ValidW &lt;= 1'b0;\n    else ValidW &lt;= EnMW;\nEnMW is the handshake between the Memory stage and Writeback: the Memory stage offers an instruction (ValidM) and Writeback accepts it (ReadyW). As in every stage, it is the enable of the pipeline registers.\nReadyW is constant 1. In every other stage, ready said “my own instruction leaves at this edge, or I am empty”. Writeback is the last stage: its instruction leaves the pipeline after one cycle, unconditionally, because there is no next stage that could be busy. The register file write happens at the end of that cycle and always succeeds. So Writeback can always accept a new instruction, and EnMW reduces to ValidM.\nThe valid bit ValidW follows the same idea in a simpler form. In the other stages, it was loaded only when the stage was ready. Here the stage is always ready, so it is loaded at every edge, with 1 when an instruction arrives and 0 when a bubble arrives.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#pipeline-registers",
+    "href": "chapters/06f-wbu.html#pipeline-registers",
+    "title": "12  Writeback unit",
+    "section": "12.6 Pipeline registers",
+    "text": "12.6 Pipeline registers\nThe pipeline registers are written at the handshake, on EnMW:\n  // M/W pipeline registers\n  flopenr #(32) alureg(.clk(clk), .reset(reset), .en(EnMW), .D(ALUResultM), .Q(ALUResultW));\n  flopenr #(32) rdatareg(.clk(clk), .reset(reset), .en(EnMW), .D(ReadDataM), .Q(ReadDataW));\n  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnMW), .D(PCPlus4M), .Q(PCPlus4W));\n  flopenr #(8)  ctrlreg(.clk(clk), .reset(reset), .en(EnMW),\n                        .D({RegWriteM, RdM, ResultSrcM}),\n                        .Q({RegWriteWReg, RdW, ResultSrcW}));\n\nALUResultW: the result computed by the ALU in Execute.\nReadDataW: the word read from memory by a load, already shifted and extended by the LSU.\nPCPlus4W: the address of the next instruction, PC + 4, which jal and jalr write as their return address.\nctrlreg packs the three control fields into one 8-bit register: RegWriteWReg (1 bit), the destination register RdW (5 bits), and ResultSrcW (2 bits), which selects which of the three results is written back.\n\nOnly one of the three results matters for any given instruction. The WBU stores all three anyway, because it is simpler and cheaper to select at the end than to decide earlier which one to carry.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#writeback-logic",
+    "href": "chapters/06f-wbu.html#writeback-logic",
+    "title": "12  Writeback unit",
+    "section": "12.7 Writeback logic",
+    "text": "12.7 Writeback logic\n\n12.7.1 The result multiplexer\nThe result is selected by a three-input multiplexer, the same generic mux3 as the forwarding multiplexers in Execute:\n  // result selection\n  mux3 #(32) resultmux(.D0(ALUResultW), .D1(ReadDataW), .D2(PCPlus4W),\n                       .S(ResultSrcW), .Y(ResultW));\nThe select ResultSrcW was decided long ago, in Decode, by the main decoder, and has travelled with the instruction through three pipeline registers. Its three values are the constants from hipv_pkg:\n\n\n\n\n\n\n\n\n\nResultSrcW\nName\nResultW\nInstructions\n\n\n\n\n00\nRESULT_ALU\nALUResultW\narithmetic and logic, lui, auipc\n\n\n01\nRESULT_MEM\nReadDataW\nloads\n\n\n10\nRESULT_PC4\nPCPlus4W\njal, jalr\n\n\n\nFor stores and branches, the main decoder sets RESULT_ALU, but the value does not matter, because these instructions do not write a register.\nResultSrc is used in two stages. In the Memory stage, ResultSrcM picks ForwardDataM and identifies a load. In Writeback, ResultSrcW picks the value that is written into the register file and forwarded from W.\n\n\n12.7.2 The register write enable\nRegWriteW enables the write into the register file. It drives the write enable WE3 of the register file in Decode, so a register changes only when it is 1:\n  // register write, qualified with the stage valid bit\n  assign RegWriteW = RegWriteWReg & ValidW;\nIt has two conditions:\n\nRegWriteWReg: the instruction has a destination register. This is RegWriteD from the main decoder, carried through the pipeline. It is 0 for stores and branches.\nValidW: the stage holds a real instruction.\n\nThe second condition looks redundant at first. RegWriteM coming from the Memory stage is already qualified with that stage’s valid bit, so a bubble arrives with RegWriteM = 0. The catch is the enable of the pipeline registers. When a bubble arrives, EnMW is 0, so ctrlreg is not loaded, and RegWriteWReg keeps the value of the previous instruction, which has already retired. Without ValidW, that instruction would write its register again in every bubble cycle that follows, and would keep showing up to the hazard unit as an instruction in Writeback.\nIn HIPV, this repeated write happens to be harmless: RdW and ResultW are held too, so the same value lands in the same register, and the forwarded value equals what the register file already holds. But it only works by coincidence. It would break as soon as anything changed the held values, and it makes every waveform misleading, showing writes that belong to no instruction. Only ValidW knows whether the registers hold a fresh instruction, so it is the right signal to qualify the write. The unit testbench checks exactly this: RegWriteW stays low for bubbles.\nThe same pattern appears in every stage: a control signal that causes a side effect, a register write here or a memory access in the LSU, is qualified with the valid bit of its stage, because the contents of the pipeline registers are meaningful only while that bit is 1.\n\n\n12.7.3 Where the outputs go\nThe three writeback outputs leave the WBU in two directions:\n\nTo the IDU, where they form the write port of the register file: RegWriteW is the write enable WE3, RdW the address A3, and ResultW the data WD3. The register is written at the end of the cycle, and the write-first bypass in the register file lets the instruction in Decode see the new value already in this cycle.\nTo the IEU, where ResultW is the FWD_WB input of the forwarding multiplexers. The hazard unit selects it when RegWriteW is 1 and RdW matches a source register of the instruction in Execute.\n\nSo the result of an instruction is available to the instructions behind it from three places: forwarded from the Memory stage while it is there, forwarded from Writeback one cycle later, and through the register file from then on.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/06f-wbu.html#summary",
+    "href": "chapters/06f-wbu.html#summary",
+    "title": "12  Writeback unit",
+    "section": "12.8 Summary",
+    "text": "12.8 Summary\nThe WBU is the end of the pipeline, where an instruction retires. It never stalls, so its handshake reduces to ReadyW = 1. It stores the three candidate results, selects the one that the decoder chose with ResultSrcW, and writes it into the register file in Decode, qualified with its valid bit so that bubbles never write. The same three signals, RegWriteW, RdW and ResultW, also feed the forwarding logic in Execute.\nThis completes the five stages of HIPV. Each one has the same skeleton, a valid/ready handshake with a valid bit and a set of pipeline registers, and adds its own work: fetching, decoding, executing, accessing memory, and writing back.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Writeback unit</span>"
+    ]
+  },
+  {
     "objectID": "chapters/07-pipeline-hazards.html",
     "href": "chapters/07-pipeline-hazards.html",
-    "title": "11  Five-Stage Pipeline — Hazards",
+    "title": "13  Pipeline hazards and the HIPV core",
     "section": "",
-    "text": "Pipeline hazards\n(placeholder — fill in with week 4 content: forwarding, stall, branch flush)",
+    "text": "Pipeline hazards and the HIPV core",
     "crumbs": [
-      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Five-Stage Pipeline — Hazards</span>"
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#goal-for-this-week",
+    "href": "chapters/07-pipeline-hazards.html#goal-for-this-week",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.1 Goal for this week",
+    "text": "13.1 Goal for this week\n\nKnow the three kinds of pipeline hazards: structural, data and control\nUnderstand how HIPV resolves each of them, and which part of the core does it\nRead the hazard unit: the forwarding conditions and their priority\nPut the five stages together: the top-level module hipv_core and its interface",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#introduction",
+    "href": "chapters/07-pipeline-hazards.html#introduction",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.2 Introduction",
+    "text": "13.2 Introduction\nAt the algorithmic level, RV32I is a loop that finishes one instruction before it starts the next (see the pipeline chapter). The pipeline breaks that promise on purpose: it keeps up to five instructions in flight, each in a different stage. That is where its speed comes from, but it means that an instruction can start before the ones in front of it have finished.\nA hazard is a situation in which this overlap would produce a different result than the sequential algorithm. Hazards come in three kinds:\n\nA structural hazard: two instructions need the same piece of hardware in the same cycle.\nA data hazard: an instruction needs a value that an earlier instruction has computed, but not yet written to the register file.\nA control hazard: the pipeline must fetch the next instruction before it knows which instruction that is, because a branch in front of it is not resolved yet.\n\nEvery pipelined processor has to deal with all three. In the chapters on the individual stages we met the pieces of HIPV that do this one at a time: the forwarding multiplexers in Execute, the write-first register file in Decode, the flush in Fetch and Decode, and the elastic handshake that connects them all. This chapter puts these pieces together, adds the last missing block, the hazard unit, and then assembles the whole core.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#structural-hazards",
+    "href": "chapters/07-pipeline-hazards.html#structural-hazards",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.3 Structural hazards",
+    "text": "13.3 Structural hazards\nA structural hazard arises when the hardware cannot serve all the instructions that need it in the same cycle. The classic example is a single memory port: in a cycle in which the Memory stage loads data, Fetch cannot fetch an instruction, and one of them must wait.\nHIPV avoids structural hazards by construction, by giving every stage the resources it needs:\n\nTwo memory ports. Fetch has its own OBI port for instructions, and the Memory stage its own for data. Both can work in the same cycle.\nEnough register file ports. Decode reads two registers through two read ports, while Writeback writes a third through a separate write port.\nSeparate arithmetic. Execute computes branch targets with a dedicated adder (targetadd) and evaluates branch conditions with its own comparator (branchcmp), so the ALU is never needed twice.\n\nEven if two stages did compete, the elastic handshake would turn the conflict into a stall rather than an error: the stage that has to wait simply holds ready or valid low. The SoC relies on exactly this when both ports of the core reach the same slave through the interconnect, which then grants one of them and makes the other wait, as we will see later in the course.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#data-hazards",
+    "href": "chapters/07-pipeline-hazards.html#data-hazards",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.4 Data hazards",
+    "text": "13.4 Data hazards\nA data hazard arises when an instruction reads a register that an earlier instruction has not written yet:\nadd  x5, x1, x2    # producer: writes x5\nsub  x6, x5, x3    # consumer: reads x5 one instruction later\nsub reads x5 from the register file in Decode. At that moment add is one stage ahead, in Execute, where its result is just being computed. The register file receives that result only when add reaches Writeback, three cycles later. Without help, sub would compute with the old value of x5. This kind of dependency is called read after write (RAW): the consumer reads a register after the producer writes it, in program order, but the pipeline would do the read first.\nRISC-V has two other kinds of dependency, write after read and write after write, but HIPV cannot suffer from them: all instructions read their registers in the same stage (Decode) and write them in the same stage (Writeback), always in program order.\n\n13.4.1 The distance decides the remedy\nHow a RAW hazard is resolved depends on the distance between the producer and the consumer, counted in instructions. When the consumer is in Execute and needs its operands, the producer is as many stages further down the pipeline:\nadd  x5, x1, x2   # producer\nsub  x6, x5, x3   # distance 1: forward from M\nor   x7, x5, x4   # distance 2: forward from W\nand  x8, x5, x9   # distance 3: write-first register file\nxor  x9, x5, x1   # distance 4: plain register read\n\n\n\n\n\n\n\n\n\nDistance\nProducer is in\nRemedy\nWhere\n\n\n\n\n1\nthe Memory stage\nforward its result, ForwardDataM\nforwarding multiplexers in Execute\n\n\n2\nWriteback\nforward its result, ResultW\nforwarding multiplexers in Execute\n\n\n3\nWriteback, while the consumer is in Decode\nwrite-first bypass\nregister file in Decode\n\n\n≥ 4\nalready retired\nnone: the register file holds the value\n—\n\n\n\nThe two forwarding cases need the hazard unit, which decides when a forwarded value replaces the register operand. The third case is handled inside the register file, by the write-first read ports described in the IDU chapter: when the consumer reads in Decode in the same cycle in which the producer writes in Writeback, the register file returns the value being written.\n\n\n13.4.2 The hazard unit\n\n\n\n\n\n\nFigure 13.1: The hazard unit. For each operand, the source register is compared with RdM and RdW, qualified with RegWrite and rs ≠ x0, and a priority select chooses the Memory stage over Writeback over the register file.\n\n\n\nThe hazard unit is a small, purely combinational block (Figure 13.1). It compares the source registers of the instruction in Execute with the destination registers of the instructions in the Memory stage and in Writeback, and drives the selects of the forwarding multiplexers:\nmodule hazard (input  logic [4:0] Rs1E, Rs2E,\n               input  logic [4:0] RdM, RdW,\n               input  logic       RegWriteM, RegWriteW,\n               output logic [1:0] ForwardAE, ForwardBE);\n\n  import hipv_pkg::*;\n\n  always_comb\n    if (RegWriteM & (Rs1E == RdM) & (Rs1E != 5'b0)) ForwardAE = FWD_MEM;\n    else if (RegWriteW & (Rs1E == RdW) & (Rs1E != 5'b0)) ForwardAE = FWD_WB;\n    else ForwardAE = FWD_RF;\n\n  always_comb\n    if (RegWriteM & (Rs2E == RdM) & (Rs2E != 5'b0)) ForwardBE = FWD_MEM;\n    else if (RegWriteW & (Rs2E == RdW) & (Rs2E != 5'b0)) ForwardBE = FWD_WB;\n    else ForwardBE = FWD_RF;\n\nendmodule\nThe two blocks are identical, one for each operand. The values FWD_MEM, FWD_WB and FWD_RF come from hipv_pkg, and they are the selects of fwdamux and fwdbmux in the IEU.\n\n\n13.4.3 The forwarding conditions\nA value is forwarded from a stage when three conditions hold together:\n\n\n\n\n\n\n\n\nTerm\nQuestion\nWhy it is needed\n\n\n\n\nRs1E == RdM\nDoes the instruction in that stage write my source register?\nOnly then does it hold a newer value of my operand.\n\n\nRegWriteM\nDoes that instruction write a register at all?\nStores and branches have bits in their rd field too, but they never write rd. Without this check, the immediate bits of a store could trigger a bogus forward.\n\n\nRs1E != 0\nIs my source register something other than x0?\nx0 is always zero. addi x0, x1, 5 has RegWrite = 1, but its write is discarded, and forwarding its result would give a non-zero x0.\n\n\n\nRegWriteM and RegWriteW are already qualified with the valid bits of their stages, by the LSU and the WBU. A bubble therefore never matches, even though its pipeline registers still contain the fields of an older instruction.\nPriority. If both the Memory stage and Writeback write the register, the Memory stage wins:\nadd  x5, x1, x2    # in W: older value of x5\nsub  x5, x5, x3    # in M: newer value of x5\nand  x6, x5, x4    # in E: must use the value from sub\nIn program order, the instruction in the Memory stage is the younger of the two, so it holds the most recent value of x5. Checking it first, in the if, gives it priority.\n\n\n13.4.4 Loads: no stall unit needed\n\n\n\n\n\n\nFigure 13.2: A load followed by a dependent add. While the load waits for memory, ReadyM is 0 and the add waits in Execute, with ForwardAE already pointing to the Memory stage. When the load data arrives (cycle 3), ForwardDataM carries it, and the add leaves Execute with the correct operand.\n\n\n\nOne data hazard cannot be solved by forwarding in a classic five-stage pipeline:\nlw   x5, 0(x10)\nadd  x6, x5, x1    # needs x5 right away\nWhen the add is in Execute, the load is in the Memory stage, and its data arrives from memory only at the end of that stage, too late for the add. Classic designs therefore add a load-use stall: the hazard unit detects this pattern and freezes Fetch and Decode for one cycle.\nHIPV needs no such logic, because the elastic handshake already does it (Figure 13.2). A load holds the Memory stage until its transaction is complete (ReadyM = 0), and while it does, the add simply waits in Execute. The hazard unit already selects FWD_MEM for it, and the LSU makes sure that ForwardDataM is the loaded data, not the address. In the cycle in which the data is there, ReadyM rises, and the add leaves Execute with the correct operand. Before that, the forwarded value is garbage, but it is never used, because the add cannot leave. The refresh loop (HoldE) in the IEU keeps the operand register up to date while the instruction waits, so that no forwarded value is lost if the producer retires in the meantime (see the IEU chapter).\nThe same mechanism also covers stores and slow memories: whatever the Memory stage is doing, Execute waits for it, and forwarding delivers the right value once it can leave. This is why the hazard unit of HIPV has no stall outputs at all.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#control-hazards",
+    "href": "chapters/07-pipeline-hazards.html#control-hazards",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.5 Control hazards",
+    "text": "13.5 Control hazards\nA control hazard arises because Fetch must choose the next instruction every cycle, but whether a branch is taken, and where it goes, is known only when the branch reaches Execute. By then, the stages behind it, Fetch and Decode, already hold the instructions that follow it in memory.\nHIPV handles this in the simplest way: it always continues fetching sequentially, as if every branch were not taken, and repairs the damage when the guess was wrong. When Execute resolves a taken branch or a jump, it raises PCSrcE for one cycle, and two things happen at once:\n\nFetch loads its PC with PCTargetE and starts fetching from there. An instruction it already holds is dropped, and a fetch that is still on its way from memory is discarded on arrival, using the discard flag (see the IFU chapter).\nDecode drops its instruction by gating ValidD with ~PCSrcE, and its valid bit is cleared at the same edge (see the IDU chapter).\n\nThis is a flush: the wrong-path instructions become bubbles. Execute and the later stages are not touched. The instructions there are older than the branch, and the branch itself continues to the Memory stage and retires normally.\nTwo details make the flush safe in the elastic pipeline. PCSrcE is qualified with the valid bit of Execute, so a bubble never redirects, and gated with ReadyM, so the redirect fires only in the cycle in which the branch actually leaves Execute. While the branch waits, for example behind a load whose data it compares, its operands may not be final yet, and a redirect issued from them could not be taken back.\nThe cost of a taken branch is the work thrown away in Fetch and Decode, plus the time to fetch the target. Better processors reduce it with branch prediction, guessing the outcome in Fetch already. HIPV does not predict, which keeps it simple, and leaves an obvious direction for improvement.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#summary-of-hazards",
+    "href": "chapters/07-pipeline-hazards.html#summary-of-hazards",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.6 Summary of hazards",
+    "text": "13.6 Summary of hazards\n\n\n\n\n\n\n\n\nHazard\nRemedy\nWhere\n\n\n\n\nstructural\nseparate memory ports, register file ports and adders\nacross the core\n\n\nRAW at distance 1 or 2\nforwarding\nhazard unit and forwarding multiplexers (IEU)\n\n\nRAW at distance 3\nwrite-first read ports\nregister file (IDU)\n\n\nload-use, slow memory\nstall by back-pressure\nhandshake: ReadyM\n\n\nproducer retires while the consumer waits\noperand refresh\nHoldE loop (IEU)\n\n\ntaken branch or jump\nflush of Fetch and Decode\nPCSrcE: IFU, IDU\n\n\n\nWhat stands out is how little dedicated hazard logic HIPV needs. The hazard unit has no stall outputs, and there is no separate flush controller. The valid/ready handshake carries most of the work: a stage that cannot proceed holds ready low, a stage with nothing to offer holds valid low, and a flush is just a valid bit turned off.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#the-hipv-core",
+    "href": "chapters/07-pipeline-hazards.html#the-hipv-core",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.7 The HIPV core",
+    "text": "13.7 The HIPV core\n\n\n\n\n\n\nFigure 13.3: The HIPV core: five pipeline stages connected by valid/ready handshakes (V/R), the redirect from Execute, the write-back into the register file, the hazard unit, and the two OBI ports to instruction and data memory.\n\n\n\nWe now have all the parts, and the top level of the CPU, hipv_core.sv, puts them together (Figure 13.3). It contains no logic of its own. It is purely structural: six instances, the five stages and the hazard unit, and the wires that connect them. Every one of those connections is a signal we have already met from one side or the other in the stage chapters.\n\n13.7.1 Interface of the CPU\nSeen from the outside, the whole CPU has a remarkably small interface: a clock, a reset, and two OBI master ports.\nmodule hipv_core (input  logic        clk, reset,\n                  // OBI instruction port\n                  output logic        ObiIReq,\n                  input  logic        ObiIGnt,\n                  output logic [31:0] ObiIAddr,\n                  input  logic        ObiIRvalid,\n                  input  logic [31:0] ObiIRdata,\n                  // OBI data port\n                  output logic        ObiDReq,\n                  input  logic        ObiDGnt,\n                  output logic [31:0] ObiDAddr,\n                  output logic        ObiDWe,\n                  output logic [3:0]  ObiDBe,\n                  output logic [31:0] ObiDWdata,\n                  input  logic        ObiDRvalid,\n                  input  logic [31:0] ObiDRdata);\n\n\n\n\n\n\n\n\nGroup\nSignals\nConnected to\n\n\n\n\nClock and reset\nclk, reset (synchronous, active high)\nevery stage\n\n\nInstruction port (read only)\nObiIReq, ObiIGnt, ObiIAddr, ObiIRvalid, ObiIRdata\nthe IFU (Obi…F)\n\n\nData port (read and write)\nObiDReq, ObiDGnt, ObiDAddr, ObiDWe, ObiDBe, ObiDWdata, ObiDRvalid, ObiDRdata\nthe LSU (Obi…M)\n\n\n\nThe instruction port is the read-only subset of OBI, the data port the full set with the write signals. The names change at the boundary: inside, the ports carry the stage suffix (ObiReqF, ObiReqM); outside, they are named after their role (ObiIReq for instructions, ObiDReq for data), which is what the memory system on the other side cares about.\nEverything a program does reaches the outside world through these two ports. There are no interrupt inputs and no debug port yet. After reset, the core starts fetching at address 0x00000000, the reset value of the PC register in the IFU.\n\n\n13.7.2 Inside the top level\nThe body of hipv_core has two parts. First, the internal wires, declared in groups, one group per boundary between two stages:\n  // F &lt;-&gt; D\n  logic        ValidF, ReadyD;\n  logic [31:0] InstrF, PCF, PCPlus4F;\n  // D &lt;-&gt; E\n  logic        ValidD, ReadyE;\n  logic [31:0] RD1D, RD2D, ImmExtD, PCD, PCPlus4D;\n  ...\n  // E &lt;-&gt; M\n  logic        ValidE, ReadyM;\n  logic [31:0] ALUResultE, WriteDataE, PCPlus4E;\n  ...\n  // redirect\n  logic        PCSrcE;\n  logic [31:0] PCTargetE;\n  // M &lt;-&gt; W\n  logic        ValidM, ReadyW;\n  logic [31:0] ALUResultM, ReadDataM, PCPlus4M, ForwardDataM;\n  ...\n  // forwarding\n  logic [1:0]  ForwardAE, ForwardBE;\nThen the six instances, connected by name. Because every signal carries the suffix of the stage that produces it, the connections are easy to check: an output of the IEU always ends in E, and it appears as an input of the LSU or as feedback to an earlier stage. Two instances show the pattern:\n  // Execute\n  ieu ieu(.clk(clk), .reset(reset),\n          .ValidD(ValidD), .ReadyE(ReadyE),\n          .RD1D(RD1D), .RD2D(RD2D), .ImmExtD(ImmExtD), .PCD(PCD), .PCPlus4D(PCPlus4D),\n          .Rs1D(Rs1D), .Rs2D(Rs2D), .RdD(RdD), .Funct3D(Funct3D),\n          .RegWriteD(RegWriteD), .MemWriteD(MemWriteD), .BranchD(BranchD),\n          .JumpD(JumpD), .JalrD(JalrD), .ResultSrcD(ResultSrcD),\n          .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD),\n          .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),\n          .ForwardDataM(ForwardDataM), .ResultW(ResultW),\n          .PCSrcE(PCSrcE), .PCTargetE(PCTargetE),\n          .ValidE(ValidE), .ReadyM(ReadyM),\n          .ALUResultE(ALUResultE), .WriteDataE(WriteDataE), .PCPlus4E(PCPlus4E),\n          .RdE(RdE), .Rs1E(Rs1E), .Rs2E(Rs2E), .Funct3E(Funct3E),\n          .RegWriteE(RegWriteE), .MemWriteE(MemWriteE), .ResultSrcE(ResultSrcE));\n\n  // Hazard unit (forwarding)\n  hazard hz(.Rs1E(Rs1E), .Rs2E(Rs2E), .RdM(RdM), .RdW(RdW),\n            .RegWriteM(RegWriteM), .RegWriteW(RegWriteW),\n            .ForwardAE(ForwardAE), .ForwardBE(ForwardBE));\nThe IEU is the busiest instance, because Execute is where the pipeline’s feedback paths meet: the forwarded values come in from the Memory stage and Writeback, the forwarding selects come from the hazard unit, and the redirect goes out to Fetch and Decode. Three kinds of connections appear in the whole module:\n\nForward connections, from each stage to the next: the handshake pair and the payload. They are the pipeline itself.\nBackward connections: ready against the flow in every handshake; the redirect PCSrcE/PCTargetE from Execute to Fetch and Decode; the write port RegWriteW/RdW/ResultW from Writeback to the register file in Decode; and the forwarded values ForwardDataM and ResultW into Execute.\nThe hazard unit, which listens to the register numbers of three stages and talks only to Execute.\n\nOne output of the WBU, ValidW, is connected to nothing. It marks the cycle in which an instruction retires, which is useful in waveforms, and it is the natural hook for an instruction trace port in the future.\n\n\n13.7.3 How fast is it?\nHIPV was designed to be correct and readable first. It is not fast. With ideal memories, the IFU fetches at most one instruction every three cycles, because it waits for each fetch to finish before it starts the next. Loads and stores add the latency of the data memory in the Memory stage, and a taken branch throws away the work in Fetch and Decode. The rest of the pipeline could handle one instruction per cycle, but it is starved by Fetch.\nThis is deliberate. Each of these limitations can be removed without touching the rest of the design, thanks to the handshake between the stages, and each removal is a project with a measurable speedup. Some of them are listed at the end of this chapter.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#you-have-come-a-long-way",
+    "href": "chapters/07-pipeline-hazards.html#you-have-come-a-long-way",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.8 You have come a long way",
+    "text": "13.8 You have come a long way\n\n\n\n\n\n\nTipCongratulations!\n\n\n\nTake a moment to look back. A few weeks ago we started with a single flip-flop and a multiplexer. Since then, you have learned to describe hardware in SystemVerilog, to design finite state machines, and to build a pipeline stage by stage: fetching over a bus protocol, decoding an instruction set, executing with forwarding, accessing memory, and writing back. Now you have put them together into a complete, pipelined RISC-V processor that runs real programs compiled from C.\nEvery line of hipv_core is now something you can read and explain, and that is not a small thing: the same ideas, handshakes, pipeline registers, forwarding and flushes, are at the heart of the processors in your phone and your laptop. They are just bigger.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#what-comes-next",
+    "href": "chapters/07-pipeline-hazards.html#what-comes-next",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.9 What comes next",
+    "text": "13.9 What comes next\nA processor on its own does nothing: it needs memory to hold its program and data, and peripherals to talk to the world. The coming lectures build the rest of the system around the core:\n\nMemory. What sits behind the two OBI ports: how memories are described in SystemVerilog, and how an FPGA implements them.\nVerification with cocotb. How we know that HIPV is correct. Every stage in this book has a testbench written in Python with cocotb, and the core is tested by running whole programs against a model of the memory.\nThe HIPV SoC. The interconnect that lets the core reach the memory and the peripherals, and the peripherals themselves: a UART, a timer and GPIO.\nFPGA. Synthesizing the SoC and running programs on the Nexys A7 board.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/07-pipeline-hazards.html#directions-for-future-work",
+    "href": "chapters/07-pipeline-hazards.html#directions-for-future-work",
+    "title": "13  Pipeline hazards and the HIPV core",
+    "section": "13.10 Directions for future work",
+    "text": "13.10 Directions for future work\nHIPV is a starting point, and it is built to be extended. If you want to go further, here are directions, roughly in order of difficulty. Each one touches only a few modules, and the handshake between the stages keeps the rest of the core unchanged:\n\nA faster fetch unit. Issue the next request before the previous response arrives, and keep the extra instructions in a small buffer. This alone could bring HIPV close to one instruction per cycle.\nBranch prediction. Guess the outcome of a branch in Fetch, from its direction or its history, so that fewer instructions are flushed.\nA store buffer. Let a store leave the Memory stage as soon as its request is granted, instead of waiting for the response.\nThe M extension. Add multiplication and division. Division takes many cycles, and the elastic handshake makes a multi-cycle unit in Execute natural: it holds ReadyE low until the result is ready, and the refresh loop keeps its operands correct while it waits.\nTraps, interrupts and CSRs. Implement ecall, ebreak, the control and status registers and mret, and connect the timer as an interrupt source. This is what an operating system needs.\nMisaligned accesses. Detect them and raise an exception, or split them into two bus transactions.\nAn instruction trace port. Attach the RISC-V Formal Interface (RVFI) to ValidW, and verify HIPV formally against the ISA specification.\n\nThe complete source code of HIPV, with all the testbenches, the software and the FPGA flow, is on GitHub:\nhttps://github.com/RatkoFri/HIPV-SoC\nClone it, run the tests, break something and see which test catches it, and then make it better.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Pipeline hazards and the HIPV core</span>"
     ]
   },
   {
     "objectID": "chapters/08-memory.html",
     "href": "chapters/08-memory.html",
-    "title": "12  Memory — Implementation in SystemVerilog",
+    "title": "14  Memory — Implementation in SystemVerilog",
     "section": "",
     "text": "Memory\n(placeholder — fill in with week 5 content)",
     "crumbs": [
-      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Memory — Implementation in SystemVerilog</span>"
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Memory — Implementation in SystemVerilog</span>"
     ]
   },
   {
     "objectID": "chapters/09-cocotb-verification.html",
     "href": "chapters/09-cocotb-verification.html",
-    "title": "13  Verification with CocoTB",
+    "title": "15  Verification with CocoTB",
     "section": "",
     "text": "Verification with CocoTB\n(placeholder — fill in with week 6-7 content)",
     "crumbs": [
-      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Verification with CocoTB</span>"
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Verification with CocoTB</span>"
     ]
   },
   {
     "objectID": "references.html",
     "href": "references.html",
-    "title": "14  References",
+    "title": "16  References",
     "section": "",
     "text": "IEEE. 2017. IEEE Standard for SystemVerilog–Unified Hardware Design, Specification, and Verification Language.\n\n\nPatterson, David A., and John L. Hennessy. 2017. Computer Organization and Design RISC-v Edition: The Hardware Software Interface. Morgan Kaufmann.\n\n\nWaterman, Andrew, and Krste Asanović. 2019. The RISC-v Instruction Set Manual, Volume i: Unprivileged ISA. RISC-V Foundation.",
     "crumbs": [
-      "<span class='chapter-number'>14</span>  <span class='chapter-title'>References</span>"
+      "<span class='chapter-number'>16</span>  <span class='chapter-title'>References</span>"
     ]
   }
 ]

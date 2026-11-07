@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; Load/store unit – Designing a RISC-V SoC</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/06f-wbu.html" rel="next">
+<link href="../chapters/06d-ieu.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/06e-lsu.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Load/store unit</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06c-idu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06d-ieu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06e-lsu.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Load/store unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06f-wbu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Writeback unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Pipeline hazards and the HIPV core</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-lsu" id="toc-sec-lsu" class="nav-link active" data-scroll-target="#sec-lsu">Load/store unit</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">11.1</span> Goal for this week</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">11.2</span> Introduction</a></li>
+  <li><a href="#interface-of-the-lsu" id="toc-interface-of-the-lsu" class="nav-link" data-scroll-target="#interface-of-the-lsu"><span class="header-section-number">11.3</span> Interface of the LSU</a></li>
+  <li><a href="#structure-of-the-lsu" id="toc-structure-of-the-lsu" class="nav-link" data-scroll-target="#structure-of-the-lsu"><span class="header-section-number">11.4</span> Structure of the LSU</a></li>
+  <li><a href="#sec-lsu-handshake" id="toc-sec-lsu-handshake" class="nav-link" data-scroll-target="#sec-lsu-handshake"><span class="header-section-number">11.5</span> Handshake logic</a>
+  <ul class="collapse">
+  <li><a href="#when-is-the-output-valid" id="toc-when-is-the-output-valid" class="nav-link" data-scroll-target="#when-is-the-output-valid"><span class="header-section-number">11.5.1</span> When is the output valid?</a></li>
+  <li><a href="#when-can-the-stage-accept" id="toc-when-can-the-stage-accept" class="nav-link" data-scroll-target="#when-can-the-stage-accept"><span class="header-section-number">11.5.2</span> When can the stage accept?</a></li>
+  </ul></li>
+  <li><a href="#em-pipeline-registers" id="toc-em-pipeline-registers" class="nav-link" data-scroll-target="#em-pipeline-registers"><span class="header-section-number">11.6</span> E/M pipeline registers</a></li>
+  <li><a href="#sec-lsu-obi" id="toc-sec-lsu-obi" class="nav-link" data-scroll-target="#sec-lsu-obi"><span class="header-section-number">11.7</span> Access to memory</a>
+  <ul class="collapse">
+  <li><a href="#sec-lsu-fsm" id="toc-sec-lsu-fsm" class="nav-link" data-scroll-target="#sec-lsu-fsm"><span class="header-section-number">11.7.1</span> Why an FSM?</a></li>
+  <li><a href="#interface-of-the-controller" id="toc-interface-of-the-controller" class="nav-link" data-scroll-target="#interface-of-the-controller"><span class="header-section-number">11.7.2</span> Interface of the controller</a></li>
+  <li><a href="#states-and-transitions" id="toc-states-and-transitions" class="nav-link" data-scroll-target="#states-and-transitions"><span class="header-section-number">11.7.3</span> States and transitions</a></li>
+  <li><a href="#the-outputs" id="toc-the-outputs" class="nav-link" data-scroll-target="#the-outputs"><span class="header-section-number">11.7.4</span> The outputs</a></li>
+  <li><a href="#the-controller-in-the-waveform" id="toc-the-controller-in-the-waveform" class="nav-link" data-scroll-target="#the-controller-in-the-waveform"><span class="header-section-number">11.7.5</span> The controller in the waveform</a></li>
+  </ul></li>
+  <li><a href="#sec-lsu-signals" id="toc-sec-lsu-signals" class="nav-link" data-scroll-target="#sec-lsu-signals"><span class="header-section-number">11.8</span> OBI signals: address, byte enables, write data</a></li>
+  <li><a href="#capturing-and-processing-loaded-data" id="toc-capturing-and-processing-loaded-data" class="nav-link" data-scroll-target="#capturing-and-processing-loaded-data"><span class="header-section-number">11.9</span> Capturing and processing loaded data</a></li>
+  <li><a href="#sec-lsu-forward" id="toc-sec-lsu-forward" class="nav-link" data-scroll-target="#sec-lsu-forward"><span class="header-section-number">11.10</span> Forwarding and outputs to Writeback</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">11.11</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Load/store unit</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-lsu" class="level1 unnumbered">
+<h1 class="unnumbered">Load/store unit</h1>
+<section id="goal-for-this-week" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">11.1</span> Goal for this week</h2>
+<ul>
+<li>Know what the load/store unit (LSU) does, and how it differs from the stages before it</li>
+<li>Read the LSU interface, in particular the OBI signals for writing to memory</li>
+<li>Understand how the stage holds a memory instruction until its transaction is finished</li>
+<li>Design the LSU controller as an FSM, and process the data of byte and halfword accesses</li>
+</ul>
+</section>
+<section id="introduction" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">11.2</span> Introduction</h2>
+<p>The load/store unit is the fourth stage of the HIPV pipeline, the Memory stage. Its design closely resembles the stages we have seen so far: it has the same valid/ready handshake, the same kind of pipeline registers, and, like the IFU, an FSM that talks to a memory. What is new is mostly what it does with the memory.</p>
+<p>The role of the LSU is to give the core access to the data memory, for the load and store instructions. That gives it four properties:</p>
+<ul>
+<li>It communicates with the data memory through the <strong>OBI</strong> interface, the same protocol the IFU uses for the instruction memory.</li>
+<li>Unlike the IFU, which only reads instructions, the LSU also <strong>writes</strong> to memory, for the store instructions, alongside <strong>reading</strong> for the loads.</li>
+<li>It does <strong>not</strong> need to access memory all the time. Only loads and stores use the memory. Every other instruction, an <code>add</code> or a <code>jal</code>, just passes through the stage to Writeback, in a single cycle.</li>
+<li>It <strong>forwards</strong> its result back to the Execute stage, so that the next instruction can use it before it reaches the register file.</li>
+</ul>
+</section>
+<section id="interface-of-the-lsu" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="interface-of-the-lsu"><span class="header-section-number">11.3</span> Interface of the LSU</h2>
+<p>The ports of the LSU fall into six groups:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Execute stage</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ValidE,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ReadyM,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="co">// inputs from Execute</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ALUResultE, WriteDataE, PCPlus4E,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  RdE,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  Funct3E,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        RegWriteE, MemWriteE,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcE,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Writeback stage</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ValidM,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ReadyW,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="co">// stage outputs to Writeback</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ALUResultM, ReadDataM, PCPlus4M,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  RdM,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        RegWriteM,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcM,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="co">// forwarding to Execute</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ForwardDataM,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="co">// OBI master port to data memory</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ObiReqM,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ObiGntM,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiAddrM,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ObiWeM,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ObiBeM,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiWdataM,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ObiRvalidM,</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiRdataM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Handshake with Execute</strong>: <code>ValidE</code> and <code>ReadyM</code>.</li>
+<li><strong>Inputs from Execute</strong>: <code>ALUResultE</code>, which is the address for a load or store and the result for any other instruction; <code>WriteDataE</code>, the data a store writes; <code>PCPlus4E</code>, the return address of <code>jal</code> and <code>jalr</code>; the destination register <code>RdE</code>; <code>Funct3E</code>, which gives the size of the access; and the controls <code>RegWriteE</code>, <code>MemWriteE</code> and <code>ResultSrcE</code>.</li>
+<li><strong>Handshake with Writeback</strong>: <code>ValidM</code> and <code>ReadyW</code>.</li>
+<li><strong>Outputs to Writeback</strong>: the three candidate results (<code>ALUResultM</code>, the loaded data <code>ReadDataM</code>, and <code>PCPlus4M</code>), the destination register <code>RdM</code>, the write enable <code>RegWriteM</code>, and <code>ResultSrcM</code>, which tells Writeback which of the three results to write.</li>
+<li><strong>Forwarding to Execute</strong>: <code>ForwardDataM</code>, the result of the instruction in this stage.</li>
+<li><strong>OBI port to the data memory</strong>, described in <a href="#sec-lsu-obi" class="quarto-xref"><span>Section 11.7</span></a>.</li>
+</ul>
+</section>
+<section id="structure-of-the-lsu" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="structure-of-the-lsu"><span class="header-section-number">11.4</span> Structure of the LSU</h2>
+<div id="fig-lsu" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lsu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/lsu.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lsu-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline registers, the controller <code>lsuctrl</code>, the OBI address, byte enables and store data, the read path (<code>rawreg</code>, shift, sign/zero extension), and the forwarding multiplexer.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-lsu" class="quarto-xref">Figure&nbsp;<span>11.1</span></a> shows the LSU. It has six parts, and the rest of the chapter takes them in this order:</p>
+<ol type="1">
+<li>the <strong>handshake logic</strong>, which accepts instructions from Execute and, for a memory instruction, holds it in the stage until the memory access is finished;</li>
+<li>the <strong>E/M pipeline registers</strong>;</li>
+<li>the <strong>FSM</strong> <code>lsuctrl</code>, which runs the OBI transaction;</li>
+<li>the logic that generates the <strong>OBI signals</strong>: the word address, the byte enables and the store data;</li>
+<li>the <strong>post-processing of loaded data</strong>: the register <code>rawreg</code>, which captures the word from memory, followed by a shift and a sign or zero extension;</li>
+<li>the <strong>forwarding</strong> of the result to Execute, and the outputs to Writeback.</li>
+</ol>
+</section>
+<section id="sec-lsu-handshake" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="sec-lsu-handshake"><span class="header-section-number">11.5</span> Handshake logic</h2>
+<p>The handshake logic of the LSU has the same shape as in Decode and Execute, with one addition: a memory instruction cannot be handed on until its memory access is finished.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M handshake: a memory instruction holds the stage until done</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnEM   = ValidE &amp; ReadyM;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M valid bit</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) ValidMReg &lt;= <span class="bn">1'b0</span>;</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyM) ValidMReg &lt;= ValidE;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong><code>EnEM</code></strong> is the handshake between Execute and the LSU: Execute offers an instruction (<code>ValidE</code>) and the LSU accepts it (<code>ReadyM</code>). As in the other stages, it enables the pipeline registers, so it is the moment the instruction enters the Memory stage.</p>
+<section id="when-is-the-output-valid" class="level3" data-number="11.5.1">
+<h3 data-number="11.5.1" class="anchored" data-anchor-id="when-is-the-output-valid"><span class="header-section-number">11.5.1</span> When is the output valid?</h3>
+<p>In Decode and Execute, the output was valid as soon as the stage held a valid instruction. The LSU adds a condition:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The output is valid when the stage holds a valid instruction, <strong>and</strong> either it is not a memory instruction, or its memory transaction is done. The three terms:</p>
+<ul>
+<li><strong><code>ValidMReg</code></strong> is the valid bit of the stage. It says that the stage holds a valid instruction and not a bubble.</li>
+<li><strong><code>~MemOpM</code></strong> says that the instruction is neither a load nor a store. Such an instruction has nothing to do here, so it is handed on to Writeback in the same cycle, without waiting for anything.</li>
+<li><strong><code>DoneM</code></strong> says that the memory transaction of a load or store is finished. It is generated by the FSM (<a href="#sec-lsu-fsm" class="quarto-xref"><span>Section 11.7.1</span></a>). Until it is 1, a memory instruction is not offered to Writeback.</li>
+</ul>
+<p>How does the LSU know that it holds a memory instruction? From two controls that Decode generated, and that have travelled with the instruction through the pipeline registers:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><code>MemWriteM</code>, the copy of <code>MemWriteE</code> in the E/M register, is 1 for a store.</li>
+<li><code>ResultSrcM</code> says which value Writeback will write into the register file. <code>RESULT_MEM</code> means that this value is the data read from memory, and only a load writes that. So <code>ResultSrcM == RESULT_MEM</code> identifies a load.</li>
+</ul>
+<p>No separate “is a load” signal is needed: the two controls the later stages need anyway already carry the information.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Reminder: why a valid <em>register</em>?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>ValidMReg</code> is a copy of <code>ValidE</code> delayed by one edge, loaded whenever the stage can accept something (<code>ReadyM</code>). It must be a register, because the valid bit has to move through the pipeline at the same pace as the instruction it labels. After the edge, the instruction from Execute sits in the E/M registers, and <code>ValidE</code> already describes the next one. Storing the valid bit at the same edge, next to the data, keeps the label with its instruction. The same holds for <code>ValidDReg</code> in Decode and <code>ValidEReg</code> in Execute.</p>
+</div>
+</div>
+</section>
+<section id="when-can-the-stage-accept" class="level3" data-number="11.5.2">
+<h3 data-number="11.5.2" class="anchored" data-anchor-id="when-can-the-stage-accept"><span class="header-section-number">11.5.2</span> When can the stage accept?</h3>
+<p><code>ReadyM</code> tells Execute that the LSU can accept a new instruction:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There are two cases:</p>
+<ul>
+<li><strong><code>~ValidMReg</code></strong>: the stage holds a bubble, so there is nothing to lose.</li>
+<li><strong><code>ValidM &amp; ReadyW</code></strong>: the instruction in the stage is drained, handed over to Writeback at this very edge, so its place is free for the next one.</li>
+</ul>
+<p>Compare this with Execute, where the second term was just <code>ReadyM</code>. Here it includes <code>ValidM</code>, because a memory instruction that is still waiting for its transaction cannot leave, even if Writeback is ready. While a load waits for memory, <code>ValidM</code> is 0, so <code>ReadyM</code> is 0, and the stall propagates backwards: Execute holds its instruction, Decode holds its, and Fetch stops. This is the back-pressure that makes a separate load-use stall unnecessary (see the refresh loop in the <a href="../chapters/06d-ieu.html">IEU chapter</a>).</p>
+</section>
+</section>
+<section id="em-pipeline-registers" class="level2" data-number="11.6">
+<h2 data-number="11.6" class="anchored" data-anchor-id="em-pipeline-registers"><span class="header-section-number">11.6</span> E/M pipeline registers</h2>
+<p>The pipeline registers store what Execute has produced, and they are loaded on <code>EnEM</code>. While a memory instruction waits for its transaction, <code>EnEM</code> is 0, and they hold the address, the store data and the controls stable for as long as the transaction takes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M pipeline registers</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) alureg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(ALUResultE),<span class="dt"> .Q</span>(ALUResultM));</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) wdreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(WriteDataE),<span class="dt"> .Q</span>(WriteDataM));</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(PCPlus4E),<span class="dt"> .Q</span>(PCPlus4M));</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">5</span>)  rdreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(RdE),<span class="dt"> .Q</span>(RdM));</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">3</span>)  funct3reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(Funct3E),<span class="dt"> .Q</span>(Funct3M));</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">4</span>)  ctrlreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                        .D({RegWriteE, MemWriteE, ResultSrcE}),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                        .Q({RegWriteMReg, MemWriteM, ResultSrcM}));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The register for <code>RegWriteE</code> drives <code>RegWriteMReg</code>, not <code>RegWriteM</code> directly. Before it leaves the stage, it is qualified with the valid bit (<a href="#sec-lsu-forward" class="quarto-xref"><span>Section 11.10</span></a>).</p>
+</section>
+<section id="sec-lsu-obi" class="level2" data-number="11.7">
+<h2 data-number="11.7" class="anchored" data-anchor-id="sec-lsu-obi"><span class="header-section-number">11.7</span> Access to memory</h2>
+<p>Like the IFU, the LSU talks to its memory over OBI. The two phases of a transaction are the same as on the instruction port (<a href="06b-ifu.html#fig-ifu-obi" class="quarto-xref">Figure&nbsp;<span>8.2</span></a>): in the <strong>address phase</strong>, the LSU holds <code>ObiReqM</code> and the request signals until the memory grants with <code>ObiGntM</code>; in the <strong>response phase</strong>, at least one cycle later, the memory raises <code>ObiRvalidM</code> to say that the access is complete.</p>
+<p>What the IFU never needed is writing. A store must tell the memory three more things: <em>that</em> it writes, <em>which bytes</em> it writes, and <em>what</em> it writes. That adds three signals to the address phase:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Dir</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ObiReqM</code></td>
+<td>out</td>
+<td>request: the LSU starts a transaction</td>
+</tr>
+<tr class="even">
+<td><code>ObiGntM</code></td>
+<td>in</td>
+<td>grant: the memory has accepted the request</td>
+</tr>
+<tr class="odd">
+<td><code>ObiAddrM</code></td>
+<td>out</td>
+<td>address of the 32-bit word to access</td>
+</tr>
+<tr class="even">
+<td><strong><code>ObiWeM</code></strong></td>
+<td>out</td>
+<td><strong>write enable</strong>: 1 for a write (store), 0 for a read (load)</td>
+</tr>
+<tr class="odd">
+<td><strong><code>ObiBeM</code></strong></td>
+<td>out</td>
+<td><strong>byte enables</strong>, 4 bits: which bytes of the word take part</td>
+</tr>
+<tr class="even">
+<td><strong><code>ObiWdataM</code></strong></td>
+<td>out</td>
+<td><strong>write data</strong>, each byte already in its position in the word</td>
+</tr>
+<tr class="odd">
+<td><code>ObiRvalidM</code></td>
+<td>in</td>
+<td>response valid: the transaction is complete</td>
+</tr>
+<tr class="even">
+<td><code>ObiRdataM</code></td>
+<td>in</td>
+<td>read data, meaningful only for a read, while <code>ObiRvalidM</code> is 1</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong><code>ObiWeM</code></strong> selects the direction of the transfer. It is simply <code>MemWriteM</code>, the store flag from Decode.</li>
+<li><strong><code>ObiBeM</code></strong> exists because a store does not always write a whole word. <code>sb</code> writes one byte and <code>sh</code> two, and the other bytes of the word must not change. Bit <em>i</em> of <code>ObiBeM</code> enables byte <em>i</em> of the word, so <code>sb</code> to byte 2 sends <code>0100</code>, and the memory leaves bytes 0, 1 and 3 untouched.</li>
+<li><strong><code>ObiWdataM</code></strong> carries the data, but the memory takes byte <em>i</em> from bits <code>8i+7 : 8i</code> of the bus. A byte stored at offset 2 must therefore travel on bits 23:16, not 7:0, and the LSU shifts it into place (<a href="#sec-lsu-signals" class="quarto-xref"><span>Section 11.8</span></a>).</li>
+</ul>
+<p>A store gets a response too. <code>ObiRvalidM</code> still comes, one or more cycles after the grant, and it tells the LSU that the write is complete. <code>ObiRdataM</code> is meaningless in that case and is ignored. Both loads and stores therefore follow the same sequence: request, grant, response.</p>
+<section id="sec-lsu-fsm" class="level3" data-number="11.7.1">
+<h3 data-number="11.7.1" class="anchored" data-anchor-id="sec-lsu-fsm"><span class="header-section-number">11.7.1</span> Why an FSM?</h3>
+<p>A transaction lasts several cycles, and how many depends on the memory: the grant may come at once or after a few wait cycles, and the response may follow one cycle or many cycles later. The LSU must remember where the transaction is: has the request been granted, has the response arrived, has the instruction been handed on? That memory is the state of an FSM, the controller <code>lsuctrl</code>.</p>
+<p>It is the counterpart of <code>ifuctrl</code> in the IFU, and it has the same three states. It is simpler, though, because nothing can interrupt it. A jump discards instructions in Fetch and Decode, but an instruction that has reached the Memory stage is older than any jump that is still being resolved, so it always completes. The LSU needs no discard flag.</p>
+</section>
+<section id="interface-of-the-controller" class="level3" data-number="11.7.2">
+<h3 data-number="11.7.2" class="anchored" data-anchor-id="interface-of-the-controller"><span class="header-section-number">11.7.2</span> Interface of the controller</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsuctrl (<span class="kw">input</span>  <span class="kw">logic</span> clk, reset,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> MemReqM,               <span class="co">// valid load/store in M</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> ObiGntM, ObiRvalidM,   <span class="co">// From OBI memory</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> ReadyW,                <span class="co">// From Writeback</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                <span class="kw">output</span> <span class="kw">logic</span> ObiReqM, CaptureM, DoneM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The controller watches three sources and drives three outputs:</p>
+<ul>
+<li><strong><code>MemReqM</code></strong> says that there is work to do: a valid instruction in the stage that is a load or store. The LSU computes it as <code>MemReqM = ValidMReg &amp; MemOpM</code>, so a bubble or a non-memory instruction never starts a transaction.</li>
+<li><strong><code>ObiGntM</code></strong> and <strong><code>ObiRvalidM</code></strong> come from the memory and mark the end of the address and the response phase.</li>
+<li><strong><code>ReadyW</code></strong> says that Writeback takes the finished instruction.</li>
+<li><strong><code>ObiReqM</code></strong> is the OBI request.</li>
+<li><strong><code>CaptureM</code></strong> loads the read data into the register <code>rawreg</code>, in the cycle in which it is valid on the bus.</li>
+<li><strong><code>DoneM</code></strong> says that the transaction is finished. It opens <code>ValidM</code> in the handshake logic.</li>
+</ul>
+<p>In the LSU it is instantiated with <code>MemReqM</code> computed next to it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// OBI transaction control FSM: one outstanding request per instruction</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemReqM = ValidMReg &amp; MemOpM;</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  lsuctrl ctrl<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .MemReqM</span>(MemReqM),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>               .ObiGntM(ObiGntM),<span class="dt"> .ObiRvalidM</span>(ObiRvalidM),<span class="dt"> .ReadyW</span>(ReadyW),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>               .ObiReqM(ObiReqM),<span class="dt"> .CaptureM</span>(CaptureM),<span class="dt"> .DoneM</span>(DoneM));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="states-and-transitions" class="level3" data-number="11.7.3">
+<h3 data-number="11.7.3" class="anchored" data-anchor-id="states-and-transitions"><span class="header-section-number">11.7.3</span> States and transitions</h3>
+<div id="fig-lsuctrl-fsm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lsuctrl-fsm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/lsuctrl-fsm.svg" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lsuctrl-fsm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.2: The LSU controller as a state diagram, with the transitions only.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-lsuctrl-fsm" class="quarto-xref">Figure&nbsp;<span>11.2</span></a> shows the three states:</p>
+<ul>
+<li><strong><code>IDLE</code></strong>: no transaction is in progress. When a load or store is in the stage, the controller requests the memory and waits for the grant. When <code>MemReqM</code> and <code>ObiGntM</code> are both 1, the memory has accepted the request and the FSM moves to <code>WAIT_RESP</code>. A non-memory instruction never leaves <code>IDLE</code>: <code>MemReqM</code> is 0, and it passes through without the controller.</li>
+<li><strong><code>WAIT_RESP</code></strong>: the request has been granted, and the controller waits for the response. When <code>ObiRvalidM</code> arrives, the access is complete, and the FSM moves to <code>DONE</code>.</li>
+<li><strong><code>DONE</code></strong>: the transaction is finished, and the instruction is offered to Writeback. When Writeback takes it (<code>ReadyW</code>), the FSM returns to <code>IDLE</code>, ready for the next instruction.</li>
+</ul>
+<p>In SystemVerilog the FSM follows the familiar pattern, a state register and a next-state <code>case</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, WAIT_RESP, DONE} statetype;</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  statetype State, NextState;</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// state register</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) State &lt;= IDLE;</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span>       State &lt;= NextState;</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next state logic</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    NextState = State;  <span class="co">// default: hold</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (State)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      IDLE:      <span class="kw">if</span> (MemReqM &amp; ObiGntM) NextState = WAIT_RESP;</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>      WAIT_RESP: <span class="kw">if</span> (ObiRvalidM)        NextState = DONE;</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      DONE:      <span class="kw">if</span> (ReadyW)            NextState = IDLE;</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:   NextState = IDLE;</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-outputs" class="level3" data-number="11.7.4">
+<h3 data-number="11.7.4" class="anchored" data-anchor-id="the-outputs"><span class="header-section-number">11.7.4</span> The outputs</h3>
+<p>The three outputs are one line each:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiReqM  = (State == IDLE) &amp; MemReqM;</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> CaptureM = (State == WAIT_RESP) &amp; ObiRvalidM;</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> DoneM    = (State == DONE);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong><code>ObiReqM</code></strong> is high in <code>IDLE</code> while a load or store is in the stage. It depends on the input <code>MemReqM</code>, so it is a Mealy output, and that is intentional: the request goes out in the very first cycle in which the instruction is in the Memory stage, without waiting for a state change. It stays high until the grant moves the FSM to <code>WAIT_RESP</code>, as the address phase requires. The address, the byte enables and the write data come straight from the E/M registers, which hold still during that time.</li>
+<li><strong><code>CaptureM</code></strong> is high in the one cycle in which the response arrives. That is the only cycle in which <code>ObiRdataM</code> is valid, so it is the enable of <code>rawreg</code>. For a store it captures meaningless data, which nobody uses.</li>
+<li><strong><code>DoneM</code></strong> is high in <code>DONE</code>. It depends only on the state, a Moore output. It stays high until Writeback takes the instruction.</li>
+</ul>
+<p>In HIPV, Writeback never stalls (<code>ReadyW</code> is always 1), so <code>DONE</code> lasts exactly one cycle. The controller does not rely on that: if a later version of Writeback could stall, the FSM would simply wait in <code>DONE</code>.</p>
+</section>
+<section id="the-controller-in-the-waveform" class="level3" data-number="11.7.5">
+<h3 data-number="11.7.5" class="anchored" data-anchor-id="the-controller-in-the-waveform"><span class="header-section-number">11.7.5</span> The controller in the waveform</h3>
+<div id="fig-lsu-access" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lsu-access-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/lsu_access.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lsu-access-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add</code>) and a store (<code>sw</code>) in the Memory stage. The load waits one cycle for the grant and one for the response; the <code>add</code> passes through in one cycle; the store is granted at once.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-lsu-access" class="quarto-xref">Figure&nbsp;<span>11.3</span></a> shows the controller at work on three instructions.</p>
+<p>The <strong>load</strong> <code>lw</code> enters the stage in cycle 1. <code>MemReqM</code> is 1 and the FSM is in <code>IDLE</code>, so <code>ObiReqM</code> rises at once. The memory grants in cycle 2, and at the end of that cycle the FSM moves to <code>WAIT_RESP</code>. The response comes in cycle 4: <code>CaptureM</code> loads the word into <code>rawreg</code>, and the FSM moves to <code>DONE</code>. In cycle 5, <code>DoneM</code> makes <code>ValidM</code> high, Writeback takes the load, and <code>ReadyM</code> rises, so the next instruction moves in at the same edge. Throughout cycles 1 to 4, <code>ReadyM</code> is 0, and Execute waits.</p>
+<p>The <strong><code>add</code></strong> in cycle 6 is not a memory instruction. <code>MemOpM</code> is 0, so <code>ValidM</code> is high at once, the FSM stays in <code>IDLE</code>, and the instruction leaves after one cycle, as if the LSU were a plain pipeline register.</p>
+<p>The <strong>store</strong> <code>sw</code> in cycle 7 drives <code>ObiWeM = 1</code> together with the request. The memory grants at once, responds in cycle 8, and in cycle 9 the store is done and passes on to Writeback, where it does nothing, because a store writes no register.</p>
+<p>Even with a memory that grants and responds as fast as OBI allows, a load or store spends three cycles in the Memory stage, one in each state. Like the one-transaction-at-a-time IFU, this is a simplification that keeps the controller small.</p>
+</section>
+</section>
+<section id="sec-lsu-signals" class="level2" data-number="11.8">
+<h2 data-number="11.8" class="anchored" data-anchor-id="sec-lsu-signals"><span class="header-section-number">11.8</span> OBI signals: address, byte enables, write data</h2>
+<p>The memory is organized in 32-bit words, but RISC-V addresses bytes. The LSU therefore splits the byte address from the ALU into a <strong>word address</strong> and a <strong>byte offset</strong> within the word:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// address phase: word-aligned address, byte enables from size and offset</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> AddrLsbM  = ALUResultM[<span class="dv">1</span>:<span class="dv">0</span>];</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiAddrM  = {ALUResultM[<span class="dv">31</span>:<span class="dv">2</span>], <span class="bn">2'b00</span>};</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiWeM    = MemWriteM;</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiWdataM = WriteDataM &lt;&lt; {AddrLsbM, <span class="bn">3'b000</span>};</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (Funct3M[<span class="dv">1</span>:<span class="dv">0</span>])</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b00</span>:   ObiBeM = <span class="bn">4'b0001</span> &lt;&lt; AddrLsbM;              <span class="co">// sb/lb</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b01</span>:   ObiBeM = AddrLsbM[<span class="dv">1</span>] ? <span class="bn">4'b1100</span> : <span class="bn">4'b0011</span>;  <span class="co">// sh/lh</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ObiBeM = <span class="bn">4'b1111</span>;                          <span class="co">// sw/lw</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong><code>ObiAddrM</code></strong> is the address with its two lowest bits cleared: the address of the word that contains the byte.</li>
+<li><strong><code>AddrLsbM</code></strong>, the two lowest bits, is the offset of the byte within that word, 0 to 3.</li>
+<li><strong><code>ObiBeM</code></strong> depends on the size of the access, given by the two lowest bits of <code>funct3</code>: a byte (<code>00</code>) enables one byte at the offset, a halfword (<code>01</code>) the lower or the upper half, and a word all four.</li>
+<li><strong><code>ObiWdataM</code></strong> shifts the store data left by eight times the offset. <code>{AddrLsbM, 3'b000}</code> is a neat way to write <code>8 × AddrLsbM</code>: appending three zero bits multiplies by 8. The byte to store, which <code>rs2</code> holds in its lowest bits, lands in the byte lane that the byte enables select.</li>
+</ul>
+<p>An example: <code>sb x5, 2(x10)</code> with <code>x10 = 0x100</code> and <code>x5 = 0x000000AB</code>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>byte address <code>ALUResultM</code></td>
+<td><code>0x102</code></td>
+</tr>
+<tr class="even">
+<td><code>ObiAddrM</code></td>
+<td><code>0x100</code></td>
+</tr>
+<tr class="odd">
+<td><code>AddrLsbM</code></td>
+<td><code>2</code></td>
+</tr>
+<tr class="even">
+<td><code>ObiBeM</code></td>
+<td><code>0100</code></td>
+</tr>
+<tr class="odd">
+<td><code>ObiWdataM</code></td>
+<td><code>0x00AB0000</code></td>
+</tr>
+</tbody>
+</table>
+<p>The memory writes byte 2 of the word at <code>0x100</code> with <code>0xAB</code>, and leaves the other three bytes unchanged. Loads use the same address and byte enables. A memory may ignore the byte enables for a read and return the whole word, so the LSU always selects the right bytes itself, on the way back.</p>
+<p>The LSU does not check alignment. A halfword at offset 3 or a word at an offset other than 0 would cross into the next word. HIPV does not detect this, and such an access is silently truncated to the addressed word. RV32I allows a processor to trap on misaligned accesses, and the compiler never generates them for ordinary data, so this simplification costs little.</p>
+</section>
+<section id="capturing-and-processing-loaded-data" class="level2" data-number="11.9">
+<h2 data-number="11.9" class="anchored" data-anchor-id="capturing-and-processing-loaded-data"><span class="header-section-number">11.9</span> Capturing and processing loaded data</h2>
+<p>The loaded data passes through three steps on its way out of the LSU.</p>
+<p><strong>Capture.</strong> <code>ObiRdataM</code> is valid only in the cycle in which <code>ObiRvalidM</code> is 1, but the LSU hands the load on to Writeback one cycle later, in <code>DONE</code>. The register <code>rawreg</code> keeps the word in between. Its enable is <code>CaptureM</code> from the FSM:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// raw read data register</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rawreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(CaptureM),<span class="dt"> .D</span>(ObiRdataM),<span class="dt"> .Q</span>(ReadRawM));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Shift.</strong> The memory returns the whole word, with the wanted byte or halfword in its byte lane. Shifting right by eight times the offset brings it down to the lowest bits, the reverse of the store shift:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// read data alignment and sign/zero extension</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadShiftM = ReadRawM &gt;&gt; {AddrLsbM, <span class="bn">3'b000</span>};</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Extend.</strong> The final step depends on the load instruction, selected by <code>funct3</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (Funct3M)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b000</span>:  ReadDataM = {{<span class="dv">24</span>{ReadShiftM[<span class="dv">7</span>]}}, ReadShiftM[<span class="dv">7</span>:<span class="dv">0</span>]};    <span class="co">// lb</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b001</span>:  ReadDataM = {{<span class="dv">16</span>{ReadShiftM[<span class="dv">15</span>]}}, ReadShiftM[<span class="dv">15</span>:<span class="dv">0</span>]};  <span class="co">// lh</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b100</span>:  ReadDataM = {<span class="bn">24'b0</span>, ReadShiftM[<span class="dv">7</span>:<span class="dv">0</span>]};                  <span class="co">// lbu</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b101</span>:  ReadDataM = {<span class="bn">16'b0</span>, ReadShiftM[<span class="dv">15</span>:<span class="dv">0</span>]};                 <span class="co">// lhu</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ReadDataM = ReadShiftM;                                <span class="co">// lw</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Instruction</th>
+<th><code>funct3</code></th>
+<th>Keeps</th>
+<th>Upper bits</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>lb</code></td>
+<td><code>000</code></td>
+<td>bits 7:0</td>
+<td>copies of bit 7 (sign-extended)</td>
+</tr>
+<tr class="even">
+<td><code>lh</code></td>
+<td><code>001</code></td>
+<td>bits 15:0</td>
+<td>copies of bit 15 (sign-extended)</td>
+</tr>
+<tr class="odd">
+<td><code>lw</code></td>
+<td><code>010</code></td>
+<td>all 32 bits</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td><code>lbu</code></td>
+<td><code>100</code></td>
+<td>bits 7:0</td>
+<td>zeros (zero-extended)</td>
+</tr>
+<tr class="odd">
+<td><code>lhu</code></td>
+<td><code>101</code></td>
+<td>bits 15:0</td>
+<td>zeros (zero-extended)</td>
+</tr>
+</tbody>
+</table>
+<p>The signed loads, <code>lb</code> and <code>lh</code>, treat the value as a two’s-complement number and copy its sign bit into the upper bits, with the same replication operator as the immediate extension in Decode. The unsigned loads, <code>lbu</code> and <code>lhu</code>, fill with zeros. <code>funct3</code> encodes this neatly: its two lowest bits give the size (and drive <code>ObiBeM</code> above), and its highest bit says unsigned.</p>
+<p>For example, if the word at <code>0x100</code> is <code>0x80FF1234</code>, then <code>lb</code> from <code>0x103</code> shifts right by 24 to get <code>0x80</code>, and sign-extends it to <code>0xFFFFFF80</code>, which is −128, while <code>lbu</code> from the same address gives <code>0x00000080</code>, which is 128.</p>
+</section>
+<section id="sec-lsu-forward" class="level2" data-number="11.10">
+<h2 data-number="11.10" class="anchored" data-anchor-id="sec-lsu-forward"><span class="header-section-number">11.10</span> Forwarding and outputs to Writeback</h2>
+<p>The last two lines of the LSU prepare its result for the two stages that use it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding data for the Execute stage: load data or ALU result</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ForwardDataM = (ResultSrcM == RESULT_MEM) ? ReadDataM : ALUResultM;</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// register write indication, qualified with the stage valid bit</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RegWriteM = RegWriteMReg &amp; ValidMReg;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong><code>ForwardDataM</code></strong> goes back to the forwarding multiplexers in Execute (<a href="06d-ieu.html#fig-ieu-forwarding" class="quarto-xref">Figure&nbsp;<span>10.3</span></a>). It is the value that the instruction in the Memory stage will write into the register file: the loaded data for a load, and the ALU result for everything else. This multiplexer makes the LSU, not the IEU, responsible for choosing the right value, so the IEU always receives the architecturally correct result. For a load still waiting for memory, <code>ForwardDataM</code> is garbage, but then <code>ReadyM</code> is 0 and the consumer in Execute waits (see the refresh loop in the <a href="../chapters/06d-ieu.html">IEU chapter</a>). The one result it does not include is <code>PCPlus4M</code>, the return address of <code>jal</code> and <code>jalr</code>. It does not have to: a jump redirects Fetch, and by the time the first instruction from the target has been fetched and decoded, the jump has long left the Memory stage.</p>
+<p>The outputs to Writeback are the three candidate results, <code>ALUResultM</code>, <code>ReadDataM</code> and <code>PCPlus4M</code>, together with <code>ResultSrcM</code>, which says which of them to write, and the destination register <code>RdM</code>.</p>
+<p><strong><code>RegWriteM</code></strong> is the register write enable, qualified with the valid bit. This matters for the hazard unit, which compares <code>RdM</code> with the source registers in Execute whenever <code>RegWriteM</code> is 1. When the stage holds a bubble, its registers still contain the last instruction, and without the valid bit that old instruction would keep being forwarded. With it, a bubble never looks like it writes a register.</p>
+</section>
+<section id="summary" class="level2" data-number="11.11">
+<h2 data-number="11.11" class="anchored" data-anchor-id="summary"><span class="header-section-number">11.11</span> Summary</h2>
+<p>The LSU has the same skeleton as the stages before it: a valid/ready handshake, a set of pipeline registers, and an FSM that talks to a memory. Its handshake adds one condition: a load or store is offered to Writeback only when its memory transaction is done, which stalls the pipeline behind it for as long as the memory needs. Every other instruction passes through in a single cycle.</p>
+<p>The controller <code>lsuctrl</code> is a three-state FSM, simpler than the IFU controller because nothing can interrupt an instruction that has reached the Memory stage. Around it, combinational logic turns the byte address and the access size into the word address, the byte enables and the aligned write data for a store, and turns the returned word into a sign- or zero-extended value for a load. Finally, the LSU forwards its result to Execute and qualifies its register write with the valid bit, so that the hazard logic always sees the newest correct value.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/06d-ieu.html" class="pagination-link" aria-label="Integer execution unit">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/06f-wbu.html" class="pagination-link" aria-label="Writeback unit">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Writeback unit</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
