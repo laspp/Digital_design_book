@@ -1,6 +1,6 @@
 """Load/store unit (HIPV rtl/core/lsu/lsu.sv): the E/M handshake and valid
-bit, the E/M pipeline registers, the OBI transaction control (WaitRespM,
-DoneM), the address, byte-enable and store-data alignment, the read-data
+bit, the E/M pipeline registers, the OBI transaction control FSM
+(lsuctrl), the address, byte-enable and store-data alignment, the read-data
 register (rawreg) with shift and sign/zero extension, and the forwarding
 mux that drives ForwardDataM."""
 from schemdraw import flow

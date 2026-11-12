@@ -1,0 +1,16 @@
+{
+ "signal": [
+  { "name": "clk",          "wave": "p...." },
+  { "name": "instr in E",   "wave": "=..=.", "data": ["add x6, x5, x1", "next"] },
+  { "name": "instr in M",   "wave": "=..=.", "data": ["lw x5, 0(x10)", "add x6, x5, x1"] },
+  { "name": "State (LSU)",  "wave": "====.", "data": ["IDLE", "WAIT_RESP", "DONE", "IDLE"] },
+  { "name": "ObiRvalidM",   "wave": "010.." },
+  {},
+  { "name": "ReadyM",       "wave": "0.1.." },
+  { "name": "HoldE",        "wave": "1.0.." },
+  { "name": "ForwardAE",    "wave": "=..=.", "data": ["10 (FWD_MEM)", "00"] },
+  { "name": "ForwardDataM", "wave": "x.==.", "data": ["load data", "add result"] }
+ ],
+ "head": { "text": "Load-use without a stall unit: the dependent add waits in Execute", "tock": 1 },
+ "config": { "hscale": 3 }
+}

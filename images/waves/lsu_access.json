@@ -1,0 +1,22 @@
+{
+ "signal": [
+  { "name": "clk",        "wave": "p........." },
+  { "name": "instr in M", "wave": "=....==..x", "data": ["lw", "add", "sw"] },
+  { "name": "ValidMReg",  "wave": "1........0" },
+  { "name": "MemOpM",     "wave": "1....01..x" },
+  { "name": "State",      "wave": "=.=.==.===",
+    "data": ["IDLE", "WAIT_RESP", "DONE", "IDLE", "WAIT_RESP", "DONE", "IDLE"] },
+  {},
+  { "name": "ObiReqM",    "wave": "1.0...10.." },
+  { "name": "ObiWeM",     "wave": "0.....10.." },
+  { "name": "ObiGntM",    "wave": "010...10.." },
+  { "name": "ObiRvalidM", "wave": "0..10..10." },
+  {},
+  { "name": "CaptureM",   "wave": "0..10..10." },
+  { "name": "DoneM",      "wave": "0...10..10" },
+  { "name": "ValidM",     "wave": "0...1.0.10" },
+  { "name": "ReadyM",     "wave": "0...1.0.1." }
+ ],
+ "head": { "text": "A load, a pass-through instruction and a store in the Memory stage", "tock": 1 },
+ "config": { "hscale": 3 }
+}

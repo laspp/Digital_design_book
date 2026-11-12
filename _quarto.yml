@@ -21,6 +21,8 @@ book:
     - chapters/06b-ifu.qmd
     - chapters/06c-idu.qmd
     - chapters/06d-ieu.qmd
+    - chapters/06e-lsu.qmd
+    - chapters/06f-wbu.qmd
     - chapters/07-pipeline-hazards.qmd
     - chapters/08-memory.qmd
     - chapters/09-cocotb-verification.qmd
