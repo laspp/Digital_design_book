@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.7.31">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>6&nbsp; Finite State Machines – Designing a RISC-V SoC</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -79,14 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -116,7 +110,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -129,7 +123,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+      if (mathElements[i].tagName == "SPAN") {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -767,7 +761,7 @@ Figure&nbsp;6.4: ASM chart of the blinds controller. The Mealy outputs <code>Pus
 <section id="describing-an-fsm-in-systemverilog" class="level3" data-number="6.2.7">
 <h3 data-number="6.2.7" class="anchored" data-anchor-id="describing-an-fsm-in-systemverilog"><span class="header-section-number">6.2.7</span> Describing an FSM in SystemVerilog</h3>
 <p>The three hardware parts of <a href="#fig-fsm-structure" class="quarto-xref">Figure&nbsp;<span>6.2</span></a> become three pieces of code. Here is the blinds controller, written according to the HIPV coding conventions:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">// blinds_fsm</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Purpose: Window-blinds controller. A press of Button pushes the</span></span>
@@ -803,12 +797,12 @@ Figure&nbsp;6.4: ASM chart of the blinds controller. The Mealy outputs <code>Pus
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Push = (State == UP) &amp;&amp; Button;</span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Pull = (State == DOWN) &amp;&amp; Button;</span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>The states</strong> are an enumerated type. <code>typedef enum logic {UP, DOWN} state_t;</code> defines a new type, <code>state_t</code>, whose values have names. The simulator shows those names in the waveform instead of bits, and the compiler refuses to assign an unrelated value to a <code>state_t</code> signal without a cast. Without explicit values the encoding is binary, in the order listed; to choose another encoding, give the values explicitly:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] {RED        = <span class="bn">4'b0001</span>,     <span class="co">// one-hot</span></span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] {RED        = <span class="bn">4'b0001</span>,     <span class="co">// one-hot</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                          RED_YELLOW = <span class="bn">4'b0010</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                          GREEN      = <span class="bn">4'b0100</span>,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                          YELLOW     = <span class="bn">4'b1000</span>} state_t;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                          YELLOW     = <span class="bn">4'b1000</span>} state_t;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Following the HIPV naming convention, the state names are constants and are written in MACRO_CASE, the type name ends in <code>_t</code>, and the signals <code>State</code> and <code>NextState</code> are in UpperCamelCase.</p>
 <p><strong>The state register</strong> is an <code>always_ff</code> with a synchronous reset, exactly the register of the previous chapter. Reset loads the initial state.</p>
 <p><strong>The next-state logic</strong> is an <code>always_comb</code> with a <code>case</code> on the current state, one branch per state. It begins by assigning the default <code>NextState = State</code>, “stay where you are”. This is the <em>default first, then override</em> pattern: every <code>if</code> without an <code>else</code> falls back on the default, which is exactly the <code>0</code> exit of a decision in the ASM chart, and <code>NextState</code> is assigned on every path, so no latch can appear. The <code>default</code> branch of the <code>case</code> catches state codes that do not belong to any state. With two states in one bit there are none, but in a one-hot machine most of the codes are illegal, and the <code>default</code> sends the machine back to a known state instead of leaving it stuck.</p>
@@ -899,7 +893,7 @@ Figure&nbsp;6.5: The traffic-light system: the tick generator turns the 100 MHz 
 <section id="the-1-ms-tick-generator" class="level3" data-number="6.3.3">
 <h3 data-number="6.3.3" class="anchored" data-anchor-id="the-1-ms-tick-generator"><span class="header-section-number">6.3.3</span> The 1 ms tick generator</h3>
 <p>The tick generator is a counter with a comparator. It counts from 0 to <code>TICK_CYCLES - 1</code>, raises <code>Tick</code> for the one cycle in which it holds that last value, and starts again from 0:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">// tick_gen</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Purpose: One-cycle Tick pulse every TICK_CYCLES clock cycles</span></span>
@@ -920,7 +914,7 @@ Figure&nbsp;6.5: The traffic-light system: the tick generator turns the 100 MHz 
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Tick = (Count == TICK_CYCLES - <span class="dv">1</span>);</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The period of <code>Tick</code> is exactly <code>TICK_CYCLES</code> clock cycles, because the counter spends one cycle at each of the values 0 to <code>TICK_CYCLES - 1</code>. With the default of 100 000 and a 100 MHz clock, that is 1 ms. The counter width is derived from the parameter with <code>$clog2</code>, which the tool evaluates at compile time, and it is a <code>localparam</code> because nobody outside should change it. <code>Tick</code> itself is a Moore-style output of the counter: it depends only on the register <code>Count</code>, so it is clean for a whole clock cycle.</p>
 </section>
 <section id="the-asm-chart-of-the-traffic-light" class="level3" data-number="6.3.4">
@@ -942,7 +936,7 @@ Figure&nbsp;6.6: ASM chart of the traffic-light FSM. Each column is one state: t
 <section id="the-fsm-in-systemverilog" class="level3" data-number="6.3.5">
 <h3 data-number="6.3.5" class="anchored" data-anchor-id="the-fsm-in-systemverilog"><span class="header-section-number">6.3.5</span> The FSM in SystemVerilog</h3>
 <p>The code follows the chart box by box, and uses the FSMD pattern for <code>MsCount</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">// traffic_fsm</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Purpose: Traffic-light controller. Cycles through RED, RED_YELLOW,</span></span>
@@ -1008,7 +1002,7 @@ Figure&nbsp;6.6: ASM chart of the traffic-light FSM. Each column is one state: t
 <span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Yellow = (State == RED_YELLOW) || (State == YELLOW);</span>
 <span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Green  = (State == GREEN);</span>
 <span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>The state register</strong> stores the control state and the data register <code>MsCount</code>, and loads both together. On reset the FSM goes to <code>RED</code> with the count at 0, which is the <code>reset</code> arrow of the chart.</p>
 <p><strong>The next-state logic</strong> starts with the defaults: stay in the current state and keep the count. They cover the <code>Tick = 0</code> exits of every column without a single <code>else</code>. The next line is the <code>MsCount++</code> box, which is the same in every state, so we write it once: on every tick, count. The <code>case</code> then handles the last tick of each state. It overrides both defaults: it selects the next state and clears the counter. Because this assignment comes later in the block, it wins over the increment, as the blocking <code>=</code> guarantees. The <code>default</code> branch is not reachable with four states in two bits, but it keeps the machine safe if the encoding changes.</p>
 <p><strong>The output logic</strong> is three <code>assign</code> statements, one per lamp, each a function of <code>State</code> alone: this is a Moore machine, so the lamps change only at a clock edge, when the state changes. The light times are parameters, so another junction, with other times, is a different instance of the same module.</p>
@@ -1032,7 +1026,7 @@ Figure&nbsp;6.7: <code>traffic_fsm</code> in simulation with the times scaled do
 <section id="putting-it-together" class="level3" data-number="6.3.7">
 <h3 data-number="6.3.7" class="anchored" data-anchor-id="putting-it-together"><span class="header-section-number">6.3.7</span> Putting it together</h3>
 <p>The top level is purely structural, as the HIPV convention asks for a module that only connects blocks. It is <a href="#fig-traffic-system" class="quarto-xref">Figure&nbsp;<span>6.5</span></a> in code: one instance of each module, wired by name.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////////////</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">// traffic_light</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Purpose: Traffic light: a 1 ms tick generator driving the</span></span>
@@ -1052,7 +1046,7 @@ Figure&nbsp;6.7: <code>traffic_fsm</code> in simulation with the times scaled do
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    .clk(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .Tick</span>(Tick),</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    .Red(Red),<span class="dt"> .Yellow</span>(Yellow),<span class="dt"> .Green</span>(Green));</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The split is what makes the design easy to change. A board with a 50 MHz clock needs a different <code>TICK_CYCLES</code>, and a different junction needs different light times; each is one parameter in one instance, and neither touches the logic of the FSM. The same pattern, a counter that produces a periodic tick and an FSM that uses the tick as an enable, appears in every serial interface: in a UART, the tick marks the duration of one bit, and the FSM steps through the start bit, the data bits and the stop bit.</p>
 
 
@@ -1125,14 +1119,13 @@ Figure&nbsp;6.7: <code>traffic_fsm</code> in simulation with the times scaled do
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

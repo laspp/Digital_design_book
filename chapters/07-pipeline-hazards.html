@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.7.31">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>13&nbsp; Pipeline hazards and the HIPV core – Designing a RISC-V SoC</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -79,14 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -457,7 +451,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#interface-of-the-cpu" id="toc-interface-of-the-cpu" class="nav-link" data-scroll-target="#interface-of-the-cpu"><span class="header-section-number">13.7.1</span> Interface of the CPU</a></li>
   <li><a href="#inside-the-top-level" id="toc-inside-the-top-level" class="nav-link" data-scroll-target="#inside-the-top-level"><span class="header-section-number">13.7.2</span> Inside the top level</a></li>
-  <li><a href="#how-fast-is-it" id="toc-how-fast-is-it" class="nav-link" data-scroll-target="#how-fast-is-it"><span class="header-section-number">13.7.3</span> How fast is it?</a></li>
+  <li><a href="#sec-hazards-valid-ready" id="toc-sec-hazards-valid-ready" class="nav-link" data-scroll-target="#sec-hazards-valid-ready"><span class="header-section-number">13.7.3</span> Propagation of valid and ready</a></li>
+  <li><a href="#how-fast-is-it" id="toc-how-fast-is-it" class="nav-link" data-scroll-target="#how-fast-is-it"><span class="header-section-number">13.7.4</span> How fast is it?</a></li>
   </ul></li>
   <li><a href="#you-have-come-a-long-way" id="toc-you-have-come-a-long-way" class="nav-link" data-scroll-target="#you-have-come-a-long-way"><span class="header-section-number">13.8</span> You have come a long way</a></li>
   <li><a href="#what-comes-next" id="toc-what-comes-next" class="nav-link" data-scroll-target="#what-comes-next"><span class="header-section-number">13.9</span> What comes next</a></li>
@@ -594,7 +589,7 @@ Figure&nbsp;13.1: The hazard unit. For each operand, the source register is comp
 </figure>
 </div>
 <p>The hazard unit is a small, purely combinational block (<a href="#fig-hazard" class="quarto-xref">Figure&nbsp;<span>13.1</span></a>). It compares the source registers of the instruction in Execute with the destination registers of the instructions in the Memory stage and in Writeback, and drives the selects of the forwarding multiplexers:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> hazard (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>] Rs1E, Rs2E,</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> hazard (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>] Rs1E, Rs2E,</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>               <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>] RdM, RdW,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>               <span class="kw">input</span>  <span class="kw">logic</span>       RegWriteM, RegWriteW,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>               <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] ForwardAE, ForwardBE);</span>
@@ -611,7 +606,7 @@ Figure&nbsp;13.1: The hazard unit. For each operand, the source register is comp
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (RegWriteW &amp; (Rs2E == RdW) &amp; (Rs2E != <span class="bn">5'b0</span>)) ForwardBE = FWD_WB;</span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> ForwardBE = FWD_RF;</span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The two blocks are identical, one for each operand. The values <code>FWD_MEM</code>, <code>FWD_WB</code> and <code>FWD_RF</code> come from <code>hipv_pkg</code>, and they are the selects of <code>fwdamux</code> and <code>fwdbmux</code> in the <a href="../chapters/06d-ieu.html">IEU</a>.</p>
 </section>
 <section id="the-forwarding-conditions" class="level3" data-number="13.4.3">
@@ -753,7 +748,7 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <section id="interface-of-the-cpu" class="level3" data-number="13.7.1">
 <h3 data-number="13.7.1" class="anchored" data-anchor-id="interface-of-the-cpu"><span class="header-section-number">13.7.1</span> Interface of the CPU</h3>
 <p>Seen from the outside, the whole CPU has a remarkably small interface: a clock, a reset, and two OBI master ports.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> hipv_core (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> hipv_core (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                  <span class="co">// OBI instruction port</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">output</span> <span class="kw">logic</span>        ObiIReq,</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">input</span>  <span class="kw">logic</span>        ObiIGnt,</span>
@@ -768,7 +763,7 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ObiDBe,</span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiDWdata,</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">input</span>  <span class="kw">logic</span>        ObiDRvalid,</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiDRdata);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>                  <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiDRdata);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -806,7 +801,7 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <section id="inside-the-top-level" class="level3" data-number="13.7.2">
 <h3 data-number="13.7.2" class="anchored" data-anchor-id="inside-the-top-level"><span class="header-section-number">13.7.2</span> Inside the top level</h3>
 <p>The body of <code>hipv_core</code> has two parts. First, the internal wires, declared in groups, one group per boundary between two stages:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F &lt;-&gt; D</span></span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F &lt;-&gt; D</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>        ValidF, ReadyD;</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] InstrF, PCF, PCPlus4F;</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// D &lt;-&gt; E</span></span>
@@ -825,9 +820,9 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ALUResultM, ReadDataM, PCPlus4M, ForwardDataM;</span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  ...</span>
 <span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ForwardAE, ForwardBE;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ForwardAE, ForwardBE;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then the six instances, connected by name. Because every signal carries the suffix of the stage that produces it, the connections are easy to check: an output of the IEU always ends in <code>E</code>, and it appears as an input of the LSU or as feedback to an earlier stage. Two instances show the pattern:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Execute</span></span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Execute</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  ieu ieu<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>          .ValidD(ValidD),<span class="dt"> .ReadyE</span>(ReadyE),</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>          .RD1D(RD1D),<span class="dt"> .RD2D</span>(RD2D),<span class="dt"> .ImmExtD</span>(ImmExtD),<span class="dt"> .PCD</span>(PCD),<span class="dt"> .PCPlus4D</span>(PCPlus4D),</span>
@@ -846,7 +841,7 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Hazard unit (forwarding)</span></span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  hazard hz<span class="dt">(.Rs1E</span>(Rs1E),<span class="dt"> .Rs2E</span>(Rs2E),<span class="dt"> .RdM</span>(RdM),<span class="dt"> .RdW</span>(RdW),</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            .RegWriteM(RegWriteM),<span class="dt"> .RegWriteW</span>(RegWriteW),</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>            .ForwardAE(ForwardAE),<span class="dt"> .ForwardBE</span>(ForwardBE));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>            .ForwardAE(ForwardAE),<span class="dt"> .ForwardBE</span>(ForwardBE));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The IEU is the busiest instance, because Execute is where the pipeline’s feedback paths meet: the forwarded values come in from the Memory stage and Writeback, the forwarding selects come from the hazard unit, and the redirect goes out to Fetch and Decode. Three kinds of connections appear in the whole module:</p>
 <ul>
 <li><strong>Forward connections</strong>, from each stage to the next: the handshake pair and the payload. They are the pipeline itself.</li>
@@ -855,8 +850,103 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 </ul>
 <p>One output of the WBU, <code>ValidW</code>, is connected to nothing. It marks the cycle in which an instruction retires, which is useful in waveforms, and it is the natural hook for an instruction trace port in the future.</p>
 </section>
-<section id="how-fast-is-it" class="level3" data-number="13.7.3">
-<h3 data-number="13.7.3" class="anchored" data-anchor-id="how-fast-is-it"><span class="header-section-number">13.7.3</span> How fast is it?</h3>
+<section id="sec-hazards-valid-ready" class="level3" data-number="13.7.3">
+<h3 data-number="13.7.3" class="anchored" data-anchor-id="sec-hazards-valid-ready"><span class="header-section-number">13.7.3</span> Propagation of valid and ready</h3>
+<div id="fig-valid-ready-chain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-valid-ready-chain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/valid-ready-chain.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-valid-ready-chain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13.4: Valid travels forward and ready travels backward between neighbouring stages. The redirect <code>PCSrcE</code> from Execute clears valid in Fetch and Decode.
+</figcaption>
+</figure>
+</div>
+<p>The core is a chain of five stages, and each pair of neighbours speaks the valid/ready handshake. Seen at the top level, the stage handshakes form two signal chains that run in opposite directions (<a href="#fig-valid-ready-chain" class="quarto-xref">Figure&nbsp;<span>13.4</span></a>). We gather the equations from the stage chapters here, so that we can see the whole picture at once:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// valid travels forward, one register per stage</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">//   ValidF -&gt; ValidDReg -&gt; ValidD -&gt; ValidEReg -&gt; ValidE -&gt; ValidMReg -&gt; ValidM -&gt; ValidW</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidD = ValidDReg &amp; ~PCSrcE;                <span class="co">// IDU: hide the wrong path</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidE = ValidEReg;                          <span class="co">// IEU</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);      <span class="co">// LSU: wait for memory</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ready travels backward, through logic only</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">//   ReadyW -&gt; ReadyM -&gt; ReadyE -&gt; ReadyD -&gt; IFU</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyW = <span class="bn">1'b1</span>;                               <span class="co">// WBU: never stalls</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);     <span class="co">// LSU</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyE = ~ValidEReg | ReadyM;                <span class="co">// IEU</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyD = ~ValidDReg | ReadyE;                <span class="co">// IDU</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// every boundary: the instruction moves when both are 1</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnFD = ValidF &amp; ReadyD;   <span class="kw">assign</span> EnDE = ValidD &amp; ReadyE;</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnEM = ValidE &amp; ReadyM;   <span class="kw">assign</span> EnMW = ValidM &amp; ReadyW;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>In the code above, each line lives in the stage that the comment names. The top level only connects the wires, as we saw in the instances of <code>hipv_core</code>.</p>
+<p><strong>Valid moves forward with the instruction.</strong> Each stage has a valid bit, a register that is loaded at the same edge as the pipeline registers (<code>ValidDReg</code>, <code>ValidEReg</code>, <code>ValidMReg</code>). It says whether the stage holds a real instruction or a bubble. The output <code>valid</code> of a stage is its valid bit, possibly qualified by something the stage knows. Decode masks it with <code>~PCSrcE</code>, so an instruction on the wrong path is invisible to Execute. The LSU masks it with <code>~MemOpM | DoneM</code>, so a load or store is offered to Writeback only when its memory transaction is finished. Because the valid bit is a register, a bubble inserted in Fetch travels through the pipeline like an instruction, one stage per cycle.</p>
+<p><strong>Ready moves backward, against the flow.</strong> A stage can accept a new instruction when it is empty (<code>~ValidReg</code>) or when its instruction leaves in this very cycle. The second condition is the <code>ready</code> of the next stage. Writeback is the end of the chain. It never stalls, so <code>ReadyW = 1</code>. The Memory stage can accept when it holds a bubble or drains its instruction into Writeback. Execute can accept when it holds a bubble or when the Memory stage can accept. Decode follows the same rule with Execute, and <code>ReadyD</code> finally reaches the IFU. There is no register in the chain. It is a path of combinational logic from Writeback to Fetch, in the same cycle, which is simple and quick to reason about. Its price is a longer path in every stage that a faster design would have to cut.</p>
+<p>A transfer happens at a boundary where both signals are 1, and then the pipeline registers of the stage load (<code>EnFD</code>, <code>EnDE</code>, <code>EnEM</code>, <code>EnMW</code>).</p>
+<p><strong>A stall in one picture.</strong> Suppose a load waits for the data memory:</p>
+<pre><code>lw  x1, 0x400(x0)
+add x3, x2, x1
+sub x4, x3, x2
+or  x5, x4, x2</code></pre>
+<div id="fig-valid-ready-stall" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-valid-ready-stall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/valid-ready-stall.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-valid-ready-stall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13.5: A load waiting for the data memory. <code>ReadyM</code> falls first and forces <code>ReadyE</code> and <code>ReadyD</code> low in the same cycle. Fetch holds its output, and Writeback sees a bubble.
+</figcaption>
+</figure>
+</div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Holds</th>
+<th>Valid bit</th>
+<th>Ready it gives backward</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Memory</td>
+<td><code>lw</code>, waiting for <code>ObiRvalidM</code></td>
+<td><code>ValidM = 0</code> (not done)</td>
+<td><code>ReadyM = ~ValidMReg \| ValidM = 0</code></td>
+</tr>
+<tr class="even">
+<td>Execute</td>
+<td><code>add</code>, valid</td>
+<td><code>ValidE = 1</code></td>
+<td><code>ReadyE = ~ValidEReg \| ReadyM = 0</code></td>
+</tr>
+<tr class="odd">
+<td>Decode</td>
+<td><code>sub</code>, valid</td>
+<td><code>ValidD = 1</code></td>
+<td><code>ReadyD = ~ValidDReg \| ReadyE = 0</code></td>
+</tr>
+<tr class="even">
+<td>Fetch</td>
+<td><code>or</code>, offered</td>
+<td><code>ValidF = 1</code></td>
+<td>none, the IFU holds its output</td>
+</tr>
+</tbody>
+</table>
+<p><a href="#fig-valid-ready-stall" class="quarto-xref">Figure&nbsp;<span>13.5</span></a> shows the same state of the pipeline as a picture.</p>
+<p><code>ReadyM</code> falls first, because the <code>lw</code> cannot leave. It forces <code>ReadyE</code> and <code>ReadyD</code> low in the same cycle, and the IFU keeps <code>or</code> at its output until <code>ReadyD</code> returns. No stage has to know about the memory latency except the LSU. Writeback gets <code>ValidM = 0</code> and simply sees a bubble. When the data arrives, <code>DoneM</code> rises, <code>ValidM</code> and <code>ReadyM</code> become 1, and the whole chain moves in the same cycle.</p>
+<p>A stall does not always reach the front. If Decode held a bubble, then <code>ReadyD = ~ValidDReg | ReadyE = 1</code> regardless of <code>ReadyE</code>. The bubble would absorb the stall, and Fetch would keep delivering. The stall stops at the first empty stage, so bubbles are not just waste. They are also the slack that lets the pipeline run elastically.</p>
+<p><strong>A jump in one picture.</strong> A jump is a different case, because the instructions behind it are wrong, not just late. When Execute resolves a jump, <code>PCSrcE</code> goes high for one cycle and clears <code>valid</code> in two places. The IFU does not offer a fetched word (<code>ValidF = (State == DONE) &amp; ~PCSrcE</code>), and Decode masks its instruction (<code>ValidD = ValidDReg &amp; ~PCSrcE</code>). The masked instruction is then loaded into Execute as a bubble, because <code>ValidEReg</code> takes over <code>ValidD</code>. Execute and later stages are never flushed, since they hold the jump and everything before it.</p>
+</section>
+<section id="how-fast-is-it" class="level3" data-number="13.7.4">
+<h3 data-number="13.7.4" class="anchored" data-anchor-id="how-fast-is-it"><span class="header-section-number">13.7.4</span> How fast is it?</h3>
 <p>HIPV was designed to be correct and readable first. It is not fast. With ideal memories, the IFU fetches at most one instruction every three cycles, because it waits for each fetch to finish before it starts the next. Loads and stores add the latency of the data memory in the Memory stage, and a taken branch throws away the work in Fetch and Decode. The rest of the pipeline could handle one instruction per cycle, but it is starved by Fetch.</p>
 <p>This is deliberate. Each of these limitations can be removed without touching the rest of the design, thanks to the handshake between the stages, and each removal is a project with a measurable speedup. Some of them are listed at the end of this chapter.</p>
 </section>
@@ -869,7 +959,7 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Tip</span>Congratulations!
+Congratulations!
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -973,14 +1063,13 @@ Figure&nbsp;13.3: The HIPV core: five pipeline stages connected by valid/ready h
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

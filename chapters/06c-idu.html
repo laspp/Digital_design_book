@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.7.31">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>9&nbsp; Instruction decode unit – Designing a RISC-V SoC</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -79,14 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -462,12 +456,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-alu-decoder" id="toc-the-alu-decoder" class="nav-link" data-scroll-target="#the-alu-decoder"><span class="header-section-number">9.9.4</span> The ALU decoder</a></li>
   </ul></li>
   <li><a href="#immediate-extension" id="toc-immediate-extension" class="nav-link" data-scroll-target="#immediate-extension"><span class="header-section-number">9.10</span> Immediate extension</a></li>
-  <li><a href="#register-file" id="toc-register-file" class="nav-link" data-scroll-target="#register-file"><span class="header-section-number">9.11</span> Register file</a>
+  <li><a href="#sec-idu-examples" id="toc-sec-idu-examples" class="nav-link" data-scroll-target="#sec-idu-examples"><span class="header-section-number">9.11</span> Worked examples: three instructions through the decoder</a>
   <ul class="collapse">
-  <li><a href="#storage-an-array-of-registers" id="toc-storage-an-array-of-registers" class="nav-link" data-scroll-target="#storage-an-array-of-registers"><span class="header-section-number">9.11.1</span> Storage: an array of registers</a></li>
-  <li><a href="#writing-and-reading" id="toc-writing-and-reading" class="nav-link" data-scroll-target="#writing-and-reading"><span class="header-section-number">9.11.2</span> Writing and reading</a></li>
+  <li><a href="#sub-x3-x1-x2" id="toc-sub-x3-x1-x2" class="nav-link" data-scroll-target="#sub-x3-x1-x2"><span class="header-section-number">9.11.1</span> <code>sub x3, x1, x2</code></a></li>
+  <li><a href="#addi-x5-x5-1" id="toc-addi-x5-x5-1" class="nav-link" data-scroll-target="#addi-x5-x5-1"><span class="header-section-number">9.11.2</span> <code>addi x5, x5, 1</code></a></li>
+  <li><a href="#jal-x1-16" id="toc-jal-x1-16" class="nav-link" data-scroll-target="#jal-x1-16"><span class="header-section-number">9.11.3</span> <code>jal x1, 16</code></a></li>
   </ul></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9.12</span> Summary</a></li>
+  <li><a href="#register-file" id="toc-register-file" class="nav-link" data-scroll-target="#register-file"><span class="header-section-number">9.12</span> Register file</a>
+  <ul class="collapse">
+  <li><a href="#storage-an-array-of-registers" id="toc-storage-an-array-of-registers" class="nav-link" data-scroll-target="#storage-an-array-of-registers"><span class="header-section-number">9.12.1</span> Storage: an array of registers</a></li>
+  <li><a href="#writing-and-reading" id="toc-writing-and-reading" class="nav-link" data-scroll-target="#writing-and-reading"><span class="header-section-number">9.12.2</span> Writing and reading</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9.13</span> Summary</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -519,7 +519,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="interface-of-the-idu" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="interface-of-the-idu"><span class="header-section-number">9.3</span> Interface of the IDU</h2>
 <p>The ports of the IDU fall into five groups: the handshake with Fetch and the data coming from it, the jump from Execute, the handshake with Execute, the write port of the register file driven by Writeback, and the stage outputs.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Fetch stage</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ValidF,</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ReadyD,</span>
@@ -540,7 +540,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ResultSrcD, ALUSrcAD,</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ALUSrcBD,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ALUControlD);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ALUControlD);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li><strong>Handshake with Fetch and data from Fetch.</strong> <code>ValidF</code> and <code>ReadyD</code> agree on each transfer. The data is the instruction <code>InstrF</code> and its two addresses, <code>PCF</code> and <code>PCPlus4F</code>.</li>
 <li><strong>Jump from Execute.</strong> When <code>PCSrcE</code> is high, Execute has taken a branch or a jump, and the instruction held in Decode was fetched from the wrong path. The IDU throws it away.</li>
@@ -689,7 +689,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 </figure>
 </div>
 <p>The handshake logic of the IDU is a few lines of code (<a href="#fig-idu-handshake" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D handshake: accept when the stage is empty or being drained</span></span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D handshake: accept when the stage is empty or being drained</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyD = ~ValidDReg | ReadyE;</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> EnFD   = ValidF &amp; ReadyD;</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidD = ValidDReg &amp; ~PCSrcE;</span>
@@ -697,7 +697,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D valid bit</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) ValidDReg &lt;= <span class="bn">1'b0</span>;</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyD) ValidDReg &lt;= ValidF;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyD) ValidDReg &lt;= ValidF;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The most important signal is <strong><code>EnFD</code></strong>, the transfer between Fetch and Decode: Fetch offers an instruction (<code>ValidF</code>) and Decode accepts it (<code>ReadyD</code>). It is the enable of the pipeline registers, so it is the moment the instruction enters Decode.</p>
 <p><strong><code>ReadyD</code></strong> says that Decode can accept a new instruction. That is true in two situations:</p>
 <ul>
@@ -712,10 +712,10 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="pipeline-registers" class="level2" data-number="9.7">
 <h2 data-number="9.7" class="anchored" data-anchor-id="pipeline-registers"><span class="header-section-number">9.7</span> Pipeline registers</h2>
 <p>The F/D pipeline registers store the instruction and its two addresses. They are three instances of the generic <code>flopenr</code>, all with the same enable, <code>EnFD</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D pipeline registers</span></span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// F/D pipeline registers</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) instrreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(InstrF),<span class="dt"> .Q</span>(InstrD));</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(PCF),<span class="dt"> .Q</span>(PCD));</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(PCPlus4F),<span class="dt"> .Q</span>(PCPlus4D));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnFD),<span class="dt"> .D</span>(PCPlus4F),<span class="dt"> .Q</span>(PCPlus4D));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Each register does one of two things at a clock edge:</p>
 <ul>
 <li><strong>update</strong>: when <code>EnFD</code> is 1, it stores the new value from Fetch;</li>
@@ -727,11 +727,11 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="instruction-fields" class="level2" data-number="9.8">
 <h2 data-number="9.8" class="anchored" data-anchor-id="instruction-fields"><span class="header-section-number">9.8</span> Instruction fields</h2>
 <p>RV32I is designed so that decoding is easy. In every format that has them, the register numbers and <code>funct3</code> sit at the same bit positions, so the IDU can extract them with plain wiring, before it even knows what kind of instruction it holds:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// instruction fields</span></span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// instruction fields</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Rs1D    = InstrD[<span class="dv">19</span>:<span class="dv">15</span>];</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Rs2D    = InstrD[<span class="dv">24</span>:<span class="dv">20</span>];</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RdD     = InstrD[<span class="dv">11</span>:<span class="dv">7</span>];</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Funct3D = InstrD[<span class="dv">14</span>:<span class="dv">12</span>];</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> Funct3D = InstrD[<span class="dv">14</span>:<span class="dv">12</span>];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The six RV32I formats differ only in which of these fields they use and how they place the immediate:</p>
 <table class="caption-top table">
 <colgroup>
@@ -898,7 +898,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="the-hipv-package" class="level3" data-number="9.9.1">
 <h3 data-number="9.9.1" class="anchored" data-anchor-id="the-hipv-package"><span class="header-section-number">9.9.1</span> The HIPV package</h3>
 <p>The decoder produces encoded signals, such as <code>ALUControlD = 4'b0001</code> for a subtraction, and the IEU must interpret them in exactly the same way. If each module wrote its own numbers, a change on one side would silently break the other. HIPV therefore keeps all encodings in one place, a <strong>package</strong>. A package is a named collection of declarations (constants, types, functions) that does not describe hardware by itself, but can be used by any module. The HIPV package, <code>config/hipv_pkg.sv</code>, defines the encodings of all control signals and the RV32I opcodes as <code>localparam</code> constants. For example, the immediate formats and the opcodes:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> hipv_pkg;</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> hipv_pkg;</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  ...</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// immediate format select (ImmSrc)</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>] IMM_I = <span class="bn">3'b000</span>;</span>
@@ -917,21 +917,21 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_JALR   = <span class="bn">7'b1100111</span>;</span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_LUI    = <span class="bn">7'b0110111</span>;</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">logic</span> [<span class="dv">6</span>:<span class="dv">0</span>] OP_AUIPC  = <span class="bn">7'b0010111</span>;</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endpackage</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>A module that needs the constants imports the package at the top of its body:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idudec (...);</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> idudec (...);</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> hipv_pkg::*;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> hipv_pkg::*;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><code>hipv_pkg::*</code> makes every name of the package visible in the module, so the code can write <code>OP_LOAD</code> instead of <code>7'b0000011</code>. The decoder (<code>idudec</code>), the extension unit (<code>extend</code>), the ALU (<code>alu</code>) and the IEU all import the same package, so they always agree on the encodings. The code also becomes readable: <code>ResultSrcD = RESULT_MEM</code> says what it means, while <code>ResultSrcD = 2'b01</code> does not. The package must be compiled before the modules that import it, which is why it comes first in the file lists of the simulation and synthesis scripts.</p>
 </section>
 <section id="the-control-word" class="level3" data-number="9.9.2">
 <h3 data-number="9.9.2" class="anchored" data-anchor-id="the-control-word"><span class="header-section-number">9.9.2</span> The control word</h3>
 <p>The decoder has a dozen output signals, and each opcode must set all of them. Rather than assigning each signal separately in every branch, the decoder collects them into one vector, the <strong>control word</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">14</span>:<span class="dv">0</span>] ControlsD;</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">14</span>:<span class="dv">0</span>] ControlsD;</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>]  ALUOpD;</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD, ResultSrcD,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>          BranchD, JumpD, JalrD, ALUOpD} = ControlsD;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>          BranchD, JumpD, JalrD, ALUOpD} = ControlsD;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This is the concatenation operator on the left-hand side of an assignment, which we met in the <a href="../chapters/04-sv-basics.html">SystemVerilog basics</a> to catch the carry of an adder: <code>assign {carry_out, sum} = a + b;</code>. On the right of an assignment, <code>{}</code> joins signals into one vector. On the left, it does the reverse: it splits a vector into pieces and assigns each piece to one signal, from the most significant bit down. The widths add up to 15:</p>
 <table class="caption-top table">
 <colgroup>
@@ -996,7 +996,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="the-main-decoder" class="level3" data-number="9.9.3">
 <h3 data-number="9.9.3" class="anchored" data-anchor-id="the-main-decoder"><span class="header-section-number">9.9.3</span> The main decoder</h3>
 <p>The main decoder is one <code>case</code> on the opcode, inside <code>always_comb</code>. Each branch assigns the whole control word, using the package names for the encoded fields:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// main decoder</span></span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// main decoder</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">//                        RegWrite ImmSrc SrcA       SrcB  MemWrite ResultSrc   Branch Jump  Jalr  ALUOp</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (OpD)</span>
@@ -1010,7 +1010,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      OP_LUI:    ControlsD = {<span class="bn">1'b1</span>, IMM_U, SRCA_ZERO, <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>      OP_AUIPC:  ControlsD = {<span class="bn">1'b1</span>, IMM_U, SRCA_PC,   <span class="bn">1'b1</span>, <span class="bn">1'b0</span>, RESULT_ALU, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">1'b0</span>, <span class="bn">2'b00</span>};</span>
 <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:   ControlsD = <span class="bn">15'b0</span>;  <span class="co">// unimplemented opcode: nop</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Each row is the complete recipe for one kind of instruction. Read the load row from left to right: it writes a register; its immediate has the I format; the ALU adds the register <code>rs1</code> and the immediate, which gives the address; it does not write memory; the value written back is the loaded data; and it is neither a branch nor a jump. A store differs in the immediate format (S), in writing memory, and in not writing a register.</p>
 <p>Some fields do not matter for some instructions, and the table simply fills them with a harmless value. An R-type instruction has no immediate, so its <code>ImmSrcD</code> is arbitrary. A store or branch does not write back, so its <code>ResultSrcD</code> is arbitrary. A few choices are worth noting:</p>
 <ul>
@@ -1023,7 +1023,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="the-alu-decoder" class="level3" data-number="9.9.4">
 <h3 data-number="9.9.4" class="anchored" data-anchor-id="the-alu-decoder"><span class="header-section-number">9.9.4</span> The ALU decoder</h3>
 <p>The ALU decoder turns <code>ALUOpD</code>, <code>funct3</code> and <code>funct7[5]</code> into the final <code>ALUControlD</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sub only exists as an R-type encoding (addi has no subi)</span></span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sub only exists as an R-type encoding (addi has no subi)</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RtypeSubD = Funct7b5D &amp; OpD[<span class="dv">5</span>];</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ALU decoder</span></span>
@@ -1039,7 +1039,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        <span class="bn">3'b110</span>:  ALUControlD = ALU_OR;</span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">default</span>: ALUControlD = ALU_AND;</span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">endcase</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> ALUControlD = ALU_ADD;  <span class="co">// address / target computation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> ALUControlD = ALU_ADD;  <span class="co">// address / target computation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>For the arithmetic instructions (<code>ALUOpD = 10</code>), <code>funct3</code> selects the operation directly, and it does so in the same way for the R-type and the I-type form: <code>add</code> and <code>addi</code> both have <code>funct3 = 000</code>, <code>xor</code> and <code>xori</code> both <code>100</code>. For every other instruction, the ALU adds: a load or store computes its address, <code>jalr</code> its target, <code>lui</code> and <code>auipc</code> their results. A branch has <code>ALUOpD = 01</code>, but it also gets <code>ADD</code>. Its condition is evaluated by the branch comparator, so the ALU result is not used.</p>
 <p>Two values of <code>funct3</code> need bit 30 as well. For <code>funct3 = 101</code>, it separates the arithmetic shift <code>sra</code>/<code>srai</code> from the logical shift <code>srl</code>/<code>srli</code>. This works for both forms, because in <code>srai</code> the immediate’s upper bits are a fixed <code>funct7</code> pattern, with bit 30 set. For <code>funct3 = 000</code> it separates <code>sub</code> from <code>add</code>, but only for R-type instructions. In <code>addi</code>, bit 30 is an ordinary immediate bit, and <code>addi x1, x1, -1024</code> has it set, yet must still add. <code>OpD[5]</code> is 1 for the R-type opcode <code>0110011</code> and 0 for the I-type <code>0010011</code>, so <code>RtypeSubD = Funct7b5D &amp; OpD[5]</code> selects <code>sub</code> only where it exists.</p>
 </section>
@@ -1047,7 +1047,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <section id="immediate-extension" class="level2" data-number="9.10">
 <h2 data-number="9.10" class="anchored" data-anchor-id="immediate-extension"><span class="header-section-number">9.10</span> Immediate extension</h2>
 <p>The datapath of HIPV is 32 bits wide, but an immediate in an instruction has at most 20 bits, and it is split across the instruction differently in each format. The extension unit <code>extend</code> collects the bits of the immediate and extends them to a 32-bit value. The decoder tells it which format to use, with <code>ImmSrcD</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> extend (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">7</span>] InstrD,</span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> extend (<span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">7</span>] InstrD,</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>               <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">2</span>:<span class="dv">0</span>]  ImmSrcD,</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>               <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ImmExtD);</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -1063,7 +1063,7 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ImmExtD = <span class="bn">32'b0</span>;</span>
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Each line is a concatenation that follows the format table from the section on instruction fields:</p>
 <ul>
 <li><strong>I</strong> (arithmetic immediates, loads, <code>jalr</code>): the 12 bits 31:20.</li>
@@ -1075,10 +1075,156 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <p>All the other immediates are <strong>sign-extended</strong>: they are two’s-complement numbers, so <code>addi x1, x1, -1</code> and a backward branch work. Sign extension copies the sign bit into all the new upper bits, and the replication operator <code>{20{InstrD[31]}}</code> does exactly that. The sign bit is always bit 31 of the instruction, in every format. RISC-V placed it there on purpose: the extension can start replicating the sign before it even knows the format.</p>
 <p>The input is <code>InstrD[31:7]</code>, because the opcode bits 6:0 never contain any part of an immediate. The scrambled bit order in B and J looks strange in the code, but in hardware it costs nothing: each output bit is a wire from one input bit, chosen by a multiplexer of at most five inputs.</p>
 </section>
-<section id="register-file" class="level2" data-number="9.11">
-<h2 data-number="9.11" class="anchored" data-anchor-id="register-file"><span class="header-section-number">9.11</span> Register file</h2>
+<section id="sec-idu-examples" class="level2" data-number="9.11">
+<h2 data-number="9.11" class="anchored" data-anchor-id="sec-idu-examples"><span class="header-section-number">9.11</span> Worked examples: three instructions through the decoder</h2>
+<p>The tables of the previous sections are easier to trust once we use them. We decode three instructions by hand, one for each path that matters: an R-type arithmetic instruction, an I-type arithmetic instruction, and a jump. For each, we split the 32 bits into fields, read the row of the main decoder, run the ALU decoder, and see what the extension unit produces.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Instruction</th>
+<th><code>InstrD</code></th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>sub x3, x1, x2</code></td>
+<td><code>0x402081B3</code></td>
+<td>R</td>
+</tr>
+<tr class="even">
+<td><code>addi x5, x5, 1</code></td>
+<td><code>0x00128293</code></td>
+<td>I</td>
+</tr>
+<tr class="odd">
+<td><code>jal x1, 16</code></td>
+<td><code>0x010000EF</code></td>
+<td>J</td>
+</tr>
+</tbody>
+</table>
+<section id="sub-x3-x1-x2" class="level3" data-number="9.11.1">
+<h3 data-number="9.11.1" class="anchored" data-anchor-id="sub-x3-x1-x2"><span class="header-section-number">9.11.1</span> <code>sub x3, x1, x2</code></h3>
+<p>The instruction splits into the R-type fields:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><code>funct7</code></th>
+<th><code>rs2</code></th>
+<th><code>rs1</code></th>
+<th><code>funct3</code></th>
+<th><code>rd</code></th>
+<th><code>opcode</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>0100000</code></td>
+<td><code>00010</code></td>
+<td><code>00001</code></td>
+<td><code>000</code></td>
+<td><code>00011</code></td>
+<td><code>0110011</code></td>
+</tr>
+</tbody>
+</table>
+<p>The opcode <code>0110011</code> is <code>OP_RTYPE</code>, so the main decoder produces the row <code>{1, IMM_I, SRCA_RF, 0, 0, RESULT_ALU, 0, 0, 0, 10}</code>. It writes a register, reads <code>rs1</code> and <code>rs2</code> (<code>ALUSrcBD = 0</code>), does not touch memory, and writes the ALU result back. <code>ALUOpD = 10</code> hands the choice of the operation to the ALU decoder. There, <code>Funct3D = 000</code> selects between add and subtract, and <code>RtypeSubD = Funct7b5D &amp; OpD[5] = 1 &amp; 1 = 1</code>, because bit 30 of the instruction is set and the opcode is the R-type one. The result is <code>ALUControlD = ALU_SUB</code>.</p>
+<p>The extension unit does not know that this instruction has no immediate. <code>ImmSrcD</code> is <code>IMM_I</code>, so it extracts bits 31:20 and produces <code>0x00000402</code>, the <code>funct7</code> and <code>rs2</code> fields read as a number. The value is meaningless, but harmless: <code>ALUSrcBD = 0</code> makes the ALU ignore it.</p>
+</section>
+<section id="addi-x5-x5-1" class="level3" data-number="9.11.2">
+<h3 data-number="9.11.2" class="anchored" data-anchor-id="addi-x5-x5-1"><span class="header-section-number">9.11.2</span> <code>addi x5, x5, 1</code></h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><code>imm[11:0]</code></th>
+<th><code>rs1</code></th>
+<th><code>funct3</code></th>
+<th><code>rd</code></th>
+<th><code>opcode</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>000000000001</code></td>
+<td><code>00101</code></td>
+<td><code>000</code></td>
+<td><code>00101</code></td>
+<td><code>0010011</code></td>
+</tr>
+</tbody>
+</table>
+<p>The opcode <code>0010011</code> is <code>OP_IALU</code>. The control word is <code>{1, IMM_I, SRCA_RF, 1, 0, RESULT_ALU, 0, 0, 0, 10}</code>. It differs from the <code>sub</code> row in a single field: <code>ALUSrcBD = 1</code>, because operand B is now the immediate. <code>ALUOpD</code> is again <code>10</code> and <code>Funct3D</code> is again <code>000</code>, but this time <code>OpD[5] = 0</code>, so <code>RtypeSubD = 0</code> and the ALU decoder gives <code>ALUControlD = ALU_ADD</code>. Here <code>Funct7b5D</code> is bit 30 of the immediate, which is 0 for the value 1. Even if it were 1, as in <code>addi x1, x1, -1024</code>, the <code>OpD[5]</code> term would keep the operation an addition.</p>
+<p>The extension unit selects <code>IMM_I</code> and sign-extends the 12 bits <code>000000000001</code>. The sign bit is 0, so <code>ImmExtD = 0x00000001</code>. Note that <code>rs1</code> and <code>rd</code> are both <code>x5</code>. Decode does not care. It reads <code>x5</code> from the register file, and the destination register travels down the pipeline, where Writeback writes it. A later instruction that reads <code>x5</code> right after this one needs forwarding, which we describe in the <a href="../chapters/06d-ieu.html">IEU chapter</a>.</p>
+</section>
+<section id="jal-x1-16" class="level3" data-number="9.11.3">
+<h3 data-number="9.11.3" class="anchored" data-anchor-id="jal-x1-16"><span class="header-section-number">9.11.3</span> <code>jal x1, 16</code></h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><code>imm[20\|10:1\|11\|19:12]</code></th>
+<th><code>rd</code></th>
+<th><code>opcode</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>0 0000001000 0 00000000</code></td>
+<td><code>00001</code></td>
+<td><code>1101111</code></td>
+</tr>
+</tbody>
+</table>
+<p>The jump offset is 16, so <code>imm[4]</code> is 1 and all other immediate bits are 0. The opcode <code>1101111</code> is <code>OP_JAL</code>, and the control word is <code>{1, IMM_J, SRCA_RF, 0, 0, RESULT_PC4, 0, 1, 0, 00}</code>.</p>
+<ul>
+<li><code>RegWriteD = 1</code> and <code>ResultSrcD = RESULT_PC4</code>: the instruction writes the return address, <code>PC + 4</code>, into <code>x1</code>.</li>
+<li><code>JumpD = 1</code> is the signal that Execute uses to redirect Fetch. <code>BranchD</code> and <code>JalrD</code> are 0, so the jump is unconditional and its target is <code>PC +   imm</code>.</li>
+<li><code>ALUOpD = 00</code> gives <code>ALUControlD = ALU_ADD</code>, and <code>ALUSrcBD = 0</code>. The ALU therefore computes something, but nobody uses it. The target comes from the dedicated adder in Execute, and the value to write back is <code>PC + 4</code>.</li>
+</ul>
+<p>The extension unit selects <code>IMM_J</code> and collects the scattered bits <code>{instr[31], instr[19:12], instr[20], instr[30:21], 1'b0}</code>. Only bit 24 of the instruction, <code>imm[4]</code>, is set, so <code>ImmExtD = 0x00000010</code>. The appended <code>1'b0</code> is the lowest bit of the offset, which is always 0.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><code>sub</code></th>
+<th><code>addi</code></th>
+<th><code>jal</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>fields that differ in the control word</td>
+<td></td>
+<td><code>ALUSrcBD</code></td>
+<td><code>ImmSrcD</code>, <code>ResultSrcD</code>, <code>JumpD</code>, <code>ALUOpD</code></td>
+</tr>
+<tr class="even">
+<td><code>ALUControlD</code></td>
+<td><code>ALU_SUB</code></td>
+<td><code>ALU_ADD</code></td>
+<td><code>ALU_ADD</code> (unused)</td>
+</tr>
+<tr class="odd">
+<td><code>ImmExtD</code></td>
+<td>unused</td>
+<td><code>0x00000001</code></td>
+<td><code>0x00000010</code></td>
+</tr>
+</tbody>
+</table>
+<p>The three examples show how little the decoder does. It looks up a row by opcode, applies one more rule for <code>funct3</code> and bit 30, and extracts the immediate in the format that the row names. All three run in parallel, in the same cycle, and the control signals are ready as soon as the combinational logic settles.</p>
+</section>
+</section>
+<section id="register-file" class="level2" data-number="9.12">
+<h2 data-number="9.12" class="anchored" data-anchor-id="register-file"><span class="header-section-number">9.12</span> Register file</h2>
 <p>The register file holds the 32 registers <code>x0</code> to <code>x31</code> of RV32I, each 32 bits wide. It has two read ports, because an instruction reads up to two source registers, and one write port, because it writes at most one destination register:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> regfile (<span class="kw">input</span>  <span class="kw">logic</span>        clk,</span>
+<div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> regfile (<span class="kw">input</span>  <span class="kw">logic</span>        clk,</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span>        WE3,</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">4</span>:<span class="dv">0</span>]  A1, A2, A3,</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] WD3,</span>
@@ -1094,19 +1240,19 @@ Figure&nbsp;9.3: The handshake logic of the IDU. <code>ReadyD</code> tells Fetch
 <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RD1 = (A1 == <span class="bn">5'b0</span>) ? <span class="bn">32'b0</span> : (WE3 &amp; (A1 == A3)) ? WD3 : RF[A1];</span>
 <span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RD2 = (A2 == <span class="bn">5'b0</span>) ? <span class="bn">32'b0</span> : (WE3 &amp; (A2 == A3)) ? WD3 : RF[A2];</span>
 <span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>In the IDU, the read addresses are the register numbers of the instruction in Decode, and the write port is connected to the Writeback stage:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  regfile rf<span class="dt">(.clk</span>(clk),<span class="dt"> .WE3</span>(RegWriteW),<span class="dt"> .A1</span>(Rs1D),<span class="dt"> .A2</span>(Rs2D),<span class="dt"> .A3</span>(RdW),</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>             .WD3(ResultW),<span class="dt"> .RD1</span>(RD1D),<span class="dt"> .RD2</span>(RD2D));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="storage-an-array-of-registers" class="level3" data-number="9.11.1">
-<h3 data-number="9.11.1" class="anchored" data-anchor-id="storage-an-array-of-registers"><span class="header-section-number">9.11.1</span> Storage: an array of registers</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  regfile rf<span class="dt">(.clk</span>(clk),<span class="dt"> .WE3</span>(RegWriteW),<span class="dt"> .A1</span>(Rs1D),<span class="dt"> .A2</span>(Rs2D),<span class="dt"> .A3</span>(RdW),</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>             .WD3(ResultW),<span class="dt"> .RD1</span>(RD1D),<span class="dt"> .RD2</span>(RD2D));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="storage-an-array-of-registers" class="level3" data-number="9.12.1">
+<h3 data-number="9.12.1" class="anchored" data-anchor-id="storage-an-array-of-registers"><span class="header-section-number">9.12.1</span> Storage: an array of registers</h3>
 <p>The registers are declared as an <strong>array</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RF[<span class="dv">31</span>:<span class="dv">0</span>];</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] RF[<span class="dv">31</span>:<span class="dv">0</span>];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The range before the name, <code>[31:0]</code>, is the width of one element: a 32-bit vector, as in every declaration so far. The range after the name is new: it makes 32 such elements, <code>RF[0]</code> to <code>RF[31]</code>. In hardware, this is 32 registers of 32 flip-flops each, 1024 flip-flops in total. The array is not reset, so after power-up the registers hold unknown values. Software must write a register before it reads it, as it must on any processor.</p>
 <p>The array is indexed with a <strong>signal</strong>, not a constant: <code>RF[A1]</code> is the register whose number is the current value of <code>A1</code>. This is relative addressing: the code does not name a register, but says “the one that <code>A1</code> points to”. In hardware there is no addressing logic as in memory; the synthesis tool turns <code>RF[A1]</code> into a 32-to-1 multiplexer with all 32 registers as inputs and <code>A1</code> as the select. Each read port is one such multiplexer, 32 bits wide.</p>
 </section>
-<section id="writing-and-reading" class="level3" data-number="9.11.2">
-<h3 data-number="9.11.2" class="anchored" data-anchor-id="writing-and-reading"><span class="header-section-number">9.11.2</span> Writing and reading</h3>
+<section id="writing-and-reading" class="level3" data-number="9.12.2">
+<h3 data-number="9.12.2" class="anchored" data-anchor-id="writing-and-reading"><span class="header-section-number">9.12.2</span> Writing and reading</h3>
 <p><strong>Writing</strong> is synchronous. The <code>always_ff</code> block stores <code>WD3</code> in register <code>A3</code> at the rising clock edge, if the write enable <code>WE3</code> is 1. The extra condition <code>A3 != 0</code> protects <code>x0</code>, which RISC-V defines as constant zero: an instruction may name <code>x0</code> as its destination, but the result is discarded. <code>addi x0, x0, 0</code>, the canonical no-op, relies on it.</p>
 <p><strong>Reading</strong> is asynchronous, that is, combinational: <code>RD1</code> and <code>RD2</code> follow <code>A1</code> and <code>A2</code> within the same cycle, with no clock involved. As soon as an instruction enters Decode, its register numbers select the operands, and they are ready by the end of the cycle, in time to be stored in the D/E pipeline register. Each read port checks two special cases before it reads the array:</p>
 <ul>
@@ -1121,8 +1267,8 @@ and  x3, x5, x4    # in Decode: reads x5 in the same cycle</code></pre>
 <p>The instructions between them are three apart, too far for forwarding in Execute, which reaches only the Memory and Writeback stages. With the bypass, <code>and</code> receives the new value of <code>x5</code> straight from <code>ResultW</code>. Together with forwarding, this covers every distance between a producer and its consumer.</p>
 </section>
 </section>
-<section id="summary" class="level2" data-number="9.12">
-<h2 data-number="9.12" class="anchored" data-anchor-id="summary"><span class="header-section-number">9.12</span> Summary</h2>
+<section id="summary" class="level2" data-number="9.13">
+<h2 data-number="9.13" class="anchored" data-anchor-id="summary"><span class="header-section-number">9.13</span> Summary</h2>
 <p>The IDU turns the 32 bits of an instruction into everything the later stages need: control signals, a 32-bit immediate, and two register operands. Most of it is combinational logic that works in parallel on the instruction held in the F/D register: field extraction by wiring, the decoder, the extension unit, and the read ports of the register file.</p>
 <p>The decoder has two levels: the main decoder maps the opcode to a control word in a single table-like <code>case</code>, and the ALU decoder refines the ALU operation from <code>funct3</code> and bit 30. All encodings come from the shared package <code>hipv_pkg</code>, so Decode and Execute always agree on them.</p>
 <p>The IDU is also the first stage that receives instructions over the valid/ready handshake. This mechanism connects every pair of stages in HIPV: a sender offers an item with <code>valid</code>, a receiver accepts it with <code>ready</code>, and the item moves at the edge where both are high. A valid bit travels with each instruction, a stall propagates backwards through <code>ready</code>, and a jump turns the instruction in Decode into a bubble.</p>
@@ -1196,14 +1342,13 @@ and  x3, x5, x4    # in Decode: reads x5 in the same cycle</code></pre>
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

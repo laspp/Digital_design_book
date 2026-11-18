@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.7.31">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>11&nbsp; Load/store unit – Designing a RISC-V SoC</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -79,14 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-b85bc7c33db8c58e0ec93c3465666fed.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-1657345a1b24530a92824de3c4a56e07.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-05d3eee17293d52be02ffe9d385d010d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -460,7 +454,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-controller-in-the-waveform" id="toc-the-controller-in-the-waveform" class="nav-link" data-scroll-target="#the-controller-in-the-waveform"><span class="header-section-number">11.7.5</span> The controller in the waveform</a></li>
   </ul></li>
   <li><a href="#sec-lsu-signals" id="toc-sec-lsu-signals" class="nav-link" data-scroll-target="#sec-lsu-signals"><span class="header-section-number">11.8</span> OBI signals: address, byte enables, write data</a></li>
-  <li><a href="#capturing-and-processing-loaded-data" id="toc-capturing-and-processing-loaded-data" class="nav-link" data-scroll-target="#capturing-and-processing-loaded-data"><span class="header-section-number">11.9</span> Capturing and processing loaded data</a></li>
+  <li><a href="#capturing-and-processing-loaded-data" id="toc-capturing-and-processing-loaded-data" class="nav-link" data-scroll-target="#capturing-and-processing-loaded-data"><span class="header-section-number">11.9</span> Capturing and processing loaded data</a>
+  <ul class="collapse">
+  <li><a href="#sec-lsu-load-example" id="toc-sec-lsu-load-example" class="nav-link" data-scroll-target="#sec-lsu-load-example"><span class="header-section-number">11.9.1</span> Example: <code>lw</code> and <code>lb</code> from the same word</a></li>
+  </ul></li>
   <li><a href="#sec-lsu-forward" id="toc-sec-lsu-forward" class="nav-link" data-scroll-target="#sec-lsu-forward"><span class="header-section-number">11.10</span> Forwarding and outputs to Writeback</a></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">11.11</span> Summary</a></li>
   </ul></li>
@@ -515,7 +512,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="interface-of-the-lsu" class="level2" data-number="11.3">
 <h2 data-number="11.3" class="anchored" data-anchor-id="interface-of-the-lsu"><span class="header-section-number">11.3</span> Interface of the LSU</h2>
 <p>The ports of the LSU fall into six groups:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsu (<span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>            <span class="co">// handshake with the Execute stage</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ValidE,</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span>        ReadyM,</span>
@@ -543,7 +540,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>]  ObiBeM,</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiWdataM,</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span>        ObiRvalidM,</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiRdataM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] ObiRdataM);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li><strong>Handshake with Execute</strong>: <code>ValidE</code> and <code>ReadyM</code>.</li>
 <li><strong>Inputs from Execute</strong>: <code>ALUResultE</code>, which is the address for a load or store and the result for any other instruction; <code>WriteDataE</code>, the data a store writes; <code>PCPlus4E</code>, the return address of <code>jal</code> and <code>jalr</code>; the destination register <code>RdE</code>; <code>Funct3E</code>, which gives the size of the access; and the controls <code>RegWriteE</code>, <code>MemWriteE</code> and <code>ResultSrcE</code>.</li>
@@ -578,7 +575,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <section id="sec-lsu-handshake" class="level2" data-number="11.5">
 <h2 data-number="11.5" class="anchored" data-anchor-id="sec-lsu-handshake"><span class="header-section-number">11.5</span> Handshake logic</h2>
 <p>The handshake logic of the LSU has the same shape as in Decode and Execute, with one addition: a memory instruction cannot be handed on until its memory access is finished.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M handshake: a memory instruction holds the stage until done</span></span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M handshake: a memory instruction holds the stage until done</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);</span>
@@ -587,12 +584,12 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M valid bit</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_ff</span> @(<span class="kw">posedge</span> clk)</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (reset) ValidMReg &lt;= <span class="bn">1'b0</span>;</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyM) ValidMReg &lt;= ValidE;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">else</span> <span class="kw">if</span> (ReadyM) ValidMReg &lt;= ValidE;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong><code>EnEM</code></strong> is the handshake between Execute and the LSU: Execute offers an instruction (<code>ValidE</code>) and the LSU accepts it (<code>ReadyM</code>). As in the other stages, it enables the pipeline registers, so it is the moment the instruction enters the Memory stage.</p>
 <section id="when-is-the-output-valid" class="level3" data-number="11.5.1">
 <h3 data-number="11.5.1" class="anchored" data-anchor-id="when-is-the-output-valid"><span class="header-section-number">11.5.1</span> When is the output valid?</h3>
 <p>In Decode and Execute, the output was valid as soon as the stage held a valid instruction. The LSU adds a condition:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ValidM = ValidMReg &amp; (~MemOpM | DoneM);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The output is valid when the stage holds a valid instruction, <strong>and</strong> either it is not a memory instruction, or its memory transaction is done. The three terms:</p>
 <ul>
 <li><strong><code>ValidMReg</code></strong> is the valid bit of the stage. It says that the stage holds a valid instruction and not a bubble.</li>
@@ -600,7 +597,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <li><strong><code>DoneM</code></strong> says that the memory transaction of a load or store is finished. It is generated by the FSM (<a href="#sec-lsu-fsm" class="quarto-xref"><span>Section 11.7.1</span></a>). Until it is 1, a memory instruction is not offered to Writeback.</li>
 </ul>
 <p>How does the LSU know that it holds a memory instruction? From two controls that Decode generated, and that have travelled with the instruction through the pipeline registers:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li><code>MemWriteM</code>, the copy of <code>MemWriteE</code> in the E/M register, is 1 for a store.</li>
 <li><code>ResultSrcM</code> says which value Writeback will write into the register file. <code>RESULT_MEM</code> means that this value is the data read from memory, and only a load writes that. So <code>ResultSrcM == RESULT_MEM</code> identifies a load.</li>
@@ -612,7 +609,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Reminder: why a valid <em>register</em>?
+Reminder: why a valid <em>register</em>?
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -623,7 +620,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <section id="when-can-the-stage-accept" class="level3" data-number="11.5.2">
 <h3 data-number="11.5.2" class="anchored" data-anchor-id="when-can-the-stage-accept"><span class="header-section-number">11.5.2</span> When can the stage accept?</h3>
 <p><code>ReadyM</code> tells Execute that the LSU can accept a new instruction:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadyM = ~ValidMReg | (ValidM &amp; ReadyW);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>There are two cases:</p>
 <ul>
 <li><strong><code>~ValidMReg</code></strong>: the stage holds a bubble, so there is nothing to lose.</li>
@@ -635,7 +632,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <section id="em-pipeline-registers" class="level2" data-number="11.6">
 <h2 data-number="11.6" class="anchored" data-anchor-id="em-pipeline-registers"><span class="header-section-number">11.6</span> E/M pipeline registers</h2>
 <p>The pipeline registers store what Execute has produced, and they are loaded on <code>EnEM</code>. While a memory instruction waits for its transaction, <code>EnEM</code> is 0, and they hold the address, the store data and the controls stable for as long as the transaction takes:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M pipeline registers</span></span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// E/M pipeline registers</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) alureg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(ALUResultE),<span class="dt"> .Q</span>(ALUResultM));</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) wdreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(WriteDataE),<span class="dt"> .Q</span>(WriteDataM));</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcplus4reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(PCPlus4E),<span class="dt"> .Q</span>(PCPlus4M));</span>
@@ -643,7 +640,7 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">3</span>)  funct3reg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),<span class="dt"> .D</span>(Funct3E),<span class="dt"> .Q</span>(Funct3M));</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">4</span>)  ctrlreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(EnEM),</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                        .D({RegWriteE, MemWriteE, ResultSrcE}),</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                        .Q({RegWriteMReg, MemWriteM, ResultSrcM}));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                        .Q({RegWriteMReg, MemWriteM, ResultSrcM}));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The register for <code>RegWriteE</code> drives <code>RegWriteMReg</code>, not <code>RegWriteM</code> directly. Before it leaves the stage, it is qualified with the valid bit (<a href="#sec-lsu-forward" class="quarto-xref"><span>Section 11.10</span></a>).</p>
 </section>
 <section id="sec-lsu-obi" class="level2" data-number="11.7">
@@ -719,11 +716,11 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 </section>
 <section id="interface-of-the-controller" class="level3" data-number="11.7.2">
 <h3 data-number="11.7.2" class="anchored" data-anchor-id="interface-of-the-controller"><span class="header-section-number">11.7.2</span> Interface of the controller</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsuctrl (<span class="kw">input</span>  <span class="kw">logic</span> clk, reset,</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> lsuctrl (<span class="kw">input</span>  <span class="kw">logic</span> clk, reset,</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> MemReqM,               <span class="co">// valid load/store in M</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> ObiGntM, ObiRvalidM,   <span class="co">// From OBI memory</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                <span class="kw">input</span>  <span class="kw">logic</span> ReadyW,                <span class="co">// From Writeback</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                <span class="kw">output</span> <span class="kw">logic</span> ObiReqM, CaptureM, DoneM);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                <span class="kw">output</span> <span class="kw">logic</span> ObiReqM, CaptureM, DoneM);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The controller watches three sources and drives three outputs:</p>
 <ul>
 <li><strong><code>MemReqM</code></strong> says that there is work to do: a valid instruction in the stage that is a load or store. The LSU computes it as <code>MemReqM = ValidMReg &amp; MemOpM</code>, so a bubble or a non-memory instruction never starts a transaction.</li>
@@ -734,11 +731,11 @@ Figure&nbsp;11.1: The LSU: the handshake logic and valid bit, the E/M pipeline r
 <li><strong><code>DoneM</code></strong> says that the transaction is finished. It opens <code>ValidM</code> in the handshake logic.</li>
 </ul>
 <p>In the LSU it is instantiated with <code>MemReqM</code> computed next to it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// OBI transaction control FSM: one outstanding request per instruction</span></span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// OBI transaction control FSM: one outstanding request per instruction</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MemReqM = ValidMReg &amp; MemOpM;</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  lsuctrl ctrl<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .MemReqM</span>(MemReqM),</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>               .ObiGntM(ObiGntM),<span class="dt"> .ObiRvalidM</span>(ObiRvalidM),<span class="dt"> .ReadyW</span>(ReadyW),</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>               .ObiReqM(ObiReqM),<span class="dt"> .CaptureM</span>(CaptureM),<span class="dt"> .DoneM</span>(DoneM));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>               .ObiReqM(ObiReqM),<span class="dt"> .CaptureM</span>(CaptureM),<span class="dt"> .DoneM</span>(DoneM));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="states-and-transitions" class="level3" data-number="11.7.3">
 <h3 data-number="11.7.3" class="anchored" data-anchor-id="states-and-transitions"><span class="header-section-number">11.7.3</span> States and transitions</h3>
@@ -759,7 +756,7 @@ Figure&nbsp;11.2: The LSU controller as a state diagram, with the transitions on
 <li><strong><code>DONE</code></strong>: the transaction is finished, and the instruction is offered to Writeback. When Writeback takes it (<code>ReadyW</code>), the FSM returns to <code>IDLE</code>, ready for the next instruction.</li>
 </ul>
 <p>In SystemVerilog the FSM follows the familiar pattern, a state register and a next-state <code>case</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, WAIT_RESP, DONE} statetype;</span>
+<div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">typedef</span> <span class="kw">enum</span> <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] {IDLE, WAIT_RESP, DONE} statetype;</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  statetype State, NextState;</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// state register</span></span>
@@ -776,14 +773,14 @@ Figure&nbsp;11.2: The LSU controller as a state diagram, with the transitions on
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      DONE:      <span class="kw">if</span> (ReadyW)            NextState = IDLE;</span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>:   NextState = IDLE;</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="the-outputs" class="level3" data-number="11.7.4">
 <h3 data-number="11.7.4" class="anchored" data-anchor-id="the-outputs"><span class="header-section-number">11.7.4</span> The outputs</h3>
 <p>The three outputs are one line each:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiReqM  = (State == IDLE) &amp; MemReqM;</span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiReqM  = (State == IDLE) &amp; MemReqM;</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> CaptureM = (State == WAIT_RESP) &amp; ObiRvalidM;</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> DoneM    = (State == DONE);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> DoneM    = (State == DONE);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li><strong><code>ObiReqM</code></strong> is high in <code>IDLE</code> while a load or store is in the stage. It depends on the input <code>MemReqM</code>, so it is a Mealy output, and that is intentional: the request goes out in the very first cycle in which the instruction is in the Memory stage, without waiting for a state change. It stays high until the grant moves the FSM to <code>WAIT_RESP</code>, as the address phase requires. The address, the byte enables and the write data come straight from the E/M registers, which hold still during that time.</li>
 <li><strong><code>CaptureM</code></strong> is high in the one cycle in which the response arrives. That is the only cycle in which <code>ObiRdataM</code> is valid, so it is the enable of <code>rawreg</code>. For a store it captures meaningless data, which nobody uses.</li>
@@ -812,8 +809,8 @@ Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add<
 </section>
 <section id="sec-lsu-signals" class="level2" data-number="11.8">
 <h2 data-number="11.8" class="anchored" data-anchor-id="sec-lsu-signals"><span class="header-section-number">11.8</span> OBI signals: address, byte enables, write data</h2>
-<p>The memory is organized in 32-bit words, but RISC-V addresses bytes. The LSU therefore splits the byte address from the ALU into a <strong>word address</strong> and a <strong>byte offset</strong> within the word:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// address phase: word-aligned address, byte enables from size and offset</span></span>
+<p>The memory is organized in 32-bit words, but RISC-V addresses bytes. The rule of the LSU is simple: <strong>every load and every store goes to memory at a word-aligned address</strong>. A <code>lb</code> or a <code>sb</code> does not ask the memory for a single byte. It asks for the word that contains the byte, and then selects or replaces the right byte lane. The LSU therefore splits the byte address from the ALU into a <strong>word address</strong> and a <strong>byte offset</strong> within the word:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// address phase: word-aligned address, byte enables from size and offset</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> AddrLsbM  = ALUResultM[<span class="dv">1</span>:<span class="dv">0</span>];</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiAddrM  = {ALUResultM[<span class="dv">31</span>:<span class="dv">2</span>], <span class="bn">2'b00</span>};</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ObiWeM    = MemWriteM;</span>
@@ -824,7 +821,7 @@ Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add<
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b00</span>:   ObiBeM = <span class="bn">4'b0001</span> &lt;&lt; AddrLsbM;              <span class="co">// sb/lb</span></span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>      <span class="bn">2'b01</span>:   ObiBeM = AddrLsbM[<span class="dv">1</span>] ? <span class="bn">4'b1100</span> : <span class="bn">4'b0011</span>;  <span class="co">// sh/lh</span></span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ObiBeM = <span class="bn">4'b1111</span>;                          <span class="co">// sw/lw</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <ul>
 <li><strong><code>ObiAddrM</code></strong> is the address with its two lowest bits cleared: the address of the word that contains the byte.</li>
 <li><strong><code>AddrLsbM</code></strong>, the two lowest bits, is the offset of the byte within that word, 0 to 3.</li>
@@ -869,20 +866,20 @@ Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add<
 <h2 data-number="11.9" class="anchored" data-anchor-id="capturing-and-processing-loaded-data"><span class="header-section-number">11.9</span> Capturing and processing loaded data</h2>
 <p>The loaded data passes through three steps on its way out of the LSU.</p>
 <p><strong>Capture.</strong> <code>ObiRdataM</code> is valid only in the cycle in which <code>ObiRvalidM</code> is 1, but the LSU hands the load on to Writeback one cycle later, in <code>DONE</code>. The register <code>rawreg</code> keeps the word in between. Its enable is <code>CaptureM</code> from the FSM:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// raw read data register</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rawreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(CaptureM),<span class="dt"> .D</span>(ObiRdataM),<span class="dt"> .Q</span>(ReadRawM));</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// raw read data register</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) rawreg<span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(CaptureM),<span class="dt"> .D</span>(ObiRdataM),<span class="dt"> .Q</span>(ReadRawM));</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Shift.</strong> The memory returns the whole word, with the wanted byte or halfword in its byte lane. Shifting right by eight times the offset brings it down to the lowest bits, the reverse of the store shift:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// read data alignment and sign/zero extension</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadShiftM = ReadRawM &gt;&gt; {AddrLsbM, <span class="bn">3'b000</span>};</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// read data alignment and sign/zero extension</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ReadShiftM = ReadRawM &gt;&gt; {AddrLsbM, <span class="bn">3'b000</span>};</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong>Extend.</strong> The final step depends on the load instruction, selected by <code>funct3</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
+<div class="sourceCode" id="cb14"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (Funct3M)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b000</span>:  ReadDataM = {{<span class="dv">24</span>{ReadShiftM[<span class="dv">7</span>]}}, ReadShiftM[<span class="dv">7</span>:<span class="dv">0</span>]};    <span class="co">// lb</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b001</span>:  ReadDataM = {{<span class="dv">16</span>{ReadShiftM[<span class="dv">15</span>]}}, ReadShiftM[<span class="dv">15</span>:<span class="dv">0</span>]};  <span class="co">// lh</span></span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b100</span>:  ReadDataM = {<span class="bn">24'b0</span>, ReadShiftM[<span class="dv">7</span>:<span class="dv">0</span>]};                  <span class="co">// lbu</span></span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="bn">3'b101</span>:  ReadDataM = {<span class="bn">16'b0</span>, ReadShiftM[<span class="dv">15</span>:<span class="dv">0</span>]};                 <span class="co">// lhu</span></span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span>: ReadDataM = ReadShiftM;                                <span class="co">// lw</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -927,15 +924,93 @@ Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add<
 </table>
 <p>The signed loads, <code>lb</code> and <code>lh</code>, treat the value as a two’s-complement number and copy its sign bit into the upper bits, with the same replication operator as the immediate extension in Decode. The unsigned loads, <code>lbu</code> and <code>lhu</code>, fill with zeros. <code>funct3</code> encodes this neatly: its two lowest bits give the size (and drive <code>ObiBeM</code> above), and its highest bit says unsigned.</p>
 <p>For example, if the word at <code>0x100</code> is <code>0x80FF1234</code>, then <code>lb</code> from <code>0x103</code> shifts right by 24 to get <code>0x80</code>, and sign-extends it to <code>0xFFFFFF80</code>, which is −128, while <code>lbu</code> from the same address gives <code>0x00000080</code>, which is 128.</p>
+<section id="sec-lsu-load-example" class="level3" data-number="11.9.1">
+<h3 data-number="11.9.1" class="anchored" data-anchor-id="sec-lsu-load-example"><span class="header-section-number">11.9.1</span> Example: <code>lw</code> and <code>lb</code> from the same word</h3>
+<div id="fig-lsu-load" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lsu-load-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/lsu-load.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lsu-load-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11.4: Two loads from the word at <code>0x400</code>. Lanes selected by <code>ObiBeM</code> are red. <code>lw</code> keeps all four bytes. <code>lb</code> at offset 2 shifts byte 2 down to byte 0 and fills the upper bytes with copies of its sign bit.
+</figcaption>
+</figure>
+</div>
+<p>We follow two loads through the LSU. Both read from the same memory word, at address <code>0x400</code>, which holds <code>0xA1B2C3D4</code>. Its bytes are <code>D4</code> in lane 0, <code>C3</code> in lane 1, <code>B2</code> in lane 2 and <code>A1</code> in lane 3.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th><code>lw x1, 0x400(x0)</code></th>
+<th><code>lb x1, 0x402(x0)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>ALUResultM</code> (byte address)</td>
+<td><code>0x400</code></td>
+<td><code>0x402</code></td>
+</tr>
+<tr class="even">
+<td><code>ObiAddrM</code></td>
+<td><code>0x400</code></td>
+<td><code>0x400</code></td>
+</tr>
+<tr class="odd">
+<td><code>AddrLsbM</code></td>
+<td><code>0</code></td>
+<td><code>2</code></td>
+</tr>
+<tr class="even">
+<td><code>Funct3M</code></td>
+<td><code>010</code></td>
+<td><code>000</code></td>
+</tr>
+<tr class="odd">
+<td><code>ObiBeM</code></td>
+<td><code>1111</code></td>
+<td><code>0100</code></td>
+</tr>
+<tr class="even">
+<td><code>ObiWeM</code></td>
+<td><code>0</code></td>
+<td><code>0</code></td>
+</tr>
+<tr class="odd">
+<td><code>ReadRawM</code></td>
+<td><code>0xA1B2C3D4</code></td>
+<td><code>0xA1B2C3D4</code></td>
+</tr>
+<tr class="even">
+<td><code>ReadShiftM</code></td>
+<td><code>0xA1B2C3D4</code></td>
+<td><code>0x0000A1B2</code></td>
+</tr>
+<tr class="odd">
+<td><code>ReadDataM</code></td>
+<td><code>0xA1B2C3D4</code></td>
+<td><code>0xFFFFFFB2</code></td>
+</tr>
+</tbody>
+</table>
+<p>In the address phase, the ALU computes the byte address by adding <code>x0</code> and the immediate. For <code>lw</code> the address is <code>0x400</code>, so <code>AddrLsbM</code> is 0 and <code>ObiAddrM</code> is the same <code>0x400</code>. Because <code>funct3[1:0]</code> is <code>10</code>, the <code>default</code> branch of the byte-enable <code>case</code> gives <code>ObiBeM = 1111</code>. For <code>lb</code> the address is <code>0x402</code>. The upper bits are the same, so <code>ObiAddrM</code> is again <code>0x400</code>, but <code>AddrLsbM</code> is 2. Now <code>funct3[1:0]</code> is <code>00</code>, so the byte enable is <code>0001 &lt;&lt; 2 = 0100</code>, which selects lane 2.</p>
+<p>Both loads therefore make the same request to the memory, for the word at <code>0x400</code>, and the memory answers both with <code>0xA1B2C3D4</code>. The difference is only in the processing in the LSU, which the figure shows from left to right.</p>
+<ul>
+<li><strong>Capture.</strong> <code>rawreg</code> stores the word, so <code>ReadRawM = 0xA1B2C3D4</code> in both cases.</li>
+<li><strong>Shift.</strong> The shift amount is <code>8 × AddrLsbM</code>. For <code>lw</code> it is 0, so the word stays as it is. For <code>lb</code> it is 16, so lane 2 moves to lane 0 and <code>ReadShiftM = 0x0000A1B2</code>.</li>
+<li><strong>Extend.</strong> For <code>lw</code>, the <code>default</code> branch passes all 32 bits. For <code>lb</code>, <code>funct3 = 000</code> keeps the lowest byte, <code>0xB2</code>, and copies its bit 7 into the upper 24 bits. Bit 7 of <code>0xB2</code> is 1, so the result is <code>0xFFFFFFB2</code>, which is −78. The lanes <code>A1</code>, <code>C3</code> and <code>D4</code> were never needed, and none of them reaches the register.</li>
+</ul>
+<p>The shift is what makes the lowest byte the right one. Without it, <code>lb</code> from <code>0x402</code> would return the byte at offset 0, <code>D4</code>, instead of the byte at offset 2.</p>
+</section>
 </section>
 <section id="sec-lsu-forward" class="level2" data-number="11.10">
 <h2 data-number="11.10" class="anchored" data-anchor-id="sec-lsu-forward"><span class="header-section-number">11.10</span> Forwarding and outputs to Writeback</h2>
 <p>The last two lines of the LSU prepare its result for the two stages that use it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding data for the Execute stage: load data or ALU result</span></span>
+<div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>  <span class="co">// forwarding data for the Execute stage: load data or ALU result</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> ForwardDataM = (ResultSrcM == RESULT_MEM) ? ReadDataM : ALUResultM;</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// register write indication, qualified with the stage valid bit</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RegWriteM = RegWriteMReg &amp; ValidMReg;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> RegWriteM = RegWriteMReg &amp; ValidMReg;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p><strong><code>ForwardDataM</code></strong> goes back to the forwarding multiplexers in Execute (<a href="06d-ieu.html#fig-ieu-forwarding" class="quarto-xref">Figure&nbsp;<span>10.3</span></a>). It is the value that the instruction in the Memory stage will write into the register file: the loaded data for a load, and the ALU result for everything else. This multiplexer makes the LSU, not the IEU, responsible for choosing the right value, so the IEU always receives the architecturally correct result. For a load still waiting for memory, <code>ForwardDataM</code> is garbage, but then <code>ReadyM</code> is 0 and the consumer in Execute waits (see the refresh loop in the <a href="../chapters/06d-ieu.html">IEU chapter</a>). The one result it does not include is <code>PCPlus4M</code>, the return address of <code>jal</code> and <code>jalr</code>. It does not have to: a jump redirects Fetch, and by the time the first instruction from the target has been fetched and decoded, the jump has long left the Memory stage.</p>
 <p>The outputs to Writeback are the three candidate results, <code>ALUResultM</code>, <code>ReadDataM</code> and <code>PCPlus4M</code>, together with <code>ResultSrcM</code>, which says which of them to write, and the destination register <code>RdM</code>.</p>
 <p><strong><code>RegWriteM</code></strong> is the register write enable, qualified with the valid bit. This matters for the hazard unit, which compares <code>RdM</code> with the source registers in Execute whenever <code>RegWriteM</code> is 1. When the stage holds a bubble, its registers still contain the last instruction, and without the valid bit that old instruction would keep being forwarded. With it, a bubble never looks like it writes a register.</p>
@@ -1014,14 +1089,13 @@ Figure&nbsp;11.3: A load (<code>lw</code>), a non-memory instruction (<code>add<
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
         }
-      }
-      return codeEl.innerText;
+        return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
