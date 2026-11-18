@@ -439,6 +439,99 @@ comparator. `WriteDataE` goes to the same two places, and on to the Memory
 stage as the store data, which is where its name comes from.
 :::
 
+### Why two forwarding sources? {#sec-ieu-fwd-why}
+
+::: {.content-visible when-format="revealjs"}
+**Producer right before the consumer**
+
+```
+add x1, x2, x3
+sub x4, x1, x3
+```
+
+| Cycle | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| `add x1, x2, x3` | F | D | E | **M** | W |
+| `sub x4, x1, x3` |   | F | D | **E** | M |
+
+- Cycle 4: `sub` in E needs `x1`, `add` is in **M**: `FWD_MEM`
+
+**One instruction in between**
+
+```
+add  x1, x2, x3
+addi x5, x5, 1
+sub  x4, x1, x3
+```
+
+| Cycle | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| `add x1, x2, x3` | F | D | E | M | **W** |   |   |
+| `addi x5, x5, 1` |   | F | D | E | M | W |   |
+| `sub x4, x1, x3` |   |   | F | D | **E** | M | W |
+
+- Cycle 5: `add` is in **W**: `FWD_WB`
+- `addi` in M writes `x5`, not `x1`: no match
+- Three apart: the register file read in Decode is enough
+:::
+
+::: {.content-visible unless-format="revealjs"}
+Why does the IEU need two forwarding sources, `ForwardDataM` and
+`ResultW`? Two short sequences show that each one covers a different
+distance between the producer and the consumer. In the first, the consumer
+directly follows the producer:
+
+```
+add x1, x2, x3
+sub x4, x1, x3
+```
+
+| Cycle | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| `add x1, x2, x3` | F | D | E | **M** | W |
+| `sub x4, x1, x3` |   | F | D | **E** | M |
+
+`sub` reads `x1` in Decode in cycle 3, but `add` writes it only at the end
+of its Writeback stage, in cycle 5. In cycle 4 `sub` is in Execute and
+needs the value, and `add` has just computed it. It is in the Memory
+stage, in the E/M register, so the hazard unit selects `FWD_MEM` and
+`ForwardDataM` delivers it. The value of `x3` is not a problem, because no
+instruction in the pipeline writes it.
+
+In the second sequence, one unrelated instruction sits between the two:
+
+```
+add  x1, x2, x3
+addi x5, x5, 1
+sub  x4, x1, x3
+```
+
+| Cycle | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| `add x1, x2, x3` | F | D | E | M | **W** |   |   |
+| `addi x5, x5, 1` |   | F | D | E | M | W |   |
+| `sub x4, x1, x3` |   |   | F | D | **E** | M | W |
+
+Now `sub` is in Execute in cycle 5, one cycle later relative to `add`. By
+then `add` has moved on to Writeback, and the Memory stage holds `addi`.
+The hazard unit compares the source registers of `sub` with the
+destination of the instruction in each stage. `addi` writes `x5`, which
+`sub` does not read, so there is no match in Memory. `add` writes `x1`,
+which `sub` reads, so there is a match in Writeback and the select is
+`FWD_WB`. The value comes from `ResultW`, which is the result that
+Writeback is about to write to the register file.
+
+The two sources therefore cover the two instructions that are still in
+flight ahead of the one in Execute, and each one has the result before it
+reaches the register file. With a third unrelated instruction between the
+two, `add` would write `x1` in the same cycle in which `sub` reads it in
+Decode. The register file solves that case itself, with its write-first
+read (see the [IDU chapter](06c-idu.qmd)), and the IEU needs no forwarding for it.
+
+If two instructions in flight write the same register, both match, and the
+Memory stage wins because it holds the younger instruction.
+:::
+
 ### Refreshing the operands with forwarded values {#sec-ieu-refresh}
 
 ::: {.content-visible when-format="revealjs"}
@@ -575,6 +668,27 @@ When the data is there, `ReadyM` rises, `ForwardDataM` carries the loaded
 value, and the consumer leaves Execute computing with it, straight from
 `fwdamux`. This is why HIPV needs no special load-use stall: the elastic
 handshake and the refresh loop together cover that case.
+
+The classic load-use pair shows the whole sequence:
+
+```
+lw  x1, 0x400(x0)
+add x3, x2, x1
+```
+
+`add` reads the loaded `x1` as operand B, so the signals involved are
+`ForwardBE`, `fwdbmux` and `rd2reg`. The steps are the same for operand A.
+
+| Phase | `lw` in Memory | `add` in Execute |
+|---|---|---|
+| 1. Request | The LSU sends the address `0x400`. `ReadDataM` is not valid yet, so `ValidM = 0` and `ReadyM = 0`. | The hazard unit sees `RdM = x1` and selects `FWD_MEM`. `HoldE = 1`, so `rd2reg` stores `ForwardDataM`, which is garbage. |
+| 2. Waiting | The memory has not answered. `ReadyM = 0`. | `add` stays in Execute and keeps refreshing `rd2reg` with garbage. Nothing uses it, because the instruction has not left. |
+| 3. Data arrives | `ObiRvalidM = 1`, `rawreg` captures the word, and the FSM reaches `DONE`. `ReadyM = 1`. | `ForwardDataM = ReadDataM` is the loaded value. `fwdbmux` passes it to the ALU, and `add` leaves Execute with the right operand. |
+
+The garbage in phases 1 and 2 is never used, and the right value is used
+exactly in the cycle in which the handshake lets `add` go. A pipeline
+without back-pressure would have to insert a bubble after every load that
+is followed by a consumer. HIPV waits only as long as the memory takes.
 :::
 
 ## The ALU

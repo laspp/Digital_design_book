@@ -831,6 +831,131 @@ the code, but in hardware it costs nothing: each output bit is a wire from
 one input bit, chosen by a multiplexer of at most five inputs.
 :::
 
+## Worked examples: three instructions through the decoder {#sec-idu-examples}
+
+::: {.content-visible when-format="revealjs"}
+Three instructions, three different paths through the decoder and the
+extension unit:
+
+| Instruction | `InstrD` | Format |
+|---|---|---|
+| `sub x3, x1, x2` | `0x402081B3` | R |
+| `addi x5, x5, 1` | `0x00128293` | I |
+| `jal x1, 16` | `0x010000EF` | J |
+
+| Signal | `sub x3, x1, x2` | `addi x5, x5, 1` | `jal x1, 16` |
+|---|---|---|---|
+| `OpD` | `0110011` | `0010011` | `1101111` |
+| `RegWriteD` | 1 | 1 | 1 |
+| `ImmSrcD` | `IMM_I` (unused) | `IMM_I` | `IMM_J` |
+| `ALUSrcAD` | `SRCA_RF` | `SRCA_RF` | `SRCA_RF` |
+| `ALUSrcBD` | 0 | 1 | 0 |
+| `MemWriteD` | 0 | 0 | 0 |
+| `ResultSrcD` | `RESULT_ALU` | `RESULT_ALU` | `RESULT_PC4` |
+| `BranchD` / `JumpD` / `JalrD` | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 1 / 0 |
+| `ALUOpD` | `10` | `10` | `00` |
+| `ALUControlD` | `ALU_SUB` | `ALU_ADD` | `ALU_ADD` (unused) |
+| `ImmExtD` | `0x402` (unused) | `0x00000001` | `0x00000010` |
+
+- `sub` vs `addi`: same `ALUOpD`, but `RtypeSubD = Funct7b5D & OpD[5]`
+- `jal`: the ALU is not needed, the **target adder** computes `PC + imm`
+:::
+
+::: {.content-visible unless-format="revealjs"}
+The tables of the previous sections are easier to trust once we use them.
+We decode three instructions by hand, one for each path that matters: an
+R-type arithmetic instruction, an I-type arithmetic instruction, and a
+jump. For each, we split the 32 bits into fields, read the row of the main
+decoder, run the ALU decoder, and see what the extension unit produces.
+
+| Instruction | `InstrD` | Format |
+|---|---|---|
+| `sub x3, x1, x2` | `0x402081B3` | R |
+| `addi x5, x5, 1` | `0x00128293` | I |
+| `jal x1, 16` | `0x010000EF` | J |
+
+### `sub x3, x1, x2`
+
+The instruction splits into the R-type fields:
+
+| `funct7` | `rs2` | `rs1` | `funct3` | `rd` | `opcode` |
+|---|---|---|---|---|---|
+| `0100000` | `00010` | `00001` | `000` | `00011` | `0110011` |
+
+The opcode `0110011` is `OP_RTYPE`, so the main decoder produces the row
+`{1, IMM_I, SRCA_RF, 0, 0, RESULT_ALU, 0, 0, 0, 10}`. It writes a register,
+reads `rs1` and `rs2` (`ALUSrcBD = 0`), does not touch memory, and writes
+the ALU result back. `ALUOpD = 10` hands the choice of the operation to the
+ALU decoder. There, `Funct3D = 000` selects between add and subtract, and
+`RtypeSubD = Funct7b5D & OpD[5] = 1 & 1 = 1`, because bit 30 of the
+instruction is set and the opcode is the R-type one. The result is
+`ALUControlD = ALU_SUB`.
+
+The extension unit does not know that this instruction has no immediate.
+`ImmSrcD` is `IMM_I`, so it extracts bits 31:20 and produces `0x00000402`,
+the `funct7` and `rs2` fields read as a number. The value is meaningless,
+but harmless: `ALUSrcBD = 0` makes the ALU ignore it.
+
+### `addi x5, x5, 1`
+
+| `imm[11:0]` | `rs1` | `funct3` | `rd` | `opcode` |
+|---|---|---|---|---|
+| `000000000001` | `00101` | `000` | `00101` | `0010011` |
+
+The opcode `0010011` is `OP_IALU`. The control word is
+`{1, IMM_I, SRCA_RF, 1, 0, RESULT_ALU, 0, 0, 0, 10}`. It differs from the
+`sub` row in a single field: `ALUSrcBD = 1`, because operand B is now the
+immediate. `ALUOpD` is again `10` and `Funct3D` is again `000`, but this
+time `OpD[5] = 0`, so `RtypeSubD = 0` and the ALU decoder gives
+`ALUControlD = ALU_ADD`. Here `Funct7b5D` is bit 30 of the immediate,
+which is 0 for the value 1. Even if it were 1, as in `addi x1, x1, -1024`,
+the `OpD[5]` term would keep the operation an addition.
+
+The extension unit selects `IMM_I` and sign-extends the 12 bits
+`000000000001`. The sign bit is 0, so `ImmExtD = 0x00000001`. Note that
+`rs1` and `rd` are both `x5`. Decode does not care. It reads `x5` from the
+register file, and the destination register travels down the pipeline,
+where Writeback writes it. A later instruction that reads `x5` right after
+this one needs forwarding, which we describe in the
+[IEU chapter](06d-ieu.qmd).
+
+### `jal x1, 16`
+
+| `imm[20\|10:1\|11\|19:12]` | `rd` | `opcode` |
+|---|---|---|
+| `0 0000001000 0 00000000` | `00001` | `1101111` |
+
+The jump offset is 16, so `imm[4]` is 1 and all other immediate bits are 0.
+The opcode `1101111` is `OP_JAL`, and the control word is
+`{1, IMM_J, SRCA_RF, 0, 0, RESULT_PC4, 0, 1, 0, 00}`.
+
+- `RegWriteD = 1` and `ResultSrcD = RESULT_PC4`: the instruction writes the
+  return address, `PC + 4`, into `x1`.
+- `JumpD = 1` is the signal that Execute uses to redirect Fetch. `BranchD`
+  and `JalrD` are 0, so the jump is unconditional and its target is `PC +
+  imm`.
+- `ALUOpD = 00` gives `ALUControlD = ALU_ADD`, and `ALUSrcBD = 0`. The ALU
+  therefore computes something, but nobody uses it. The target comes from the
+  dedicated adder in Execute, and the value to write back is `PC + 4`.
+
+The extension unit selects `IMM_J` and collects the scattered bits
+`{instr[31], instr[19:12], instr[20], instr[30:21], 1'b0}`. Only bit 24 of
+the instruction, `imm[4]`, is set, so `ImmExtD = 0x00000010`. The appended
+`1'b0` is the lowest bit of the offset, which is always 0.
+
+| | `sub` | `addi` | `jal` |
+|---|---|---|---|
+| fields that differ in the control word | | `ALUSrcBD` | `ImmSrcD`, `ResultSrcD`, `JumpD`, `ALUOpD` |
+| `ALUControlD` | `ALU_SUB` | `ALU_ADD` | `ALU_ADD` (unused) |
+| `ImmExtD` | unused | `0x00000001` | `0x00000010` |
+
+The three examples show how little the decoder does. It looks up a row by
+opcode, applies one more rule for `funct3` and bit 30, and extracts the
+immediate in the format that the row names. All three run in parallel, in
+the same cycle, and the control signals are ready as soon as the
+combinational logic settles.
+:::
+
 ## Register file
 
 ::: {.content-visible when-format="revealjs"}

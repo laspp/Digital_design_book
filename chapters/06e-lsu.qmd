@@ -615,12 +615,18 @@ controller small.
       default: ObiBeM = 4'b1111;                          // sw/lw
     endcase
 ```
+
+- Memory is accessed in **whole words**: `ObiAddrM` is always word-aligned
+- Byte or halfword: the **byte enables** and a **shift** pick the bytes
 :::
 
 ::: {.content-visible unless-format="revealjs"}
 The memory is organized in 32-bit words, but RISC-V addresses bytes. The
-LSU therefore splits the byte address from the ALU into a **word address**
-and a **byte offset** within the word:
+rule of the LSU is simple: **every load and every store goes to memory at
+a word-aligned address**. A `lb` or a `sb` does not ask the memory for a
+single byte. It asks for the word that contains the byte, and then selects
+or replaces the right byte lane. The LSU therefore splits the byte address
+from the ALU into a **word address** and a **byte offset** within the word:
 
 ```systemverilog
   // address phase: word-aligned address, byte enables from size and offset
@@ -747,6 +753,74 @@ For example, if the word at `0x100` is `0x80FF1234`, then `lb` from `0x103`
 shifts right by 24 to get `0x80`, and sign-extends it to `0xFFFFFF80`,
 which is −128, while `lbu` from the same address gives `0x00000080`, which
 is 128.
+:::
+
+### Example: `lw` and `lb` from the same word {#sec-lsu-load-example}
+
+![Two loads from the word at `0x400`. Lanes selected by `ObiBeM` are red. `lw` keeps all four bytes. `lb` at offset 2 shifts byte 2 down to byte 0 and fills the upper bytes with copies of its sign bit.](../images/blocks/lsu-load.svg){#fig-lsu-load}
+
+::: {.content-visible when-format="revealjs"}
+Memory: word at `0x400` = `0xA1B2C3D4`
+
+| Signal | `lw x1, 0x400(x0)` | `lb x1, 0x402(x0)` |
+|---|---|---|
+| `ALUResultM` | `0x400` | `0x402` |
+| `ObiAddrM` | `0x400` | `0x400` |
+| `AddrLsbM` | `0` | `2` |
+| `Funct3M` | `010` | `000` |
+| `ObiBeM` | `1111` | `0100` |
+| `ObiWeM` | `0` | `0` |
+| `ReadRawM` | `0xA1B2C3D4` | `0xA1B2C3D4` |
+| `ReadShiftM` | `0xA1B2C3D4` | `0x0000A1B2` |
+| `ReadDataM` | `0xA1B2C3D4` | `0xFFFFFFB2` |
+
+- Same word, same `ObiAddrM`: only the **offset** and `funct3` differ
+:::
+
+::: {.content-visible unless-format="revealjs"}
+We follow two loads through the LSU. Both read from the same memory word,
+at address `0x400`, which holds `0xA1B2C3D4`. Its bytes are `D4` in lane 0,
+`C3` in lane 1, `B2` in lane 2 and `A1` in lane 3.
+
+| Signal | `lw x1, 0x400(x0)` | `lb x1, 0x402(x0)` |
+|---|---|---|
+| `ALUResultM` (byte address) | `0x400` | `0x402` |
+| `ObiAddrM` | `0x400` | `0x400` |
+| `AddrLsbM` | `0` | `2` |
+| `Funct3M` | `010` | `000` |
+| `ObiBeM` | `1111` | `0100` |
+| `ObiWeM` | `0` | `0` |
+| `ReadRawM` | `0xA1B2C3D4` | `0xA1B2C3D4` |
+| `ReadShiftM` | `0xA1B2C3D4` | `0x0000A1B2` |
+| `ReadDataM` | `0xA1B2C3D4` | `0xFFFFFFB2` |
+
+In the address phase, the ALU computes the byte address by adding `x0` and
+the immediate. For `lw` the address is `0x400`, so `AddrLsbM` is 0 and
+`ObiAddrM` is the same `0x400`. Because `funct3[1:0]` is `10`, the
+`default` branch of the byte-enable `case` gives `ObiBeM = 1111`. For `lb`
+the address is `0x402`. The upper bits are the same, so `ObiAddrM` is again
+`0x400`, but `AddrLsbM` is 2. Now `funct3[1:0]` is `00`, so the byte enable
+is `0001 << 2 = 0100`, which selects lane 2.
+
+Both loads therefore make the same request to the memory, for the word at
+`0x400`, and the memory answers both with `0xA1B2C3D4`. The difference is
+only in the processing in the LSU, which the figure shows from left to
+right.
+
+- **Capture.** `rawreg` stores the word, so `ReadRawM = 0xA1B2C3D4` in
+  both cases.
+- **Shift.** The shift amount is `8 × AddrLsbM`. For `lw` it is 0, so the
+  word stays as it is. For `lb` it is 16, so lane 2 moves to lane 0 and
+  `ReadShiftM = 0x0000A1B2`.
+- **Extend.** For `lw`, the `default` branch passes all 32 bits. For `lb`,
+  `funct3 = 000` keeps the lowest byte, `0xB2`, and copies its bit 7 into
+  the upper 24 bits. Bit 7 of `0xB2` is 1, so the result is `0xFFFFFFB2`,
+  which is −78. The lanes `A1`, `C3` and `D4` were never needed, and none
+  of them reaches the register.
+
+The shift is what makes the lowest byte the right one. Without it, `lb`
+from `0x402` would return the byte at offset 0, `D4`, instead of the byte
+at offset 2.
 :::
 
 ## Forwarding and outputs to Writeback {#sec-lsu-forward}

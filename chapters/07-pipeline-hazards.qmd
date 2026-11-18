@@ -593,6 +593,135 @@ in which an instruction retires, which is useful in waveforms, and it is
 the natural hook for an instruction trace port in the future.
 :::
 
+### Propagation of valid and ready {#sec-hazards-valid-ready}
+
+![Valid travels forward and ready travels backward between neighbouring stages. The redirect `PCSrcE` from Execute clears valid in Fetch and Decode.](../images/blocks/valid-ready-chain.svg){#fig-valid-ready-chain}
+
+::: {.content-visible when-format="revealjs"}
+```systemverilog
+  // valid travels forward, one register per stage
+  //   ValidF -> ValidDReg -> ValidD -> ValidEReg -> ValidE -> ValidMReg -> ValidM -> ValidW
+  assign ValidD = ValidDReg & ~PCSrcE;                // IDU: hide the wrong path
+  assign ValidE = ValidEReg;                          // IEU
+  assign ValidM = ValidMReg & (~MemOpM | DoneM);      // LSU: wait for memory
+
+  // ready travels backward, through logic only
+  //   ReadyW -> ReadyM -> ReadyE -> ReadyD -> IFU
+  assign ReadyW = 1'b1;                               // WBU: never stalls
+  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);     // LSU
+  assign ReadyE = ~ValidEReg | ReadyM;                // IEU
+  assign ReadyD = ~ValidDReg | ReadyE;                // IDU
+
+  // every stage: transfer when both are 1
+  assign EnFD = ValidF & ReadyD;   assign EnDE = ValidD & ReadyE;
+  assign EnEM = ValidE & ReadyM;   assign EnMW = ValidM & ReadyW;
+```
+
+- `valid`: **forward**, registered in every stage
+- `ready`: **backward**, a combinational chain from Writeback to Fetch
+- A stall stops at the first **bubble** (`~ValidReg`)
+- `PCSrcE` clears `valid` of the wrong path in F and D
+:::
+
+::: {.content-visible unless-format="revealjs"}
+The core is a chain of five stages, and each pair of neighbours speaks the
+valid/ready handshake. Seen at the top level, the stage handshakes form
+two signal chains that run in opposite directions (@fig-valid-ready-chain).
+We gather the equations from the stage chapters here, so that we can see
+the whole picture at once:
+
+```systemverilog
+  // valid travels forward, one register per stage
+  //   ValidF -> ValidDReg -> ValidD -> ValidEReg -> ValidE -> ValidMReg -> ValidM -> ValidW
+  assign ValidD = ValidDReg & ~PCSrcE;                // IDU: hide the wrong path
+  assign ValidE = ValidEReg;                          // IEU
+  assign ValidM = ValidMReg & (~MemOpM | DoneM);      // LSU: wait for memory
+
+  // ready travels backward, through logic only
+  //   ReadyW -> ReadyM -> ReadyE -> ReadyD -> IFU
+  assign ReadyW = 1'b1;                               // WBU: never stalls
+  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);     // LSU
+  assign ReadyE = ~ValidEReg | ReadyM;                // IEU
+  assign ReadyD = ~ValidDReg | ReadyE;                // IDU
+
+  // every boundary: the instruction moves when both are 1
+  assign EnFD = ValidF & ReadyD;   assign EnDE = ValidD & ReadyE;
+  assign EnEM = ValidE & ReadyM;   assign EnMW = ValidM & ReadyW;
+```
+
+In the code above, each line lives in the stage that the comment names. The
+top level only connects the wires, as we saw in the instances of
+`hipv_core`.
+
+**Valid moves forward with the instruction.** Each stage has a valid bit,
+a register that is loaded at the same edge as the pipeline registers
+(`ValidDReg`, `ValidEReg`, `ValidMReg`). It says whether the stage holds
+a real instruction or a bubble. The output `valid` of a stage is its valid
+bit, possibly qualified by something the stage knows. Decode masks it with
+`~PCSrcE`, so an instruction on the wrong path is invisible to Execute.
+The LSU masks it with `~MemOpM | DoneM`, so a load or store is offered
+to Writeback only when its memory transaction is finished. Because the
+valid bit is a register, a bubble inserted in Fetch travels through the
+pipeline like an instruction, one stage per cycle.
+
+**Ready moves backward, against the flow.** A stage can accept a new
+instruction when it is empty (`~ValidReg`) or when its instruction leaves
+in this very cycle. The second condition is the `ready` of the next stage.
+Writeback is the end of the chain. It never stalls, so `ReadyW = 1`. The
+Memory stage can accept when it holds a bubble or drains its instruction
+into Writeback. Execute can accept when it holds a bubble or when the
+Memory stage can accept. Decode follows the same rule with Execute, and
+`ReadyD` finally reaches the IFU. There is no register in the chain. It is
+a path of combinational logic from Writeback to Fetch, in the same cycle,
+which is simple and quick to reason about. Its price is a longer path in
+every stage that a faster design would have to cut.
+
+A transfer happens at a boundary where both signals are 1, and then the
+pipeline registers of the stage load (`EnFD`, `EnDE`, `EnEM`, `EnMW`).
+
+**A stall in one picture.** Suppose a load waits for the data memory:
+
+```
+lw  x1, 0x400(x0)
+add x3, x2, x1
+sub x4, x3, x2
+or  x5, x4, x2
+```
+
+![A load waiting for the data memory. `ReadyM` falls first and forces `ReadyE` and `ReadyD` low in the same cycle. Fetch holds its output, and Writeback sees a bubble.](../images/blocks/valid-ready-stall.svg){#fig-valid-ready-stall}
+
+| Stage | Holds | Valid bit | Ready it gives backward |
+|---|---|---|---|
+| Memory | `lw`, waiting for `ObiRvalidM` | `ValidM = 0` (not done) | `ReadyM = ~ValidMReg \| ValidM = 0` |
+| Execute | `add`, valid | `ValidE = 1` | `ReadyE = ~ValidEReg \| ReadyM = 0` |
+| Decode | `sub`, valid | `ValidD = 1` | `ReadyD = ~ValidDReg \| ReadyE = 0` |
+| Fetch | `or`, offered | `ValidF = 1` | none, the IFU holds its output |
+
+@fig-valid-ready-stall shows the same state of the pipeline as a picture.
+
+`ReadyM` falls first, because the `lw` cannot leave. It forces `ReadyE`
+and `ReadyD` low in the same cycle, and the IFU keeps `or` at its output
+until `ReadyD` returns. No stage has to know about the memory latency
+except the LSU. Writeback gets `ValidM = 0` and simply sees a bubble. When
+the data arrives, `DoneM` rises, `ValidM` and `ReadyM` become 1, and the
+whole chain moves in the same cycle.
+
+A stall does not always reach the front. If Decode held a bubble, then
+`ReadyD = ~ValidDReg | ReadyE = 1` regardless of `ReadyE`. The bubble
+would absorb the stall, and Fetch would keep delivering. The stall stops at
+the first empty stage, so bubbles are not just waste. They are also the
+slack that lets the pipeline run elastically.
+
+**A jump in one picture.** A jump is a different case, because the
+instructions behind it are wrong, not just late. When Execute resolves a
+jump, `PCSrcE` goes high for one cycle and clears `valid` in two places.
+The IFU does not offer a fetched word (`ValidF = (State == DONE) &
+~PCSrcE`), and Decode masks its instruction (`ValidD = ValidDReg &
+~PCSrcE`). The masked instruction is then loaded into Execute as a bubble,
+because `ValidEReg` takes over `ValidD`. Execute and later stages are never
+flushed, since they hold the jump and everything before it.
+:::
+
 ### How fast is it?
 
 ::: {.content-visible when-format="revealjs"}
