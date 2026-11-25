@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.31">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>15&nbsp; The HIPV SoC – Designing a RISC-V SoC</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/08-memory.html" rel="next">
+<link href="../chapters/07b-soc.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/07c-hipv-soc.html"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06c-idu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06d-ieu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06e-lsu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Load/store unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06f-wbu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Writeback unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Pipeline hazards and the HIPV core</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07b-soc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07c-hipv-soc.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-hipv-soc" id="toc-sec-hipv-soc" class="nav-link active" data-scroll-target="#sec-hipv-soc">The HIPV SoC</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">15.1</span> Goal for this week</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">15.2</span> Introduction</a>
+  <ul class="collapse">
+  <li><a href="#a-platform-for-learning" id="toc-a-platform-for-learning" class="nav-link" data-scroll-target="#a-platform-for-learning"><span class="header-section-number">15.2.1</span> A platform for learning</a></li>
+  <li><a href="#the-parts-of-the-soc" id="toc-the-parts-of-the-soc" class="nav-link" data-scroll-target="#the-parts-of-the-soc"><span class="header-section-number">15.2.2</span> The parts of the SoC</a></li>
+  </ul></li>
+  <li><a href="#memory-mapped-io" id="toc-memory-mapped-io" class="nav-link" data-scroll-target="#memory-mapped-io"><span class="header-section-number">15.3</span> Memory-mapped I/O</a>
+  <ul class="collapse">
+  <li><a href="#one-address-space" id="toc-one-address-space" class="nav-link" data-scroll-target="#one-address-space"><span class="header-section-number">15.3.1</span> One address space</a></li>
+  <li><a href="#the-address-map" id="toc-the-address-map" class="nav-link" data-scroll-target="#the-address-map"><span class="header-section-number">15.3.2</span> The address map</a></li>
+  <li><a href="#accessing-a-device-from-software" id="toc-accessing-a-device-from-software" class="nav-link" data-scroll-target="#accessing-a-device-from-software"><span class="header-section-number">15.3.3</span> Accessing a device from software</a></li>
+  </ul></li>
+  <li><a href="#the-processor" id="toc-the-processor" class="nav-link" data-scroll-target="#the-processor"><span class="header-section-number">15.4</span> The processor</a>
+  <ul class="collapse">
+  <li><a href="#two-masters" id="toc-two-masters" class="nav-link" data-scroll-target="#two-masters"><span class="header-section-number">15.4.1</span> Two masters</a></li>
+  <li><a href="#what-the-processor-does-not-have-yet" id="toc-what-the-processor-does-not-have-yet" class="nav-link" data-scroll-target="#what-the-processor-does-not-have-yet"><span class="header-section-number">15.4.2</span> What the processor does not have yet</a></li>
+  </ul></li>
+  <li><a href="#the-interconnect" id="toc-the-interconnect" class="nav-link" data-scroll-target="#the-interconnect"><span class="header-section-number">15.5</span> The interconnect</a>
+  <ul class="collapse">
+  <li><a href="#why-a-crossbar" id="toc-why-a-crossbar" class="nav-link" data-scroll-target="#why-a-crossbar"><span class="header-section-number">15.5.1</span> Why a crossbar?</a></li>
+  <li><a href="#structure" id="toc-structure" class="nav-link" data-scroll-target="#structure"><span class="header-section-number">15.5.2</span> Structure</a></li>
+  <li><a href="#address-decoding" id="toc-address-decoding" class="nav-link" data-scroll-target="#address-decoding"><span class="header-section-number">15.5.3</span> Address decoding</a></li>
+  <li><a href="#sec-xbar-arrays" id="toc-sec-xbar-arrays" class="nav-link" data-scroll-target="#sec-xbar-arrays"><span class="header-section-number">15.5.4</span> Selects, requests, and grants</a></li>
+  <li><a href="#arbitration" id="toc-arbitration" class="nav-link" data-scroll-target="#arbitration"><span class="header-section-number">15.5.5</span> Arbitration</a></li>
+  <li><a href="#routing-the-responses" id="toc-routing-the-responses" class="nav-link" data-scroll-target="#routing-the-responses"><span class="header-section-number">15.5.6</span> Routing the responses</a></li>
+  <li><a href="#two-masters-one-slave" id="toc-two-masters-one-slave" class="nav-link" data-scroll-target="#two-masters-one-slave"><span class="header-section-number">15.5.7</span> Two masters, one slave</a></li>
+  <li><a href="#unmapped-addresses" id="toc-unmapped-addresses" class="nav-link" data-scroll-target="#unmapped-addresses"><span class="header-section-number">15.5.8</span> Unmapped addresses</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">15.6</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-hipv-soc" class="level1 unnumbered">
+<h1 class="unnumbered">The HIPV SoC</h1>
+<section id="goal-for-this-week" class="level2" data-number="15.1">
+<h2 data-number="15.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">15.1</span> Goal for this week</h2>
+<ul>
+<li>Know the parts of the HIPV SoC and how they are connected</li>
+<li>Explain the memory-mapped I/O (MMIO) scheme and read the address map</li>
+<li>Follow an access of the processor to a device, from the <code>sw</code> instruction to the slave that it reaches</li>
+<li>Describe how the crossbar decodes addresses, arbitrates between the two masters, and routes the responses back</li>
+</ul>
+</section>
+<section id="introduction" class="level2" data-number="15.2">
+<h2 data-number="15.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">15.2</span> Introduction</h2>
+<section id="a-platform-for-learning" class="level3" data-number="15.2.1">
+<h3 data-number="15.2.1" class="anchored" data-anchor-id="a-platform-for-learning"><span class="header-section-number">15.2.1</span> A platform for learning</h3>
+<p>The SoC that we build in this chapter follows the spirit of the FPRO platform of Pong P. Chu, which the earlier generations of this course used. FPRO is <em>simple</em>, so that it is easy to use and understand. It is <em>portable</em>, because all its cores are developed from scratch and need no vendor IP. It is <em>functional</em>, which means that it can run real applications, although it is not as powerful as a commercial platform. And it is <em>educational</em>: it exists to be read and understood.</p>
+<p>HIPV SoC keeps these four properties, and it changes the three things that matter most. The processor is not a MicroBlaze, but our own HIPV core from the previous chapters, so we can see and change every part of it. The bus is not the FPRO bus, but OBI, which we described in the <a href="../chapters/07b-soc.html">previous chapter</a>. And the interconnect is a crossbar, not a single shared bus, so that an instruction fetch and a data access to different devices can proceed in the same cycles.</p>
+</section>
+<section id="the-parts-of-the-soc" class="level3" data-number="15.2.2">
+<h3 data-number="15.2.2" class="anchored" data-anchor-id="the-parts-of-the-soc"><span class="header-section-number">15.2.2</span> The parts of the SoC</h3>
+<div id="fig-hipv-soc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hipv-soc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/hipv-soc.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hipv-soc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.1: The HIPV SoC. The core has two OBI master ports. The crossbar connects them to five slaves. The slaves are described in the following chapters.
+</figcaption>
+</figure>
+</div>
+<p>The SoC has four kinds of parts (<a href="#fig-hipv-soc" class="quarto-xref">Figure&nbsp;<span>15.1</span></a>):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Part</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Processor</td>
+<td><code>hipv_core</code>, the RV32I core, with two OBI master ports: one for instructions, one for data</td>
+</tr>
+<tr class="even">
+<td>Interconnect</td>
+<td><code>obi_xbar</code>, the crossbar with the address decoder, the arbiter, and the routing of the responses</td>
+</tr>
+<tr class="odd">
+<td>Memory</td>
+<td>one RAM, which the interconnect shows to the processor through two windows, one for code and one for data</td>
+</tr>
+<tr class="even">
+<td>Peripherals</td>
+<td>a UART, a timer, and a GPIO block</td>
+</tr>
+</tbody>
+</table>
+<p>The top level, <code>hipv_soc</code>, is purely structural, like <code>hipv_core</code>. It instantiates these parts and connects them by name. Seen from the outside, the SoC has a clock, a synchronous reset, and the pins of its peripherals: the serial <code>Tx</code> and <code>Rx</code>, the <code>GpioIn</code> and <code>GpioOut</code> pins, and the compare-match output <code>TimerOverflow</code> of the timer.</p>
+<p>In this chapter we study the processor side and the interconnect. The memory and the peripherals are slaves of the interconnect, and each one gets its own chapter. Here we need them only as names and addresses.</p>
+</section>
+</section>
+<section id="memory-mapped-io" class="level2" data-number="15.3">
+<h2 data-number="15.3" class="anchored" data-anchor-id="memory-mapped-io"><span class="header-section-number">15.3</span> Memory-mapped I/O</h2>
+<section id="one-address-space" class="level3" data-number="15.3.1">
+<h3 data-number="15.3.1" class="anchored" data-anchor-id="one-address-space"><span class="header-section-number">15.3.1</span> One address space</h3>
+<p>How does a program talk to a UART, or switch on a pin? RV32I has no special input and output instructions. It has only loads and stores, and the answer is the <strong>memory-mapped I/O</strong> (MMIO) scheme. The memories and the I/O devices are placed in the same address space. The processor reads a register of a device with a load, and writes it with a store, exactly as it accesses a word of memory. It does not know the difference. The interconnect looks at the address and decides which part of the system answers.</p>
+<p>An I/O device is, from the programmer’s side, just a set of registers. Each register is mapped to its own address, and each one has a function, for example data to be sent, a configuration, or a status to be polled. Programming a device means reading and writing its registers.</p>
+<p>This has a nice consequence for the design. The processor needs nothing special for I/O. The load/store unit that we built in the <a href="../chapters/06e-lsu.html">LSU chapter</a> already does everything required. All the work of an MMIO scheme is in the interconnect.</p>
+</section>
+<section id="the-address-map" class="level3" data-number="15.3.2">
+<h3 data-number="15.3.2" class="anchored" data-anchor-id="the-address-map"><span class="header-section-number">15.3.2</span> The address map</h3>
+<p>The address map of the HIPV SoC assigns a region of the address space to each slave:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Slave</th>
+<th>Base</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>IMEM window</td>
+<td><code>0x0000_0000</code></td>
+<td>64 KiB</td>
+</tr>
+<tr class="even">
+<td>DMEM window</td>
+<td><code>0x1000_0000</code></td>
+<td>64 KiB</td>
+</tr>
+<tr class="odd">
+<td>UART</td>
+<td><code>0x2000_0000</code></td>
+<td>4 KiB</td>
+</tr>
+<tr class="even">
+<td>Timer</td>
+<td><code>0x2000_1000</code></td>
+<td>4 KiB</td>
+</tr>
+<tr class="odd">
+<td>GPIO</td>
+<td><code>0x2000_2000</code></td>
+<td>4 KiB</td>
+</tr>
+</tbody>
+</table>
+<p>The code starts at address 0, because the PC of the core is reset to <code>0x0000_0000</code>. The memory is shown through two windows, <code>IMEM</code> and <code>DMEM</code>, which are two slaves of the crossbar but alias the same physical RAM. We describe this in the chapter on memory. For now, it is enough to know that a program places its data well above its code, because a store to the first word of the data window would also overwrite the first instruction.</p>
+<p>The three peripherals sit together, each in its own 4 KiB region. The size of the region is far more than the few registers that a device has, and this is intentional. Regions of equal and generous size keep the decoding simple.</p>
+<p>All regions follow one rule: the size is a power of two, and the base is aligned to the size. Then the region is exactly the set of addresses that share their upper bits. A decoder does not have to check “greater than the base and smaller than the end”, it only compares the upper bits. We see the code of this in a moment.</p>
+</section>
+<section id="accessing-a-device-from-software" class="level3" data-number="15.3.3">
+<h3 data-number="15.3.3" class="anchored" data-anchor-id="accessing-a-device-from-software"><span class="header-section-number">15.3.3</span> Accessing a device from software</h3>
+<p>In C, a register is a pointer to a fixed address. The BSP of the SoC defines the registers of the devices with a macro:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define REG32</span><span class="op">(</span><span class="pp">addr</span><span class="op">)</span><span class="pp">  </span><span class="op">(*(</span><span class="dt">volatile</span><span class="pp"> </span><span class="dt">uint32_t</span><span class="pp"> </span><span class="op">*)(</span><span class="pp">addr</span><span class="op">))</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define GPIO_BASE    </span><span class="bn">0x20002000</span><span class="bu">u</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#define GPIO_OUT     </span>REG32<span class="op">(</span><span class="pp">GPIO_BASE </span><span class="op">+</span><span class="pp"> </span><span class="bn">0x00</span><span class="op">)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>GPIO_OUT <span class="op">=</span> <span class="bn">0xA5</span><span class="op">;</span>          <span class="co">// a store to 0x2000_2000</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The assignment compiles to a store, the same as for any variable:</p>
+<pre><code>lui  x10, 0x20002         # x10 = 0x2000_2000
+addi x5,  x0, 0xA5
+sw   x5,  0(x10)          # the interconnect sends it to the GPIO</code></pre>
+<p>The word <code>volatile</code> is essential. A normal variable can be kept in a register, and the compiler may remove a store whose value is never read back. A device register is different, because the store has an effect on the outside world, and the value that a load returns may change by itself. <code>volatile</code> tells the compiler that every access must really happen, and in the order of the program.</p>
+<p>Let us follow the <code>sw</code>. In the Memory stage, the ALU result <code>0x2000_2000</code> is the address, and the LSU starts an OBI write transaction on the data port. It sets <code>ObiDWe = 1</code> and <code>ObiDBe = 1111</code>, because <code>sw</code> writes a whole word, and it puts the data on <code>ObiDWdata</code>. Nothing in the request says that the target is a device. The interconnect takes the address, finds that it belongs to the GPIO region, and sends the request there.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Comparison with FPRO
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The FPRO bus used a 22-bit address that was split in fields. Its MMIO space had 64 slots with 32 registers each, and the slot number was decoded from the address bits. A read or a write had to finish within one clock cycle.</p>
+<p>In the HIPV SoC, the address is the full 32-bit address of the core. A slave owns a region, not a slot, and OBI lets it take as many cycles as it needs, because it answers with <code>gnt</code> and <code>rvalid</code> when it is ready. The price is a more capable interconnect, which is the subject of the rest of this chapter.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="the-processor" class="level2" data-number="15.4">
+<h2 data-number="15.4" class="anchored" data-anchor-id="the-processor"><span class="header-section-number">15.4</span> The processor</h2>
+<section id="two-masters" class="level3" data-number="15.4.1">
+<h3 data-number="15.4.1" class="anchored" data-anchor-id="two-masters"><span class="header-section-number">15.4.1</span> Two masters</h3>
+<p>The processor is the <code>hipv_core</code> module that we built in the previous chapters. For the SoC, what matters is its interface: a clock, a reset, and two OBI master ports. The <strong>instruction port</strong> belongs to the IFU. It only reads, and it fetches an instruction from the address of the PC. The <strong>data port</strong> belongs to the LSU. It reads for loads and writes for stores, and it uses the full request side of OBI with <code>we</code>, <code>be</code> and <code>wdata</code>.</p>
+<p>The crossbar numbers its masters, and the numbers are constants of the SoC package: <code>MASTER_D = 0</code> for the data port and <code>MASTER_I = 1</code> for the instruction port. The order is not an accident. The lowest index has the highest priority in the default arbitration, so data accesses win over instruction fetches. We return to this in the section on arbitration.</p>
+<p>The crossbar has the same ports for both masters, and the instruction master does not write. The top level therefore ties off the write side of the instruction port:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MWe[MASTER_I]             = <span class="bn">1'b0</span>;      <span class="co">// fetch never writes</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MBe[MASTER_I*<span class="dv">4</span> +: <span class="dv">4</span>]      = <span class="bn">4'b1111</span>;</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MWdata[MASTER_I*<span class="dv">32</span> +: <span class="dv">32</span>] = <span class="bn">32'b0</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The expression <code>[MASTER_I*4 +: 4]</code> is an indexed part select. It takes 4 bits that start at bit <code>MASTER_I*4</code>. The crossbar ports are <em>flattened</em>: master <code>m</code> occupies the bits <code>[m*32 +: 32]</code> of the address vector, bit <code>m</code> of the request, and so on. The reason is the coding standard of the project, which does not allow arrays of signals as module ports. Inside the crossbar, arrays are used freely.</p>
+<p>Both masters keep <strong>at most one transaction outstanding</strong>. The IFU and the LSU each wait for <code>rvalid</code> before they issue a new request. This is a property of the processor, and it matters for the interconnect, as we will see when we route the responses.</p>
+</section>
+<section id="what-the-processor-does-not-have-yet" class="level3" data-number="15.4.2">
+<h3 data-number="15.4.2" class="anchored" data-anchor-id="what-the-processor-does-not-have-yet"><span class="header-section-number">15.4.2</span> What the processor does not have yet</h3>
+<p>HIPV is a simple core, and the SoC reflects it. There are no traps and no interrupts. The instructions <code>ecall</code> and <code>ebreak</code> and the CSR instructions are decoded as no-operations. The compare-match output of the timer, <code>TimerOverflow</code>, is brought to the boundary of the SoC as the future machine-timer interrupt, but nothing consumes it yet. There is also no bus error path. An access to an address outside every region does not stop the core, and the interconnect returns zeros, as we describe below. Each of these is a natural extension of the design.</p>
+</section>
+</section>
+<section id="the-interconnect" class="level2" data-number="15.5">
+<h2 data-number="15.5" class="anchored" data-anchor-id="the-interconnect"><span class="header-section-number">15.5</span> The interconnect</h2>
+<section id="why-a-crossbar" class="level3" data-number="15.5.1">
+<h3 data-number="15.5.1" class="anchored" data-anchor-id="why-a-crossbar"><span class="header-section-number">15.5.1</span> Why a crossbar?</h3>
+<div id="fig-xbar-matrix" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-matrix-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-matrix.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-matrix-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.2: The crossbar as a matrix. A horizontal wire for each master, a vertical wire for each slave, and a crosspoint at every intersection. Only the filled crosspoints connect a master to a slave. Red marks the active paths. Left: the masters access different slaves, so both are connected at once. Right: both want the DMEM, so the arbiter connects only one.
+</figcaption>
+</figure>
+</div>
+<p>The core has two masters that work at the same time. The IFU fetches instructions continuously, and the LSU accesses data whenever a load or a store passes the Memory stage. On a shared bus, one of them would always have to wait while the other one uses the bus. A <strong>crossbar</strong> gives every master a path to every slave, so an instruction fetch and a load or a store to <em>different</em> slaves proceed in the same cycles. Only accesses to the <em>same</em> slave are serialized.</p>
+<p><a href="#fig-xbar-matrix" class="quarto-xref">Figure&nbsp;<span>15.2</span></a> shows why the structure is called a crossbar. Draw a wire for each master as a row and a wire for each slave as a column. Every intersection holds a <strong>crosspoint</strong>, a switch that can connect that master to that slave. A shared bus would have a single wire for everybody, so only one crosspoint could be on at any time. In the crossbar, any set of crosspoints can be on at once, as long as no row and no column has two of them. A master can be connected to only one slave at a time, because it has one transaction outstanding, and a slave can serve only one master at a time, because it handles one access at a time. On the left of the figure, the data master is connected to the GPIO and the instruction master to the IMEM, and the two transfers run in parallel. On the right, both masters want the DMEM. They would need two crosspoints in the same column, so the arbiter connects one, and the other waits.</p>
+<p>The crosspoints are not separate switches in the hardware. The matrix of the figure returns later as signals, in the section on selects, requests, and grants: the rows are <code>SlaveSel[m]</code>, and the columns are <code>SlaveReqM[s]</code>. A crosspoint is on when the arbiter of its slave grants its master.</p>
+<p>The price is hardware: each slave needs its own selection logic for its masters, and each master needs its own decoder. With two masters and five slaves, this is small. The crossbar is combinational logic. The path from the request of a master to the port of a slave, and the grant and the response on the way back, pass through the decoder, the arbiter and the multiplexers within the same clock cycle. The crossbar therefore adds no pipeline stage and no extra cycle to an access. Only a few registers hold its state: which slaves are busy, and which slave owes each master a response.</p>
+</section>
+<section id="structure" class="level3" data-number="15.5.2">
+<h3 data-number="15.5.2" class="anchored" data-anchor-id="structure"><span class="header-section-number">15.5.2</span> Structure</h3>
+<div id="fig-xbar" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.3: Inside <code>obi_xbar</code>. Each master has a decoder, and its slave select is distributed to every slave. Each slave has an arbiter that picks one requesting master, and a multiplexer that passes the address phase of the winner. The pending slave registers route the responses back.
+</figcaption>
+</figure>
+</div>
+<p>The crossbar, <code>obi_xbar</code>, has the two phases of OBI built into its structure (<a href="#fig-xbar" class="quarto-xref">Figure&nbsp;<span>15.3</span></a>).</p>
+<p>In the <strong>address phase</strong>, each master has a <strong>decoder</strong> that turns the address into a one-hot slave select. For each slave, an <strong>arbiter</strong> collects the masters that want this slave, and picks one. A <strong>request multiplexer</strong> then passes the address, <code>we</code>, <code>be</code> and <code>wdata</code> of the winner to the slave port, and the grant goes back to the winner.</p>
+<p>In the <strong>response phase</strong>, OBI has no transaction ID, so the crossbar must remember where the response will come from. Each master has a pair of <strong>pending slave registers</strong> that record which slave owes it an answer.</p>
+<p>Besides these, there is an internal <strong>error responder</strong> for the addresses that belong to no slave.</p>
+</section>
+<section id="address-decoding" class="level3" data-number="15.5.3">
+<h3 data-number="15.5.3" class="anchored" data-anchor-id="address-decoding"><span class="header-section-number">15.5.3</span> Address decoding</h3>
+<p>The decoder <code>obi_decoder</code> is purely combinational, and there is one instance for each master. A region is a block of addresses that share their upper bits, so the decoder compares only the upper bits of the address with the same bits of the base:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">int</span> <span class="kw">unsigned</span> MEM_LSB    = <span class="dv">16</span>;  <span class="co">// memories are 64 KiB: compare Addr[31:16]</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">localparam</span> <span class="kw">int</span> <span class="kw">unsigned</span> PERIPH_LSB = <span class="dv">12</span>;  <span class="co">// peripherals are 4 KiB: compare Addr[31:12]</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    SlaveSel = '<span class="dv">0</span>;</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    SlaveSel[SLAVE_IMEM]  = (Addr[<span class="dv">31</span>:MEM_LSB]    == IMEM_BASE[<span class="dv">31</span>:MEM_LSB]);</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    SlaveSel[SLAVE_DMEM]  = (Addr[<span class="dv">31</span>:MEM_LSB]    == DMEM_BASE[<span class="dv">31</span>:MEM_LSB]);</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    SlaveSel[SLAVE_UART]  = (Addr[<span class="dv">31</span>:PERIPH_LSB] == UART_BASE[<span class="dv">31</span>:PERIPH_LSB]);</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    SlaveSel[SLAVE_TIMER] = (Addr[<span class="dv">31</span>:PERIPH_LSB] == TIMER_BASE[<span class="dv">31</span>:PERIPH_LSB]);</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    SlaveSel[SLAVE_GPIO]  = (Addr[<span class="dv">31</span>:PERIPH_LSB] == GPIO_BASE[<span class="dv">31</span>:PERIPH_LSB]);</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> DecErr = ~|SlaveSel;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The two constants say how many address bits are <em>not</em> compared. A 64 KiB memory has 2^16 byte addresses, so its lowest 16 bits are the <strong>offset</strong> inside the region, and the decoder compares <code>Addr[31:16]</code>. A 4 KiB peripheral has a 12-bit offset, so the decoder compares <code>Addr[31:12]</code>. The name <code>LSB</code> is the index of the lowest bit that is compared. The offset bits are not decoded at all. The slave receives the full address and uses the offset to choose one of its own registers or words.</p>
+<p>Take the address <code>0x2000_2008</code>. Its bits 31:12 are <code>0x20002</code>. For the GPIO, <code>GPIO_BASE[31:12]</code> is also <code>0x20002</code>, so the select of the GPIO is 1. For the UART, <code>UART_BASE[31:12]</code> is <code>0x20000</code>, which does not match, and the same holds for all the other slaves. Because the regions do not overlap, at most one select is 1, which is the <strong>one-hot</strong> property that the rest of the crossbar relies on. If the address matches no region, all selects are 0, and <code>DecErr</code> is 1.</p>
+<p>This is why the regions must be power-of-two sized and aligned to their size. Only then is a region exactly the set of addresses with the same upper bits, and one equality comparator for each region is enough. A range check would need two comparisons, a greater-than and a less-than.</p>
+<p>The widths in the decoder and the sizes in the package describe the same fact twice, and if somebody changes one and forgets the other, the decoder would silently select the wrong addresses. The decoder therefore checks them when the design is built:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (IMEM_SIZE != <span class="bn">32'd1</span> &lt;&lt; MEM_LSB || DMEM_SIZE != <span class="bn">32'd1</span> &lt;&lt; MEM_LSB) <span class="kw">begin :</span><span class="dt"> </span><span class="kw">gen_check_mem</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$error</span>(<span class="st">"memory region size does not match MEM_LSB"</span>);</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This is a <code>generate if</code>, which we met in the <a href="../chapters/05-sv-design.html">chapter on SystemVerilog design</a>. Its condition is made of constants, so the tool evaluates it during elaboration, and no hardware is created. If the condition is true, the tool stops with the message. A similar check covers the three peripherals and <code>PERIPH_LSB</code>.</p>
+<p>The address map lives in one place, the package <code>hipv_soc_pkg</code>, together with the indices of the masters and slaves. The decoder and the crossbar take the number of slaves from there, so adding a slave to the package resizes them automatically. Adding a slave also needs one more line in the match block of the decoder.</p>
+</section>
+<section id="sec-xbar-arrays" class="level3" data-number="15.5.4">
+<h3 data-number="15.5.4" class="anchored" data-anchor-id="sec-xbar-arrays"><span class="header-section-number">15.5.4</span> Selects, requests, and grants</h3>
+<div id="fig-xbar-arrays" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-arrays-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-arrays.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-arrays-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.4: <code>SlaveSel</code> and <code>SlaveReqM</code> hold the same bits, seen from two sides. <code>SlaveSel[m]</code> has a row for each master, with one bit per slave. <code>SlaveReqM[s]</code> has a row for each slave, with one bit per master. Here the data master stores to the GPIO and the instruction master fetches from the IMEM.
+</figcaption>
+</figure>
+</div>
+<p>Three arrays carry the address phase through the crossbar. They are declared as follows:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [NUM_SLAVES<span class="dv">-1</span>:<span class="dv">0</span>]  SlaveSel[NUM_MASTERS];   <span class="co">// one-hot, per master</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [NUM_MASTERS<span class="dv">-1</span>:<span class="dv">0</span>] SlaveReqM[NUM_SLAVES];   <span class="co">// requests per slave</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [NUM_MASTERS<span class="dv">-1</span>:<span class="dv">0</span>] GrantM[NUM_SLAVES];      <span class="co">// one-hot grant per slave</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Each declaration is an <strong>array of vectors</strong>. The part before the name is the vector, and the part after the name is the array. So <code>SlaveSel[NUM_MASTERS]</code> is an array with one element for each master, and each element is a vector of <code>NUM_SLAVES</code> bits. <code>SlaveSel[m]</code> is the whole vector of master <code>m</code>, and <code>SlaveSel[m][s]</code> is one bit of it. The indices are the constants of <code>hipv_soc_pkg</code>, such as <code>MASTER_D = 0</code> and <code>SLAVE_GPIO = 4</code>. When we write a vector as a number, the bit 0 is on the right.</p>
+<p><strong><code>SlaveSel[m]</code> says where master <code>m</code> wants to go.</strong> It is the output of the decoder of that master, one-hot, with one bit for each slave. If the address of master <code>m</code> is in the region of the GPIO, then only bit <code>SLAVE_GPIO</code> is set. If the address belongs to no region, no bit is set.</p>
+<p><strong><code>SlaveReqM[s]</code> says who asks slave <code>s</code>.</strong> It is the same information seen from the other side, one bit for each master. Bit <code>m</code> is set when master <code>m</code> is really requesting, selects this slave, and has a mapped address:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  SlaveReqM[<span class="kw">s</span>][m] = MReq[m] &amp; SlaveSel[m][<span class="kw">s</span>] &amp; ~DecErr[m];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The array turns the per-master view into a per-slave view. The decoder works per master, because an address belongs to one master. The arbiter works per slave, because it chooses between the masters that want that slave. The transposition connects the two. The terms <code>MReq</code> and <code>~DecErr</code> remove masters that are idle, because the address of an idle master may hold any old value, and masters with an unmapped address, which the error responder serves.</p>
+<p><strong><code>GrantM[s]</code> says who wins slave <code>s</code>.</strong> It is the one-hot output of the arbiter of slave <code>s</code>, which takes <code>SlaveReqM[s]</code> as its request vector. Its bit <code>m</code> selects master <code>m</code> in the request multiplexer of slave <code>s</code>, and so the address, <code>we</code>, <code>be</code> and <code>wdata</code> of the winner reach the slave. If nobody asks the slave, <code>GrantM[s]</code> is all zeros. A grant is a decision of the arbiter and not yet a transaction. The request really goes out only when the slave is not busy: <code>SReq[s] = |SlaveReqM[s] &amp; ~SlaveBusy[s]</code>.</p>
+<p>Three examples show the values. We write each vector with master 0 and slave 0 on the right.</p>
+<p><strong>Example 1: no contention.</strong> The data master stores to <code>0x2000_2000</code>, and the instruction master fetches from <code>0x0000_0040</code>. Both are valid requests.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Value</th>
+<th>Reading</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SlaveSel[MASTER_D]</code></td>
+<td><code>5'b10000</code></td>
+<td>bit 4, the GPIO</td>
+</tr>
+<tr class="even">
+<td><code>SlaveSel[MASTER_I]</code></td>
+<td><code>5'b00001</code></td>
+<td>bit 0, the IMEM</td>
+</tr>
+<tr class="odd">
+<td><code>SlaveReqM[SLAVE_GPIO]</code></td>
+<td><code>2'b01</code></td>
+<td>only the data master asks</td>
+</tr>
+<tr class="even">
+<td><code>SlaveReqM[SLAVE_IMEM]</code></td>
+<td><code>2'b10</code></td>
+<td>only the instruction master asks</td>
+</tr>
+<tr class="odd">
+<td><code>SlaveReqM</code> of the other slaves</td>
+<td><code>2'b00</code></td>
+<td>nobody asks</td>
+</tr>
+<tr class="even">
+<td><code>GrantM[SLAVE_GPIO]</code></td>
+<td><code>2'b01</code></td>
+<td>the data master wins</td>
+</tr>
+<tr class="odd">
+<td><code>GrantM[SLAVE_IMEM]</code></td>
+<td><code>2'b10</code></td>
+<td>the instruction master wins</td>
+</tr>
+</tbody>
+</table>
+<p>This is <a href="#fig-xbar-arrays" class="quarto-xref">Figure&nbsp;<span>15.4</span></a>. Each slave has exactly one requester, so each arbiter has nothing to decide, and both transactions start in the same cycle. <a href="#fig-xbar-ex1" class="quarto-xref">Figure&nbsp;<span>15.5</span></a> draws the same cycle as a crossbar, with the signals under the slave wires. Both crosspoints are filled, because the grants are 1 and the requests go out.</p>
+<div id="fig-xbar-ex1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-ex1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-ex1.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-ex1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.5: Example 1 as a crossbar. The data master is connected to the GPIO and the instruction master to the IMEM. Filled crosspoint: connected (<code>GrantM</code> and <code>SReq</code> are 1). Dashed ring: the master requests the slave but is not connected.
+</figcaption>
+</figure>
+</div>
+<p><strong>Example 2: contention.</strong> Both masters access the DMEM, as in <a href="#fig-xbar-contention" class="quarto-xref">Figure&nbsp;<span>15.11</span></a>. Both decoders produce the same select, and the requests of the slave have two bits set:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Value</th>
+<th>Reading</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SlaveSel[MASTER_D]</code>, <code>SlaveSel[MASTER_I]</code></td>
+<td><code>5'b00010</code></td>
+<td>both select bit 1, the DMEM</td>
+</tr>
+<tr class="even">
+<td><code>SlaveReqM[SLAVE_DMEM]</code></td>
+<td><code>2'b11</code></td>
+<td>both masters ask</td>
+</tr>
+<tr class="odd">
+<td><code>GrantM[SLAVE_DMEM]</code> in cycle 1</td>
+<td><code>2'b01</code></td>
+<td>fixed priority: the lowest index, the data master</td>
+</tr>
+<tr class="even">
+<td><code>GrantM[SLAVE_DMEM]</code> in cycle 2</td>
+<td><code>2'b10</code></td>
+<td>the data master is done, only the instruction master asks</td>
+</tr>
+</tbody>
+</table>
+<p>In cycle 2 the grant already names the instruction master, but <code>SReq</code> of the DMEM is still 0, because the slave is busy with the first access. The grant becomes a transaction in cycle 3. This is the difference between a decision of the arbiter and a request that goes out.</p>
+<p><a href="#fig-xbar-ex2a" class="quarto-xref">Figure&nbsp;<span>15.6</span></a> and <a href="#fig-xbar-ex2b" class="quarto-xref">Figure&nbsp;<span>15.7</span></a> show the two cycles. In cycle 1 the instruction master has the dashed ring: it asks for the DMEM, and the arbiter has not chosen it. In cycle 2 the data master no longer requests, so its row has no crosspoint, although <code>SlaveSel[MASTER_D]</code> still holds the decoded old address. The mask <code>MReq</code> removes it from <code>SlaveReqM</code>. The instruction master now has the grant, but the ring stays dashed, because <code>SReq</code> is 0.</p>
+<div id="fig-xbar-ex2a" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-ex2a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-ex2a.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-ex2a-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.6: Example 2, cycle 1. Both masters ask for the DMEM, and the arbiter connects the data master. Filled crosspoint: connected (<code>GrantM</code> and <code>SReq</code> are 1). Dashed ring: the master requests the slave but is not connected.
+</figcaption>
+</figure>
+</div>
+<div id="fig-xbar-ex2b" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-ex2b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-ex2b.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-ex2b-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.7: Example 2, cycle 2. The grant names the instruction master, but the DMEM is busy, so nobody is connected. Filled crosspoint: connected (<code>GrantM</code> and <code>SReq</code> are 1). Dashed ring: the master requests the slave but is not connected.
+</figcaption>
+</figure>
+</div>
+<p><strong>Example 3: an unmapped address.</strong> The data master reads <code>0x8000_0000</code>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Value</th>
+<th>Reading</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SlaveSel[MASTER_D]</code></td>
+<td><code>5'b00000</code></td>
+<td>no region matches</td>
+</tr>
+<tr class="even">
+<td><code>DecErr[MASTER_D]</code></td>
+<td><code>1</code></td>
+<td>the error responder takes over</td>
+</tr>
+<tr class="odd">
+<td><code>SlaveReqM</code> of every slave</td>
+<td><code>2'b00</code></td>
+<td><code>~DecErr</code> removed the request</td>
+</tr>
+</tbody>
+</table>
+<p>No slave sees the request, and no arbiter grants anything.</p>
+<div id="fig-xbar-ex3" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-ex3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/xbar-ex3.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-ex3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.8: Example 3. The address matches no region, so the whole matrix is empty and the error responder answers.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="arbitration" class="level3" data-number="15.5.5">
+<h3 data-number="15.5.5" class="anchored" data-anchor-id="arbitration"><span class="header-section-number">15.5.5</span> Arbitration</h3>
+<div id="fig-arbiter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-arbiter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/arbiter.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-arbiter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.9: The arbiter of HIPV is a priority encoder without state (top). Round robin (bottom) is a common alternative. It masks the masters below a pointer, falls back to the whole request vector when none is left, and moves the pointer past the master that was granted. HIPV does not implement it.
+</figcaption>
+</figure>
+</div>
+<div id="fig-arb-policies" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-arb-policies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/arb_policies.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-arb-policies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.10: The same requests under fixed priority, which HIPV uses, and under round robin, for an arbiter with three masters whose slave accepts one request per cycle. Fixed priority grants master 0 forever. Round robin shares the slave, and gives master 2 a turn as soon as it asks.
+</figcaption>
+</figure>
+</div>
+<p>The decoders say what each master wants. If both masters want the same slave in the same cycle, somebody has to choose. For every slave, the request vector contains one bit per master, set when that master is requesting, targets this slave, and the address is mapped:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  SlaveReqM[<span class="kw">s</span>][i] = MReq[i] &amp; SlaveSel[i][<span class="kw">s</span>] &amp; ~DecErr[i];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>An <code>obi_arbiter</code> takes this vector and returns a one-hot <code>Grant</code>. HIPV uses <strong>fixed priority</strong>: the requesting master with the lowest index always wins. The module has no clock and no state, only the number of masters as a parameter:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> obi_arbiter #(<span class="kw">parameter</span> NUM_MASTERS = <span class="dv">2</span>) (</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">input</span>  <span class="kw">logic</span> [NUM_MASTERS<span class="dv">-1</span>:<span class="dv">0</span>] Req,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">output</span> <span class="kw">logic</span> [NUM_MASTERS<span class="dv">-1</span>:<span class="dv">0</span>] Grant);</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="co">// scan from the highest index down so the lowest set bit wins last</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    Grant = '<span class="dv">0</span>;</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (<span class="kw">int</span> i = NUM_MASTERS - <span class="dv">1</span>; i &gt;= <span class="dv">0</span>; i--)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> (Req[i]) <span class="kw">begin</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        Grant    = '<span class="dv">0</span>;</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        Grant[i] = <span class="bn">1'b1</span>;</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>      <span class="kw">end</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The block starts with the default <code>Grant = '0</code>, so an empty request vector gives an empty grant. Then the loop visits the masters from the highest index down to 0. Every time it finds a set bit <code>Req[i]</code>, it first clears <code>Grant</code>, and then sets only bit <code>i</code>. The clearing matters, because an earlier iteration, for a higher index, may already have set another bit. The loop goes downwards on purpose. The visit of the lowest index comes last, so its assignment overwrites all the earlier ones, and the lowest set bit wins.</p>
+<p>Three requests show the behavior, with three masters:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>Req</code></th>
+<th>Visits</th>
+<th>Result <code>Grant</code></th>
+<th>Winner</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>3'b000</code></td>
+<td>no bit is set</td>
+<td><code>3'b000</code></td>
+<td>nobody</td>
+</tr>
+<tr class="even">
+<td><code>3'b110</code></td>
+<td><code>i = 2</code> sets <code>Grant = 100</code>, <code>i = 1</code> sets <code>Grant = 010</code>, <code>i = 0</code> does nothing</td>
+<td><code>3'b010</code></td>
+<td>master 1</td>
+</tr>
+<tr class="odd">
+<td><code>3'b111</code></td>
+<td><code>i = 2</code>, <code>i = 1</code> and <code>i = 0</code> all assign, the last one stays</td>
+<td><code>3'b001</code></td>
+<td>master 0</td>
+</tr>
+</tbody>
+</table>
+<p>In the SoC, with two masters, <code>2'b11</code> gives <code>2'b01</code>: the data master, which has index 0, wins over the instruction master. Because <code>MASTER_D</code> is index 0, the order of the indices in the package is the priority.</p>
+<p>The loop does not run in time. The block describes combinational logic, and the synthesis tool unrolls the loop, since <code>NUM_MASTERS</code> is a constant. The result is a chain of multiplexers, in which a request of a lower index overrides the choice of all the higher ones. This is a <strong>priority encoder</strong>, written as a loop so that it works for any number of masters.</p>
+<p>The price of fixed priority is <strong>starvation</strong>. If the master with the lowest index requests all the time, the others never get the slave. In <a href="#fig-arb-policies" class="quarto-xref">Figure&nbsp;<span>15.10</span></a> master 0 and master 1 both request from cycle 2 on, and master 2 requests in cycles 6 to 9. Under fixed priority, master 0 is granted in every cycle, and masters 1 and 2 never get the slave. In this SoC it is not a practical problem, because the LSU issues at most one transaction per instruction, so the fetch always finds gaps.</p>
+<p>The usual alternative is <strong>round robin</strong>, shown at the bottom of <a href="#fig-arbiter" class="quarto-xref">Figure&nbsp;<span>15.9</span></a> and in the lower rows of <a href="#fig-arb-policies" class="quarto-xref">Figure&nbsp;<span>15.10</span></a>. It is not part of the SoC, but it shows what fixed priority gives up. The round robin arbiter keeps a pointer <code>Ptr</code> to the master that has priority in this round. It first masks out the masters below the pointer and finds the lowest set bit of what is left. If no master at or above the pointer is requesting, it wraps around and takes the lowest set bit of the whole request vector. When a grant is really taken, the pointer moves past the master that was served. In the figure the grants alternate between masters 0 and 1, master 2 is served as soon as it asks in cycle 6, and when it stops requesting, the arbiter goes back to masters 0 and 1. The price is a register for the pointer and an update signal for each slave. Other policies exist as well, such as weighted round robin, where a master gets several turns per round, or time-division schemes with fixed slots. Each of them replaces only the logic that chooses the winner, and the rest of the crossbar stays as it is. The figure shows the arbiter alone, with a slave that accepts one request per cycle. In the SoC, <code>SlaveBusy</code> also spaces the grants out in time, but the order of the grants is the same.</p>
+<p>The request of the slave is the OR of the requests of the masters, with one more condition:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> SReq[<span class="kw">s</span>] = |SlaveReqM[<span class="kw">s</span>] &amp; ~SlaveBusy[<span class="kw">s</span>];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>SlaveBusy[s]</code> is a register that the crossbar sets when a request is granted and clears when the slave answers. While it is set, the crossbar does not present a second request to the slave. The slaves of this SoC handle one access at a time, and this is why two masters that access the same slave are serialized.</p>
+</section>
+<section id="routing-the-responses" class="level3" data-number="15.5.6">
+<h3 data-number="15.5.6" class="anchored" data-anchor-id="routing-the-responses"><span class="header-section-number">15.5.6</span> Routing the responses</h3>
+<p>OBI separates the address phase from the response phase, and the response carries no ID. When a slave raises <code>rvalid</code>, the crossbar has to know which master the response belongs to. So at the moment of the grant, it records the answer in two registers per master:</p>
+<ul>
+<li><code>PendValid[m]</code> says that master <code>m</code> waits for a response.</li>
+<li><code>PendSlave[m]</code> says which slave owes it.</li>
+</ul>
+<p>The response is then routed by these two registers:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MRvalid[m] = (PendValid[m] &amp; SRvalid[PendSlave[m]]) | ErrPend[m];</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> MRdata[m*<span class="dv">32</span> +: <span class="dv">32</span>] = ErrPend[m] ? <span class="bn">32'b0</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                         : SRdata[PendSlave[m]*<span class="dv">32</span> +: <span class="dv">32</span>];</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The expression <code>SRvalid[PendSlave[m]]</code> selects the valid signal of the slave that master <code>m</code> is waiting for, and <code>SRdata[PendSlave[m]*32 +: 32]</code> selects the data of the same slave. This is the read data multiplexer from the general bus structure of the <a href="../chapters/07b-soc.html">previous chapter</a>, controlled not by the current address, but by a register that was loaded when the request was granted. It has to work this way, because the address has long since changed when the response arrives.</p>
+<p>This scheme is correct only because each master has at most one transaction outstanding. It is the main structural assumption of the interconnect. If we added a prefetch buffer with several fetches in flight, <code>PendSlave</code> would have to become a FIFO for each master, and responses from different slaves would have to be put back in order. That is a design step, not a small change.</p>
+</section>
+<section id="two-masters-one-slave" class="level3" data-number="15.5.7">
+<h3 data-number="15.5.7" class="anchored" data-anchor-id="two-masters-one-slave"><span class="header-section-number">15.5.7</span> Two masters, one slave</h3>
+<div id="fig-xbar-contention" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-xbar-contention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/xbar_contention.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-xbar-contention-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15.11: Both masters read the DMEM window in the same cycle. The crossbar grants the data master first and the instruction master two cycles later, and routes each response to the master that asked.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-xbar-contention" class="quarto-xref">Figure&nbsp;<span>15.11</span></a> puts the three mechanisms together. Both masters read the DMEM slave, and every slave in this trace answers in one cycle.</p>
+<ol type="1">
+<li><strong>Cycle 1.</strong> Both masters request, and both decoders select the DMEM. The arbiter picks the data master, because of its higher priority. Its request goes to the slave, which grants it. The instruction master keeps waiting with <code>MReq</code> high and no grant.</li>
+<li><strong>Cycle 2.</strong> The slave answers with <code>SRvalid</code>. The pending slave register of the data master says that the DMEM owes it a response, so <code>MRvalid</code> of the data master rises. Meanwhile <code>SlaveBusy</code> is set, which blocks the request of the instruction master.</li>
+<li><strong>Cycle 3.</strong> The slave has answered, <code>SlaveBusy</code> is clear, and the arbiter grants the instruction master.</li>
+<li><strong>Cycle 4.</strong> The slave answers the second access, and the response goes to the instruction master.</li>
+</ol>
+<p>Two accesses to the same slave took four cycles, two for each. If the masters had targeted different slaves, both transactions would have started in cycle 1 and both would have been answered in cycle 2, which is the concurrency that we wanted from the crossbar.</p>
+</section>
+<section id="unmapped-addresses" class="level3" data-number="15.5.8">
+<h3 data-number="15.5.8" class="anchored" data-anchor-id="unmapped-addresses"><span class="header-section-number">15.5.8</span> Unmapped addresses</h3>
+<p>What happens when a program accesses an address that belongs to no slave? A bus that waits for a slave that does not exist would hang, and a hung simulation is much harder to diagnose than a wrong value. The crossbar therefore has an internal <strong>error responder</strong>. When <code>DecErr</code> is 1 for a requesting master, the crossbar grants the request immediately, without involving any slave, and one cycle later it delivers <code>rvalid</code> with zero read data. The master cannot tell this from a real grant and a real response, only the value is zero. The bus never hangs, and a stray load returns zero.</p>
+<p>OBI has an <code>err</code> signal for this purpose, and a natural extension is to route it to the core and to turn it into a load/store fault. As we said above, the processor has no traps yet, so for now the zero is all that the program sees.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="15.6">
+<h2 data-number="15.6" class="anchored" data-anchor-id="summary"><span class="header-section-number">15.6</span> Summary</h2>
+<p>The HIPV SoC joins the HIPV core with a crossbar, one RAM and three peripherals. It follows the idea of the FPRO platform, a small and readable SoC, but with our own processor and the OBI protocol.</p>
+<p>The SoC uses memory-mapped I/O. Memories and devices share one address space, a device is a set of registers, and the program reaches them with ordinary loads and stores. The processor needs no special support, and all the work is done by the interconnect, which decides from the address who answers.</p>
+<p>The processor has two OBI masters, the LSU on the data port and the IFU on the instruction port. The crossbar connects them to five slaves. A decoder for each master matches the upper bits of the address against the regions of the address map. An arbiter for each slave chooses between the masters that want it. Pending slave registers remember where each response must go, because OBI responses carry no ID, and an error responder answers the addresses that belong to no slave, so the bus cannot hang.</p>
+<p>In the next chapters we describe the slaves behind the crossbar, starting with the memory.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/07b-soc.html" class="pagination-link" aria-label="System on chip design">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/08-memory.html" class="pagination-link" aria-label="Memory — Implementation in SystemVerilog">
+        <span class="nav-page-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

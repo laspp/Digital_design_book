@@ -407,20 +407,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/07b-soc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07c-hipv-soc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../references.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">References</span></span></a>
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">References</span></span></a>
   </div>
 </li>
     </ul>
@@ -454,15 +466,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#in-sequential-logic" id="toc-in-sequential-logic" class="nav-link" data-scroll-target="#in-sequential-logic"><span class="header-section-number">5.14.2</span> In sequential logic</a></li>
   <li><a href="#the-rule" id="toc-the-rule" class="nav-link" data-scroll-target="#the-rule"><span class="header-section-number">5.14.3</span> The rule</a></li>
   </ul></li>
-  <li><a href="#structural-design-module-instances" id="toc-structural-design-module-instances" class="nav-link" data-scroll-target="#structural-design-module-instances"><span class="header-section-number">5.15</span> Structural design: module instances</a>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">5.15</span> Functions</a></li>
+  <li><a href="#structural-design-module-instances" id="toc-structural-design-module-instances" class="nav-link" data-scroll-target="#structural-design-module-instances"><span class="header-section-number">5.16</span> Structural design: module instances</a>
   <ul class="collapse">
-  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters"><span class="header-section-number">5.15.1</span> Parameters</a></li>
-  <li><a href="#a-real-example-the-program-counter-of-hipv" id="toc-a-real-example-the-program-counter-of-hipv" class="nav-link" data-scroll-target="#a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.15.2</span> A real example: the program counter of HIPV</a></li>
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters"><span class="header-section-number">5.16.1</span> Parameters</a></li>
+  <li><a href="#a-real-example-the-program-counter-of-hipv" id="toc-a-real-example-the-program-counter-of-hipv" class="nav-link" data-scroll-target="#a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.16.2</span> A real example: the program counter of HIPV</a></li>
+  <li><a href="#generate-many-copies-of-a-structure" id="toc-generate-many-copies-of-a-structure" class="nav-link" data-scroll-target="#generate-many-copies-of-a-structure"><span class="header-section-number">5.16.3</span> Generate: many copies of a structure</a></li>
   </ul></li>
-  <li><a href="#testbenches" id="toc-testbenches" class="nav-link" data-scroll-target="#testbenches"><span class="header-section-number">5.16</span> Testbenches</a></li>
-  <li><a href="#testbench-for-a-sequential-design" id="toc-testbench-for-a-sequential-design" class="nav-link" data-scroll-target="#testbench-for-a-sequential-design"><span class="header-section-number">5.17</span> Testbench for a sequential design</a></li>
-  <li><a href="#running-a-simulation" id="toc-running-a-simulation" class="nav-link" data-scroll-target="#running-a-simulation"><span class="header-section-number">5.18</span> Running a simulation</a></li>
-  <li><a href="#from-design-to-the-pipeline" id="toc-from-design-to-the-pipeline" class="nav-link" data-scroll-target="#from-design-to-the-pipeline"><span class="header-section-number">5.19</span> From design to the pipeline</a></li>
+  <li><a href="#testbenches" id="toc-testbenches" class="nav-link" data-scroll-target="#testbenches"><span class="header-section-number">5.17</span> Testbenches</a></li>
+  <li><a href="#testbench-for-a-sequential-design" id="toc-testbench-for-a-sequential-design" class="nav-link" data-scroll-target="#testbench-for-a-sequential-design"><span class="header-section-number">5.18</span> Testbench for a sequential design</a></li>
+  <li><a href="#running-a-simulation" id="toc-running-a-simulation" class="nav-link" data-scroll-target="#running-a-simulation"><span class="header-section-number">5.19</span> Running a simulation</a></li>
+  <li><a href="#from-design-to-the-pipeline" id="toc-from-design-to-the-pipeline" class="nav-link" data-scroll-target="#from-design-to-the-pipeline"><span class="header-section-number">5.20</span> From design to the pipeline</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -500,6 +514,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Know what a latch is, and write code that cannot produce one by accident</li>
 <li>Describe combinational logic with <code>always_comb</code>: multiplexers and decoders</li>
 <li>Explain the difference between <code>=</code> and <code>&lt;=</code>, and why each block uses one of them</li>
+<li>Package a combinational calculation in a function, and replicate hardware with <code>generate</code></li>
 <li>Assemble a design from smaller modules, and test it with a testbench</li>
 </ul>
 </section>
@@ -978,27 +993,91 @@ Figure&nbsp;5.15: Two registers in a chain: with blocking assignment <code>f1</c
 <p><code>=</code> for combinational logic, <code>&lt;=</code> for clocked logic, every time. Do not mix the two in one block.</p>
 </section>
 </section>
-<section id="structural-design-module-instances" class="level2" data-number="5.15">
-<h2 data-number="5.15" class="anchored" data-anchor-id="structural-design-module-instances"><span class="header-section-number">5.15</span> Structural design: module instances</h2>
+<section id="functions" class="level2" data-number="5.15">
+<h2 data-number="5.15" class="anchored" data-anchor-id="functions"><span class="header-section-number">5.15</span> Functions</h2>
+<p>When the same calculation appears several times in a module, or when an expression becomes too long to read, we give it a name. In SystemVerilog, this is a <strong>function</strong>: a piece of combinational logic that takes some inputs and returns one value. Here is the sign extension of a 12-bit immediate, which the decoder of HIPV does for I-type instructions:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="kw">automatic</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] sign_ext12(<span class="kw">input</span> <span class="kw">logic</span> [<span class="dv">11</span>:<span class="dv">0</span>] x);</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> {{<span class="dv">20</span>{x[<span class="dv">11</span>]}}, x};</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> ImmExtD = sign_ext12(InstrD[<span class="dv">31</span>:<span class="dv">20</span>]);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>A function has four parts. The keyword <code>automatic</code> says that every call has its own copy of the variables, which is the safe choice and the one we always use. The <strong>return type</strong>, here <code>logic [31:0]</code>, gives the width of the result. The <strong>inputs</strong> are declared like the ports of a module. The body ends with <code>return</code>, which gives the value. The function is then called inside an expression, like an operator, in an <code>assign</code>, in an <code>always_comb</code> block, or in the condition of an <code>if</code>.</p>
+<p>Here is a second function, for an address decoder. The decoder that we wrote earlier in this chapter compared a different slice of the address with a different constant for every region. With a function, we can write the comparison once, and give it the base address and the size of the region:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="kw">automatic</span> <span class="kw">logic</span> in_region(<span class="kw">input</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] A, Base, Size);</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> (A &amp; ~(Size - <span class="bn">32'd1</span>)) == Base;</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> SlaveSel[SLAVE_UART] = in_region(Addr, UART_BASE, UART_SIZE);</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> SlaveSel[SLAVE_GPIO] = in_region(Addr, GPIO_BASE, GPIO_SIZE);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The size is a power of two, so <code>Size - 1</code> is a mask of ones in the lower bits, and its complement keeps the upper bits of the address. A region matches when these upper bits equal the base. The function is written once, and each call with different constants becomes its own comparator. (The decoder of the HIPV crossbar, which we meet in the chapter on the SoC, makes the same comparison without a function. It compares slices such as <code>Addr[31:12]</code> directly, because there are only five regions. A function pays off when the same calculation appears many times.)</p>
+<p>A function can also contain a loop. This one finds the lowest set bit of a vector and returns it as a one-hot vector, which is what the arbiter of the HIPV crossbar does:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="kw">automatic</span> <span class="kw">logic</span> [N<span class="dv">-1</span>:<span class="dv">0</span>] lowest_set(<span class="kw">input</span> <span class="kw">logic</span> [N<span class="dv">-1</span>:<span class="dv">0</span>] R);</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [N<span class="dv">-1</span>:<span class="dv">0</span>] Y;</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  Y = '<span class="dv">0</span>;</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">for</span> (<span class="kw">int</span> i = N - <span class="dv">1</span>; i &gt;= <span class="dv">0</span>; i--)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> (R[i]) Y = (<span class="dv">1</span> &lt;&lt; i);</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">return</span> Y;</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The loop does not run in time, as it would in a program. Because <code>N</code> is a constant, the tool unrolls it and builds a chain of multiplexers in which a lower index overrides all the higher ones. The loop only makes it possible to write this priority logic for any <code>N</code> in a few lines. (The HIPV arbiter writes the same loop directly in an <code>always_comb</code> block instead of a function. The hardware is the same.) The variable <code>Y</code> is assigned on every path, starting with the default <code>'0</code>, so the function cannot create a latch. We use the <em>default first, then override</em> pattern here as well.</p>
+<p>What a function is not: it is not a module. It has no instances, no clock, and no delay, and it cannot remember anything. It cannot contain a flip-flop, and that is why we use it only for combinational logic. When we need a register or a block with its own hierarchy, we write a module.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Function</th>
+<th>Module</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>What it describes</td>
+<td>a combinational calculation</td>
+<td>any hardware, also registers</td>
+</tr>
+<tr class="even">
+<td>Output</td>
+<td>one value, returned</td>
+<td>any number of output ports</td>
+</tr>
+<tr class="odd">
+<td>How we use it</td>
+<td>called in an expression</td>
+<td>instantiated with a name</td>
+</tr>
+<tr class="even">
+<td>Appears in a schematic as</td>
+<td>logic, merged into the caller</td>
+<td>a box, a level of hierarchy</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="structural-design-module-instances" class="level2" data-number="5.16">
+<h2 data-number="5.16" class="anchored" data-anchor-id="structural-design-module-instances"><span class="header-section-number">5.16</span> Structural design: module instances</h2>
 <p>Behavioral modeling describes what a block <em>does</em>. <strong>Structural</strong> modeling describes a block by how it is <em>composed</em> of simpler modules. Each copy of a smaller module is an <strong>instance</strong>, and it has a unique name. Here is the smallest useful example, a 4:1 multiplexer assembled from three copies of a 2:1 multiplexer:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux2to1 (</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> a, b, sel,</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> y</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>);</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> y = sel ? b : a;</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux4to1_struct (</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d,</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel,</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>       y</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>);</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> y0, y1;                 <span class="co">// wires between the instances</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_low   <span class="dt">(.a</span>(d[<span class="dv">0</span>]),<span class="dt"> .b</span>(d[<span class="dv">1</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y0));</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_high  <span class="dt">(.a</span>(d[<span class="dv">2</span>]),<span class="dt"> .b</span>(d[<span class="dv">3</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y1));</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_final <span class="dt">(.a</span>(y0),   .b(y1),   .sel(sel[<span class="dv">1</span>]),<span class="dt"> .y</span>(y));</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux2to1 (</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> a, b, sel,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> y</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> y = sel ? b : a;</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> mux4to1_struct (</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>       y</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> y0, y1;                 <span class="co">// wires between the instances</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_low   <span class="dt">(.a</span>(d[<span class="dv">0</span>]),<span class="dt"> .b</span>(d[<span class="dv">1</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y0));</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_high  <span class="dt">(.a</span>(d[<span class="dv">2</span>]),<span class="dt"> .b</span>(d[<span class="dv">3</span>]),<span class="dt"> .sel</span>(sel[<span class="dv">0</span>]),<span class="dt"> .y</span>(y1));</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  mux2to1 mux_final <span class="dt">(.a</span>(y0),   .b(y1),   .sel(sel[<span class="dv">1</span>]),<span class="dt"> .y</span>(y));</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>An instantiation has three parts. First comes the <strong>module name</strong> (<code>mux2to1</code>), then the <strong>instance name</strong> you choose (<code>mux_final</code>), then in parentheses the <strong>port connections</strong>. The notation <code>.a(y0)</code> reads “the module’s port <code>a</code> is connected to my signal <code>y0</code>”. These connections by name make the code easy to read and safe to reorder. There is also a positional form, <code>mux2to1 mux_final (y0, y1, sel[1], y);</code>, which is shorter and fails silently if someone later reorders the ports, so we avoid it. <a href="#fig-mux4-struct" class="quarto-xref">Figure&nbsp;<span>5.16</span></a> shows the result: the tool leaves the three instances as boxes, exactly as the hierarchy appears in the code.</p>
 <div id="fig-mux4-struct" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
@@ -1010,37 +1089,37 @@ Figure&nbsp;5.16: The structurally built <code>mux4to1_struct</code>: two instan
 </figcaption>
 </figure>
 </div>
-<section id="parameters" class="level3" data-number="5.15.1">
-<h3 data-number="5.15.1" class="anchored" data-anchor-id="parameters"><span class="header-section-number">5.15.1</span> Parameters</h3>
+<section id="parameters" class="level3" data-number="5.16.1">
+<h3 data-number="5.16.1" class="anchored" data-anchor-id="parameters"><span class="header-section-number">5.16.1</span> Parameters</h3>
 <p>A <strong>parameter</strong> makes a module configurable, which is how one description serves every width. We have been using this all along: <code>flopenr</code> declares <code>parameter WIDTH = 8</code>, and each instance picks its own. The override goes between the module name and the instance name, after a <code>#</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>flopenr #(<span class="dv">32</span>) pcreg (...);          <span class="co">// a 32-bit instance, by position</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>flopenr #<span class="dt">(.WIDTH</span>(<span class="dv">32</span>)) pcreg (...);  <span class="co">// the same, by name</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>flopenr #(<span class="dv">32</span>) pcreg (...);          <span class="co">// a 32-bit instance, by position</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>flopenr #<span class="dt">(.WIDTH</span>(<span class="dv">32</span>)) pcreg (...);  <span class="co">// the same, by name</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The by-name form is safer when a module has several parameters. A <code>localparam</code> is a constant inside a module that, unlike a <code>parameter</code>, cannot be overridden from outside, which makes it the right choice for derived constants.</p>
 </section>
-<section id="a-real-example-the-program-counter-of-hipv" class="level3" data-number="5.15.2">
-<h3 data-number="5.15.2" class="anchored" data-anchor-id="a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.15.2</span> A real example: the program counter of HIPV</h3>
+<section id="a-real-example-the-program-counter-of-hipv" class="level3" data-number="5.16.2">
+<h3 data-number="5.16.2" class="anchored" data-anchor-id="a-real-example-the-program-counter-of-hipv"><span class="header-section-number">5.16.2</span> A real example: the program counter of HIPV</h3>
 <p>HIPV’s fetch unit is almost entirely structural. Its program-counter loop is built from three of the leaf cells we wrote above. The code is the actual instantiation, reduced to this loop:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> pc_unit (</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCEnF,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCSrcE,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCTargetE,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCF</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>);</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCNextF, PCPlus4F;</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next PC selection: sequential or redirect from Execute</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) pcmux (</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>      .D0(PCPlus4F),<span class="dt"> .D1</span>(PCTargetE),<span class="dt"> .S</span>(PCSrcE),<span class="dt"> .Y</span>(PCNextF));</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// PC register</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg (</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>      .clk(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(PCEnF),<span class="dt"> .D</span>(PCNextF),<span class="dt"> .Q</span>(PCF));</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sequential PC</span></span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  adder #(<span class="dv">32</span>) pcadd4 (</span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>      .A(PCF),<span class="dt"> .B</span>(<span class="bn">32'd4</span>),<span class="dt"> .Y</span>(PCPlus4F));</span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> pc_unit (</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        clk, reset,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCEnF,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span>        PCSrcE,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCTargetE,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCF</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">31</span>:<span class="dv">0</span>] PCNextF, PCPlus4F;</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">// next PC selection: sequential or redirect from Execute</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  mux2 #(<span class="dv">32</span>) pcmux (</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>      .D0(PCPlus4F),<span class="dt"> .D1</span>(PCTargetE),<span class="dt"> .S</span>(PCSrcE),<span class="dt"> .Y</span>(PCNextF));</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// PC register</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  flopenr #(<span class="dv">32</span>) pcreg (</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>      .clk(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .en</span>(PCEnF),<span class="dt"> .D</span>(PCNextF),<span class="dt"> .Q</span>(PCF));</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">// sequential PC</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  adder #(<span class="dv">32</span>) pcadd4 (</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>      .A(PCF),<span class="dt"> .B</span>(<span class="bn">32'd4</span>),<span class="dt"> .Y</span>(PCPlus4F));</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Everything inside the parentheses is a wire name, and nothing here describes any behavior: it only says which cell goes where. The register holds the PC, the adder computes <code>PC + 4</code>, and the multiplexer chooses between that and a branch target (<a href="#fig-pc-unit" class="quarto-xref">Figure&nbsp;<span>5.17</span></a>). Note how the signals form a loop through the register, which is the only place where the loop is broken by a clock.</p>
 <div id="fig-pc-unit" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
@@ -1053,66 +1132,171 @@ Figure&nbsp;5.17: The PC loop of HIPV, drawn by Yosys with the three cells expan
 </figure>
 </div>
 </section>
+<section id="generate-many-copies-of-a-structure" class="level3" data-number="5.16.3">
+<h3 data-number="5.16.3" class="anchored" data-anchor-id="generate-many-copies-of-a-structure"><span class="header-section-number">5.16.3</span> Generate: many copies of a structure</h3>
+<p>The <code>adder4bit</code> of the previous chapter has a fixed width. To write a 32-bit adder, we would have to write 32 copies of a full adder by hand, and a 64-bit one would be another file. The <strong>generate</strong> construct solves this. A <code>generate for</code> loop replicates a piece of hardware as many times as we tell it, and the number is a parameter. Here is the ripple-carry adder again, as a chain of <code>N</code> full adders:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> full_adder (<span class="kw">input</span>  <span class="kw">logic</span> a, b, cin,</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                   <span class="kw">output</span> <span class="kw">logic</span> <span class="ot">sum</span>, cout);</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> <span class="ot">sum</span>  = a ^ b ^ cin;</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> cout = (a &amp; b) | (cin &amp; (a ^ b));</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> ripple_adder #(<span class="kw">parameter</span> N = <span class="dv">4</span>) (</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">input</span>  <span class="kw">logic</span> [N<span class="dv">-1</span>:<span class="dv">0</span>] a, b,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span> [N<span class="dv">-1</span>:<span class="dv">0</span>] <span class="ot">sum</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">output</span> <span class="kw">logic</span>         cout);</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [N:<span class="dv">0</span>] c;                 <span class="co">// carries, c[0] is the carry in</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> c[<span class="dv">0</span>] = <span class="bn">1'b0</span>;</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">genvar</span> i;</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">generate</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; N; i++) <span class="kw">begin :</span><span class="dt"> </span><span class="kw">gen_fa</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>      full_adder fa <span class="dt">(.a</span>(a[i]),<span class="dt"> .b</span>(b[i]),<span class="dt"> .cin</span>(c[i]),</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>                     .<span class="ot">sum</span>(<span class="ot">sum</span>[i]),<span class="dt"> .cout</span>(c[i+<span class="dv">1</span>]));</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endgenerate</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>  <span class="kw">assign</span> cout = c[N];</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The carry vector <code>c</code> has <code>N + 1</code> bits. Bit 0 is the carry in, which we tie to 0, and bit <code>i + 1</code> is the carry out of stage <code>i</code>, so the loop connects each stage to its neighbor. <a href="#fig-ripple-adder" class="quarto-xref">Figure&nbsp;<span>5.18</span></a> shows the result for the default <code>N = 4</code>. It is the same carry chain that we wrote by hand with <code>adder4bit</code>, with four instances of the same cell.</p>
+<div id="fig-ripple-adder" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ripple-adder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/rtl/ripple_adder.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ripple-adder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.18: The <code>ripple_adder</code> with <code>N = 4</code>: the <code>generate for</code> loop created four <code>full_adder</code> instances, chained through the carry.
+</figcaption>
+</figure>
+</div>
+<p>There are four things to know about this code:</p>
+<ul>
+<li><strong><code>genvar</code></strong> declares the loop variable of a generate loop. It is not a signal and not a variable of the hardware. It exists only while the tool builds the design, which is called <strong>elaboration</strong>. We cannot use it anywhere else.</li>
+<li><strong>The loop runs at elaboration, not in time.</strong> Nothing in the hardware counts from 0 to <code>N - 1</code>. The tool executes the loop once, before the simulation or synthesis starts, and creates <code>N</code> copies of everything inside. This is why the bounds of the loop must be constants, such as a parameter.</li>
+<li><strong>The block needs a label</strong>, here <code>gen_fa</code>. Each copy gets a name from it: the instances are called <code>gen_fa[0].fa</code>, <code>gen_fa[1].fa</code>, and so on. We see these names in the waveform viewer, and they are the way to find one copy among many.</li>
+<li><strong>A generate loop can contain more than instances.</strong> It may hold <code>assign</code> statements, <code>always_ff</code> and <code>always_comb</code> blocks, and declarations. Whatever is inside is replicated.</li>
+</ul>
+<p>The crossbar of the HIPV SoC uses the same construct. It needs an arbiter and a request signal for every slave, and the number of slaves comes from a package, so adding a slave to the package adds an arbiter. This is the code, reduced to the loop:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">genvar</span> <span class="kw">s</span>;</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">generate</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (<span class="kw">s</span> = <span class="dv">0</span>; <span class="kw">s</span> &lt; NUM_SLAVES; <span class="kw">s</span>++) <span class="kw">begin :</span><span class="dt"> </span><span class="kw">gen_slave</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>      obi_arbiter #<span class="dt">(.NUM_MASTERS</span>(NUM_MASTERS))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>        arb<span class="dt">(.Req</span>(SlaveReqM[<span class="kw">s</span>]),<span class="dt"> .Grant</span>(GrantM[<span class="kw">s</span>]));</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>      <span class="kw">assign</span> SReq[<span class="kw">s</span>] = |SlaveReqM[<span class="kw">s</span>] &amp; ~SlaveBusy[<span class="kw">s</span>];</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endgenerate</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Every iteration instantiates one arbiter and one <code>assign</code>, both indexed with <code>s</code>. In the array <code>SlaveReqM[s]</code>, which we meet in the chapter about the SoC, the loop variable picks the elements that belong to this copy.</p>
+<p>The second form of generate chooses what to build, or checks a condition, instead of repeating one description. A <code>generate if</code> has a condition that must be a constant, and only the branch that is true is built. A good use is a check that costs no hardware. The address decoder of the crossbar compares the upper bits of the address, and the number of bits must match the size of the regions in the package. It verifies this when the design is built:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> (IMEM_SIZE != <span class="bn">32'd1</span> &lt;&lt; MEM_LSB || DMEM_SIZE != <span class="bn">32'd1</span> &lt;&lt; MEM_LSB) <span class="kw">begin :</span><span class="dt"> </span><span class="kw">gen_check_mem</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$error</span>(<span class="st">"memory region size does not match MEM_LSB"</span>);</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The condition is made of constants, so the tool evaluates it during elaboration. If it is true, the tool stops with the error message, and if it is false, the block is empty and produces nothing. The same form can also select between two descriptions, with an <code>else</code> branch. The branch that is not selected does not exist in the hardware. It costs nothing, and it may even refer to signals that the selected branch does not need.</p>
+<p>A <code>for</code> loop can appear in two different places, and they are easy to confuse:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><code>generate for</code></th>
+<th><code>for</code> in <code>always_comb</code> or in a function</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Where it lives</td>
+<td>at the level of the module</td>
+<td>inside a procedural block</td>
+</tr>
+<tr class="even">
+<td>Loop variable</td>
+<td><code>genvar</code></td>
+<td><code>int</code></td>
+</tr>
+<tr class="odd">
+<td>What it replicates</td>
+<td>instances, <code>assign</code>, <code>always</code> blocks, declarations</td>
+<td>statements</td>
+</tr>
+<tr class="even">
+<td>Can instantiate a module</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td>What runs</td>
+<td>elaboration builds the copies</td>
+<td>the tool unrolls the statements</td>
+</tr>
+</tbody>
+</table>
+<p>In both cases the loop produces hardware and does not run in time. The rule of thumb is simple: if we need to create instances or separate blocks, we use <code>generate for</code>. If we only need to compute a value in a repetitive way, a loop inside <code>always_comb</code> or in a function is enough.</p>
 </section>
-<section id="testbenches" class="level2" data-number="5.16">
-<h2 data-number="5.16" class="anchored" data-anchor-id="testbenches"><span class="header-section-number">5.16</span> Testbenches</h2>
+</section>
+<section id="testbenches" class="level2" data-number="5.17">
+<h2 data-number="5.17" class="anchored" data-anchor-id="testbenches"><span class="header-section-number">5.17</span> Testbenches</h2>
 <p>A <strong>testbench</strong> is a module that tests another module, the <em>device under test</em> (DUT). It applies inputs to the DUT and, ideally, checks that the outputs are right. Its inputs and the expected outputs are the <em>test vectors</em>. A testbench has no ports of its own: it sits at the top of the simulation, so everything it needs is declared inside as plain <code>logic</code> signals and wired to the DUT by name, like any other instance.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_mux4to1;</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d;</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel;</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       y;</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  mux4to1_struct dut <span class="dt">(.d</span>(d),<span class="dt"> .sel</span>(sel),<span class="dt"> .y</span>(y));</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    d = <span class="bn">4'b1010</span>;</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">4</span>; i++) <span class="kw">begin</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      sel = i[<span class="dv">1</span>:<span class="dv">0</span>];</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>      <span class="bn">#10</span>;</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">$display</span>(<span class="st">"d=%b sel=%b y=%b"</span>, d, sel, y);</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> (y !== d[sel]) <span class="kw">$error</span>(<span class="st">"sel=%b: expected %b, got %b"</span>, sel, d[sel], y);</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_mux4to1;</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] d;</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">1</span>:<span class="dv">0</span>] sel;</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       y;</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  mux4to1_struct dut <span class="dt">(.d</span>(d),<span class="dt"> .sel</span>(sel),<span class="dt"> .y</span>(y));</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    d = <span class="bn">4'b1010</span>;</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">4</span>; i++) <span class="kw">begin</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>      sel = i[<span class="dv">1</span>:<span class="dv">0</span>];</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>      <span class="bn">#10</span>;</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">$display</span>(<span class="st">"d=%b sel=%b y=%b"</span>, d, sel, y);</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">if</span> (y !== d[sel]) <span class="kw">$error</span>(<span class="st">"sel=%b: expected %b, got %b"</span>, sel, d[sel], y);</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Everything happens in the <code>initial</code> block, which starts at time zero and runs once. It holds <code>d</code> fixed and sweeps <code>sel</code> through all four values. After each change it waits <code>#10</code> time units, <code>$display</code> prints the inputs and the output, and the <code>if</code> checks <code>y</code> against the bit of <code>d</code> that <code>sel</code> selects. The <code>#10</code> delay is not needed by the circuit, since a combinational output settles almost instantly. It gives each test case its own slice of simulation time, so the printed lines and the waveform stay readable. The comparison uses <code>!==</code>, which also catches an <code>X</code> on the output where <code>!=</code> would stay silent. <code>$finish</code> ends the simulation.</p>
 <p>These statements (<code>initial</code>, <code>#10</code>, <code>$display</code>, <code>$finish</code>) exist only in simulation. A synthesizer has no hardware for “wait 10 time units”, which is the line between the code you simulate and the code you synthesize.</p>
 </section>
-<section id="testbench-for-a-sequential-design" class="level2" data-number="5.17">
-<h2 data-number="5.17" class="anchored" data-anchor-id="testbench-for-a-sequential-design"><span class="header-section-number">5.17</span> Testbench for a sequential design</h2>
+<section id="testbench-for-a-sequential-design" class="level2" data-number="5.18">
+<h2 data-number="5.18" class="anchored" data-anchor-id="testbench-for-a-sequential-design"><span class="header-section-number">5.18</span> Testbench for a sequential design</h2>
 <p>A registered design only changes on a clock edge, so the testbench has to supply that clock; nothing else in the simulation will. Here it is for the counter of this chapter:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_counter;</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       clk = <span class="dv">0</span>;</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       reset = <span class="dv">1</span>;</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count;</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  counter4 dut <span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .count</span>(count));</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always</span> <span class="bn">#5</span> clk = ~clk;              <span class="co">// clock generator: period of 10 units</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#12</span> reset = <span class="dv">0</span>;                   <span class="co">// release reset between clock edges</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#100</span>;</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$display</span>(<span class="st">"count=%0d"</span>, count);</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb_counter;</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       clk = <span class="dv">0</span>;</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span>       reset = <span class="dv">1</span>;</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">logic</span> [<span class="dv">3</span>:<span class="dv">0</span>] count;</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  counter4 dut <span class="dt">(.clk</span>(clk),<span class="dt"> .reset</span>(reset),<span class="dt"> .count</span>(count));</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always</span> <span class="bn">#5</span> clk = ~clk;              <span class="co">// clock generator: period of 10 units</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#12</span> reset = <span class="dv">0</span>;                   <span class="co">// release reset between clock edges</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="bn">#100</span>;</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$display</span>(<span class="st">"count=%0d"</span>, count);</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">$finish</span>;</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The separate <code>always #5 clk = ~clk;</code> has no sensitivity list and no guard, so it keeps re-executing for the whole simulation and flips <code>clk</code> every 5 time units. That gives a free-running clock with a period of 10. It runs concurrently with the <code>initial</code> block below it: every <code>initial</code> and <code>always</code> block in a module starts at time zero and proceeds independently, which is why the clock generator lives in its own block.</p>
 <p>The stimulus holds <code>reset</code> high for the first clock edge (at time 5), then releases it at time 12, between edges, so that no input changes exactly when the clock rises, the same convention as in our waveforms. After the remaining ten rising edges the counter holds 10, which <code>$display</code> prints. The key difference from the combinational testbench is the waiting. A combinational output is valid almost immediately after its inputs change, but a register updates only once per clock edge, so a sequential testbench must always budget enough simulated time, or wait for a specific number of <code>@(posedge clk)</code> events, before checking the outputs.</p>
 <p><code>$finish</code> matters even more here. The clock generator never terminates on its own, so without an explicit <code>$finish</code> the simulation would run forever.</p>
 </section>
-<section id="running-a-simulation" class="level2" data-number="5.18">
-<h2 data-number="5.18" class="anchored" data-anchor-id="running-a-simulation"><span class="header-section-number">5.18</span> Running a simulation</h2>
+<section id="running-a-simulation" class="level2" data-number="5.19">
+<h2 data-number="5.19" class="anchored" data-anchor-id="running-a-simulation"><span class="header-section-number">5.19</span> Running a simulation</h2>
 <p>Any SystemVerilog simulator can run these testbenches. With the open-source Icarus Verilog, you compile the design together with its testbench and run the result:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">iverilog</span> <span class="at">-g2012</span> <span class="at">-o</span> sim_counter counter4.sv tb_counter.sv</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">vvp</span> sim_counter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">iverilog</span> <span class="at">-g2012</span> <span class="at">-o</span> sim_counter counter4.sv tb_counter.sv</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">vvp</span> sim_counter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The <code>-g2012</code> option selects the SystemVerilog language level. To look at waveforms instead of printed lines, add two statements at the start of the <code>initial</code> block, and open the resulting file in GTKWave:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpfile</span>(<span class="st">"tb_counter.vcd"</span>);</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpvars</span>(<span class="dv">0</span>, tb_counter);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpfile</span>(<span class="st">"tb_counter.vcd"</span>);</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="kw">$dumpvars</span>(<span class="dv">0</span>, tb_counter);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>The waveforms you get are the same kind as the ones drawn in this chapter, and reading them is the same skill. Checking results by eye does not scale beyond a handful of signals, though. A testbench that compares outputs against expected values, as ours does with <code>$error</code>, can be run again after every change and report a clear pass or fail. Later in the course we move this idea to a Python framework, cocotb, which makes writing such checks much easier.</p>
 </section>
-<section id="from-design-to-the-pipeline" class="level2" data-number="5.19">
-<h2 data-number="5.19" class="anchored" data-anchor-id="from-design-to-the-pipeline"><span class="header-section-number">5.19</span> From design to the pipeline</h2>
+<section id="from-design-to-the-pipeline" class="level2" data-number="5.20">
+<h2 data-number="5.20" class="anchored" data-anchor-id="from-design-to-the-pipeline"><span class="header-section-number">5.20</span> From design to the pipeline</h2>
 <p>Everything introduced here is the working vocabulary of the rest of the course. <code>always_ff</code> with non-blocking assignment and a synchronous reset is how every pipeline register is built, through <code>flopenr</code> and its siblings. <code>always_comb</code> with a default at the top is how the ALU and the decoders avoid latch inference. Instances and parameters are how those cells are assembled into stages, and stages into a processor. The pipeline chapters introduce no new syntax: they put these constructs to work on a larger example.</p>
 
 

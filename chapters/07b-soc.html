@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.31">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>14&nbsp; System on chip design – Designing a RISC-V SoC</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/07c-hipv-soc.html" rel="next">
+<link href="../chapters/07-pipeline-hazards.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-8ef56b68f8fa1e9d2ba328e99e439f80.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-35191132f3498e878ee8f19bb70ea765.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-cc30ecb4b7ec97365b05cf0026bfdf4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/07b-soc.html"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Designing a RISC-V SoC</a> 
+        <div class="sidebar-tools-main">
+    <a href="../Designing-a-RISC-V-SoC.pdf" title="Download PDF" class="quarto-navigation-tool px-1" aria-label="Download PDF"><i class="bi bi-file-pdf"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/00-digital-design-intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction to Digital Design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/01-digital-ic-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Basics of Digital Integrated Circuits</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/03-fpga-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">FPGA Fundamentals</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/04-sv-basics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">SystemVerilog Basics</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05-sv-design.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Designing with SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/05b-fsm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Finite State Machines</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06-pipeline-structure.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Five-Stage Pipeline — Structure</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06b-ifu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Instruction fetch unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06c-idu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Instruction decode unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06d-ieu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Integer execution unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06e-lsu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Load/store unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/06f-wbu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Writeback unit</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07-pipeline-hazards.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Pipeline hazards and the HIPV core</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07b-soc.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/07c-hipv-soc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/08-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Memory — Implementation in SystemVerilog</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/09-cocotb-verification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verification with CocoTB</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">References</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-soc" id="toc-sec-soc" class="nav-link active" data-scroll-target="#sec-soc">System on chip design</a>
+  <ul class="collapse">
+  <li><a href="#goal-for-this-week" id="toc-goal-for-this-week" class="nav-link" data-scroll-target="#goal-for-this-week"><span class="header-section-number">14.1</span> Goal for this week</a></li>
+  <li><a href="#fpga-system-on-chip-development" id="toc-fpga-system-on-chip-development" class="nav-link" data-scroll-target="#fpga-system-on-chip-development"><span class="header-section-number">14.2</span> FPGA system on chip development</a>
+  <ul class="collapse">
+  <li><a href="#what-is-a-soc" id="toc-what-is-a-soc" class="nav-link" data-scroll-target="#what-is-a-soc"><span class="header-section-number">14.2.1</span> What is a SoC?</a></li>
+  <li><a href="#hardware-or-software" id="toc-hardware-or-software" class="nav-link" data-scroll-target="#hardware-or-software"><span class="header-section-number">14.2.2</span> Hardware or software?</a></li>
+  <li><a href="#the-development-flow" id="toc-the-development-flow" class="nav-link" data-scroll-target="#the-development-flow"><span class="header-section-number">14.2.3</span> The development flow</a></li>
+  </ul></li>
+  <li><a href="#on-chip-communication" id="toc-on-chip-communication" class="nav-link" data-scroll-target="#on-chip-communication"><span class="header-section-number">14.3</span> On-chip communication</a>
+  <ul class="collapse">
+  <li><a href="#the-interconnect" id="toc-the-interconnect" class="nav-link" data-scroll-target="#the-interconnect"><span class="header-section-number">14.3.1</span> The interconnect</a></li>
+  <li><a href="#what-we-ask-of-the-interconnect" id="toc-what-we-ask-of-the-interconnect" class="nav-link" data-scroll-target="#what-we-ask-of-the-interconnect"><span class="header-section-number">14.3.2</span> What we ask of the interconnect</a></li>
+  <li><a href="#topology-protocol-and-mapping" id="toc-topology-protocol-and-mapping" class="nav-link" data-scroll-target="#topology-protocol-and-mapping"><span class="header-section-number">14.3.3</span> Topology, protocol, and mapping</a></li>
+  <li><a href="#the-parts-of-a-bus-system" id="toc-the-parts-of-a-bus-system" class="nav-link" data-scroll-target="#the-parts-of-a-bus-system"><span class="header-section-number">14.3.4</span> The parts of a bus system</a></li>
+  <li><a href="#interface-and-protocol" id="toc-interface-and-protocol" class="nav-link" data-scroll-target="#interface-and-protocol"><span class="header-section-number">14.3.5</span> Interface and protocol</a></li>
+  </ul></li>
+  <li><a href="#the-obi-protocol" id="toc-the-obi-protocol" class="nav-link" data-scroll-target="#the-obi-protocol"><span class="header-section-number">14.4</span> The OBI protocol</a>
+  <ul class="collapse">
+  <li><a href="#why-obi" id="toc-why-obi" class="nav-link" data-scroll-target="#why-obi"><span class="header-section-number">14.4.1</span> Why OBI?</a></li>
+  <li><a href="#transactions-blocking-and-pipelined" id="toc-transactions-blocking-and-pipelined" class="nav-link" data-scroll-target="#transactions-blocking-and-pipelined"><span class="header-section-number">14.4.2</span> Transactions: blocking and pipelined</a></li>
+  <li><a href="#channels-and-signals" id="toc-channels-and-signals" class="nav-link" data-scroll-target="#channels-and-signals"><span class="header-section-number">14.4.3</span> Channels and signals</a></li>
+  <li><a href="#write-and-read-transactions" id="toc-write-and-read-transactions" class="nav-link" data-scroll-target="#write-and-read-transactions"><span class="header-section-number">14.4.4</span> Write and read transactions</a></li>
+  <li><a href="#two-handshakes" id="toc-two-handshakes" class="nav-link" data-scroll-target="#two-handshakes"><span class="header-section-number">14.4.5</span> Two handshakes</a></li>
+  <li><a href="#obi-in-hipv" id="toc-obi-in-hipv" class="nav-link" data-scroll-target="#obi-in-hipv"><span class="header-section-number">14.4.6</span> OBI in HIPV</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">14.5</span> Summary</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">System on chip design</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="sec-soc" class="level1 unnumbered">
+<h1 class="unnumbered">System on chip design</h1>
+<section id="goal-for-this-week" class="level2" data-number="14.1">
+<h2 data-number="14.1" class="anchored" data-anchor-id="goal-for-this-week"><span class="header-section-number">14.1</span> Goal for this week</h2>
+<ul>
+<li>Know what a system on chip (SoC) is and how an FPGA SoC is developed</li>
+<li>Describe the parts of an on-chip bus system: masters, slaves, the decoder, and bridges</li>
+<li>Explain the valid/ready handshake as the basis of on-chip communication</li>
+<li>Read and draw the transactions of the OBI protocol, with its two channels and two handshakes</li>
+</ul>
+</section>
+<section id="fpga-system-on-chip-development" class="level2" data-number="14.2">
+<h2 data-number="14.2" class="anchored" data-anchor-id="fpga-system-on-chip-development"><span class="header-section-number">14.2</span> FPGA system on chip development</h2>
+<section id="what-is-a-soc" class="level3" data-number="14.2.1">
+<h3 data-number="14.2.1" class="anchored" data-anchor-id="what-is-a-soc"><span class="header-section-number">14.2.1</span> What is a SoC?</h3>
+<p>A <strong>system on chip</strong> (SoC) packages the basic parts of a computer into a single integrated circuit: a processor, some simple I/O peripherals, and often special-purpose hardware for tasks that a processor does slowly. So far we have built only the processor, HIPV, and its two ports to memory. A processor alone cannot do anything useful. It needs memory to hold the program and the data, and peripherals to communicate with the world. The SoC is the design in which these parts meet.</p>
+<p>On an FPGA, we decide what the SoC contains. This is the main advantage over a fixed chip. We can tailor a <em>soft</em> processor, which is a processor described in HDL and placed in the fabric, as we did with HIPV. We can include only the peripherals that the application needs, and we can leave out the rest and save the resources. And for the computationally heavy part of an application, we can design a hardware accelerator and connect it next to the processor.</p>
+</section>
+<section id="hardware-or-software" class="level3" data-number="14.2.2">
+<h3 data-number="14.2.2" class="anchored" data-anchor-id="hardware-or-software"><span class="header-section-number">14.2.2</span> Hardware or software?</h3>
+<p>The freedom to choose has a consequence. Every function of the system can be implemented in software, which is flexible and easy to change but runs on a processor that executes it instruction by instruction, or in hardware, which is fast but fixed. Deciding which part goes where is the <strong>hardware/software partition</strong>, and it is the first design decision of an SoC. Because both sides are under our control, the hardware and the software can be developed at the same time, and each can be adapted to the other. This is <strong>HW/SW co-design</strong>.</p>
+<p>We rarely build all the hardware ourselves. Many functions, such as a UART, an SPI or I2C controller, or an Ethernet MAC, are standard. They exist as <strong>IP cores</strong> (intellectual property cores): pre-designed components that we can integrate into the design. IP cores come from the FPGA vendor, from third parties, or from our own earlier projects.</p>
+</section>
+<section id="the-development-flow" class="level3" data-number="14.2.3">
+<h3 data-number="14.2.3" class="anchored" data-anchor-id="the-development-flow"><span class="header-section-number">14.2.3</span> The development flow</h3>
+<div id="fig-soc-flow" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-soc-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/soc-flow.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-soc-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.1: The development flow of an FPGA SoC. After the partition, the hardware path and the software path run in parallel. The hardware path passes the memory map to the software path. Both paths end in an artifact, the bitstream and the memory image, which are integrated on the board and tested together. A failed test sends us back.
+</figcaption>
+</figure>
+</div>
+<p>The development of an FPGA SoC follows a flow that we can read in <a href="#fig-soc-flow" class="quarto-xref">Figure&nbsp;<span>14.1</span></a>. It starts with the <strong>partition</strong>: for every function of the system, we decide whether it goes into hardware or into software. Then two paths run in parallel.</p>
+<p>The <strong>hardware path</strong> has five steps. We first select the IP cores that the platform needs, such as the processor, the memory and the UART. Then we design the custom cores that no IP core provides, in an HDL, and give each one a <strong>bus wrapper</strong> so that it can be connected as a slave. In the third step we assemble the platform: a top level that connects all the cores to the interconnect, and an <strong>address map</strong> that gives every slave its region. We then simulate, with a testbench for each module and one for the whole system. The last step, synthesis, placement and routing, produces the <strong>bitstream</strong>, the file that configures the FPGA.</p>
+<p>The <strong>software path</strong> has four steps. We write the drivers and the board support package. They need to know where every device is, and that is why the hardware path hands the <strong>memory map</strong> over to the software path. Then we write the application, compile and link it with a cross compiler, here for RISC-V, using a linker script that places the code and the data in the memory of the platform. The result is a <strong>memory image</strong>, a file with the bytes of the program.</p>
+<p>The two paths meet in the <strong>integration</strong>: we program the FPGA with the bitstream, and load the memory image into the memory of the SoC. Then comes the <strong>system-level test</strong>, where we run the program on the board and check its output, for example the text that it sends over the UART. If the test fails, the cause can be anywhere: a bug in a core, in a driver, or in the application, or a partition that does not meet the speed that we need. The arrow back in the figure goes to the beginning for this reason. We fix the problem, or we move a function from software to hardware, and go through the flow again.</p>
+<p>Vendor tools support the hardware path with a graphical integrator, such as the IP Integrator of Vivado. We connect the IP cores in a diagram, and the tool generates the HDL that describes the system. It also generates a hardware specification file that describes the platform for the software tools: the processor that it uses, the memory map, and the IP cores that it contains. In this course we write the top level ourselves in SystemVerilog, the same way as the structural top level <code>hipv_core</code> of the <a href="../chapters/07-pipeline-hazards.html">previous chapter</a>. The result is the same, a description of the platform, but we see every connection.</p>
+<p>The software side has two kinds of code. The <strong>system software</strong> is provided with the platform. The <strong>application software</strong> is the program that we write. Between them sits the <strong>board support package</strong> (BSP), a set of drivers and libraries that lets the application use the hardware platform. A <strong>device driver</strong> is the part that knows how to control one peripheral, which means that it is a translator between the application and the registers of the hardware.</p>
+</section>
+</section>
+<section id="on-chip-communication" class="level2" data-number="14.3">
+<h2 data-number="14.3" class="anchored" data-anchor-id="on-chip-communication"><span class="header-section-number">14.3</span> On-chip communication</h2>
+<section id="the-interconnect" class="level3" data-number="14.3.1">
+<h3 data-number="14.3.1" class="anchored" data-anchor-id="the-interconnect"><span class="header-section-number">14.3.1</span> The interconnect</h3>
+<p>All the parts of a SoC have to talk to each other, and the wires and logic that make this possible are the <strong>interconnect</strong>. The <strong>on-chip interconnect</strong> connects the processor, the IP blocks, and the memory that sits on the chip. The <strong>off-chip interconnect</strong> connects the chip to everything outside it, such as external peripherals, external memory, and other chips.</p>
+<p>The interconnect deserves attention, because it is more critical than it looks. Wires do not scale as well as transistors. As the technology improves, a transistor gets faster and smaller, but a long wire does not. As a result, the interconnect architecture is the most critical aspect of the performance of a modern system. By common estimates, up to half of the power of a system is consumed by the interconnect, and the largest part of the design effort is spent on it.</p>
+</section>
+<section id="what-we-ask-of-the-interconnect" class="level3" data-number="14.3.2">
+<h3 data-number="14.3.2" class="anchored" data-anchor-id="what-we-ask-of-the-interconnect"><span class="header-section-number">14.3.2</span> What we ask of the interconnect</h3>
+<p>Five properties decide whether an interconnect suits a design:</p>
+<ul>
+<li><strong>Bandwidth</strong> is the amount of data that can be transferred in a given time.</li>
+<li><strong>Latency</strong> is the time between a request and the response to it. Bandwidth and latency are not the same. A pipelined interconnect can have a high bandwidth and still take several cycles for each single access, as we will see with OBI.</li>
+<li><strong>Master and slave</strong> are the two roles of the parties on the interconnect. The master initiates a communication, and the slave responds to the requests of the master. A CPU is a master, and a memory is a slave. Newer specifications, among them OBI, call them <em>manager</em> and <em>subordinate</em>.</li>
+<li><strong>Concurrency</strong> is the ability of several masters to use the interconnect at the same time.</li>
+<li><strong>Multiple clock domains</strong> appear when parts of the system run at different frequencies. The interconnect has to carry data safely between them.</li>
+</ul>
+</section>
+<section id="topology-protocol-and-mapping" class="level3" data-number="14.3.3">
+<h3 data-number="14.3.3" class="anchored" data-anchor-id="topology-protocol-and-mapping"><span class="header-section-number">14.3.3</span> Topology, protocol, and mapping</h3>
+<p>Designing an interconnect means answering three questions.</p>
+<p><strong>Topology</strong> is how the components are connected to each other. The simplest is a shared bus, to which all components are attached. More capable topologies are the crossbar switch, which can connect several pairs at once, the hierarchical bus, rings, and meshes.</p>
+<p><strong>Protocol</strong> is the set of rules that manage the communication: how a piece of data is transferred, and how access is prioritized when several masters want the interconnect at the same time.</p>
+<p><strong>Mapping</strong> is the placement of the components onto the interconnect: which component is attached to which bus, and which one is a master or a slave. A guiding idea is the principle of locality. Components that communicate often should be close to each other, so that the latency of their communication is small.</p>
+</section>
+<section id="the-parts-of-a-bus-system" class="level3" data-number="14.3.4">
+<h3 data-number="14.3.4" class="anchored" data-anchor-id="the-parts-of-a-bus-system"><span class="header-section-number">14.3.4</span> The parts of a bus system</h3>
+<div id="fig-soc-components" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-soc-components-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/soc-components.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-soc-components-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.2: A basic SoC: masters, an interconnect with the address decoder and the read data multiplexer, slaves, and a bridge to a slower bus.
+</figcaption>
+</figure>
+</div>
+<p>A <strong>bus</strong> is a set of signals that is connected to several blocks. A basic bus has a clock and a reset for synchronization, an <strong>address</strong> bus that says which location the master wants, <strong>data</strong> buses for the data that is read or written, and <strong>control</strong> signals that manage the operation, such as whether it is a read or a write, or which slave is selected.</p>
+<p>A basic SoC (<a href="#fig-soc-components" class="quarto-xref">Figure&nbsp;<span>14.2</span></a>) is made of five kinds of components:</p>
+<ul>
+<li>A <strong>master</strong> initiates the communication. The processor is a master. A system may have several masters, for example a CPU and a DMA engine that moves data without involving the CPU.</li>
+<li>A <strong>slave</strong> responds to the requests of a master. Memories and peripherals are slaves, and there are usually many of them.</li>
+<li>The <strong>decoder</strong> looks at the address of a request and selects the one slave that the address belongs to. Every slave has its own range of the address space, and the decoder is where the <strong>memory map</strong> becomes hardware.</li>
+<li>The <strong>read data multiplexer</strong> does the opposite for the response. Many slaves can return data, but the master reads only one value, so the multiplexer connects the data of the selected slave to the master.</li>
+<li>A <strong>bridge</strong> connects two different buses, for example a fast bus for memories and a slower one for peripherals. A bridge may convert the protocol of one bus to the protocol of the other, convert the width of the data, and cross between two clock domains.</li>
+</ul>
+<p>The decoder and the multiplexer are the system-level logic of the interconnect. Its design is where the choices of topology, protocol, and mapping meet.</p>
+</section>
+<section id="interface-and-protocol" class="level3" data-number="14.3.5">
+<h3 data-number="14.3.5" class="anchored" data-anchor-id="interface-and-protocol"><span class="header-section-number">14.3.5</span> Interface and protocol</h3>
+<p>Every connection between two blocks has two parts. The <strong>interface</strong> is the set of signals that connect the blocks. The <strong>protocol</strong> is the set of rules that define how those signals are used, for example how data is transferred. Two blocks can have the same interface and still not understand each other, if their protocols differ.</p>
+<p>The most common protocol in on-chip communication is the <strong>handshake</strong>, which we already know from the stages of the HIPV pipeline. The sender raises <strong>valid</strong> (in other protocols called request or enqueue) to say that it has data. The receiver raises <strong>ready</strong> (acknowledge or dequeue) to say that it can accept data. The data moves at the clock edge where both are 1. The great strength of the handshake is that the two sides work at their own pace: a slow receiver simply holds <code>ready</code> low, and a sender with nothing to say holds <code>valid</code> low.</p>
+<div id="fig-soc-handshake" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-soc-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/soc_handshake.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-soc-handshake-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.3: The valid/ready handshake. The sender raises <code>valid</code> in cycle 2, but the receiver is not ready until cycle 4, so <code>D0</code> is transferred at the end of cycle 4. <code>D1</code> is transferred in cycle 6, where <code>ready</code> was already high.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-soc-handshake" class="quarto-xref">Figure&nbsp;<span>14.3</span></a> shows two transfers. In cycle 2 the sender raises <code>valid</code> and presents <code>D0</code>. The receiver is not ready, so the sender waits and keeps both <code>valid</code> and the data stable. In cycle 4 the receiver raises <code>ready</code>, both signals are 1, and <code>D0</code> is transferred at the end of the cycle. In cycle 5 the sender has nothing to send. In cycle 6 the receiver is ready and the sender offers <code>D1</code>, so both signals are 1 in the same cycle and the transfer happens at once. Neither side had to know how fast the other is, and that is why the handshake is so widely used.</p>
+</section>
+</section>
+<section id="the-obi-protocol" class="level2" data-number="14.4">
+<h2 data-number="14.4" class="anchored" data-anchor-id="the-obi-protocol"><span class="header-section-number">14.4</span> The OBI protocol</h2>
+<section id="why-obi" class="level3" data-number="14.4.1">
+<h3 data-number="14.4.1" class="anchored" data-anchor-id="why-obi"><span class="header-section-number">14.4.1</span> Why OBI?</h3>
+<p>We now describe the protocol that HIPV already uses on its two memory ports. In the <a href="../chapters/06b-ifu.html">IFU</a> and <a href="../chapters/06e-lsu.html">LSU</a> chapters we looked at it from the CPU side, with the signals that those units needed. Here we restate it as a general protocol, for any manager and any subordinate.</p>
+<p>The <strong>Open Bus Interface</strong> (OBI) is an open specification for on-chip communication. It was designed as a simpler alternative to protocols such as AXI and Wishbone. Two properties describe it. It is <strong>synchronous</strong>, which means that all communication is timed by the clock. And it is <strong>pipelined</strong>, which means that several transactions can be in flight at the same time. This improves the throughput without shortening the time that a single transaction needs.</p>
+</section>
+<section id="transactions-blocking-and-pipelined" class="level3" data-number="14.4.2">
+<h3 data-number="14.4.2" class="anchored" data-anchor-id="transactions-blocking-and-pipelined"><span class="header-section-number">14.4.2</span> Transactions: blocking and pipelined</h3>
+<div id="fig-obi-pipelined" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-obi-pipelined-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/obi_blocking_pipelined.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-obi-pipelined-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.4: Three transactions with a round trip of three cycles. A blocking manager waits for each response, so it needs nine cycles. A pipelined manager issues a new request in every cycle, and the last response arrives in cycle 5.
+</figcaption>
+</figure>
+</div>
+<p>Every transaction on the SoC has two phases: a <strong>request</strong> from the manager, and a <strong>response</strong> from the subordinate. There are two ways to organize the transactions (<a href="#fig-obi-pipelined" class="quarto-xref">Figure&nbsp;<span>14.4</span></a>).</p>
+<p>In the <strong>blocking</strong> model, a new transaction can start only after the previous one has completed. The manager stalls after it issues a request and cannot continue until the response arrives. This is easy to build, because nothing has to be tracked, but the throughput is low: one transaction per round trip. In the figure, a round trip takes three cycles, so three transactions need nine.</p>
+<p>In the <strong>pipelined</strong> model, the manager can issue new requests without waiting for the responses to earlier ones. Requests and responses use separate channels, so they can overlap in time. The same three transactions now finish after five cycles, and once the pipeline is full, the throughput is one transaction per cycle. The latency of each transaction is still three cycles. Pipelining improves only the throughput.</p>
+<p>A general pipelined protocol needs two more things. Each request carries a <strong>unique ID</strong>, so that its response can be matched to it, and a <strong>reorder buffer</strong> puts the responses back in the order of the requests if the subordinate returns them out of order. OBI keeps this simple by returning the responses in the order of the requests, so a basic OBI manager needs neither.</p>
+</section>
+<section id="channels-and-signals" class="level3" data-number="14.4.3">
+<h3 data-number="14.4.3" class="anchored" data-anchor-id="channels-and-signals"><span class="header-section-number">14.4.3</span> Channels and signals</h3>
+<div id="fig-obi-channels" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-obi-channels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/blocks/obi-channels.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-obi-channels-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.5: The two channels of OBI. The address channel A carries the request from the manager to the subordinate, and the response channel R carries the answer back.
+</figcaption>
+</figure>
+</div>
+<p>OBI has two channels (<a href="#fig-obi-channels" class="quarto-xref">Figure&nbsp;<span>14.5</span></a>). The <strong>address channel A</strong> carries everything that defines a request, and the <strong>response channel R</strong> carries everything that returns.</p>
+<p>The signals of the address channel are:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>addr</code></td>
+<td>address of the target location, generated by the manager</td>
+</tr>
+<tr class="even">
+<td><code>we</code></td>
+<td>write enable: 1 for a write request, 0 for a read request</td>
+</tr>
+<tr class="odd">
+<td><code>wdata</code></td>
+<td>the data to write into the subordinate</td>
+</tr>
+<tr class="even">
+<td><code>be</code></td>
+<td>byte enable: which bytes of <code>wdata</code> are valid</td>
+</tr>
+<tr class="odd">
+<td><code>req</code></td>
+<td>request valid: the manager has put a valid request on the channel</td>
+</tr>
+<tr class="even">
+<td><code>gnt</code></td>
+<td>grant: the subordinate is ready to accept the address and the write data</td>
+</tr>
+</tbody>
+</table>
+<p>The byte enable has one bit for each byte of the 32-bit word, and bit <em>i</em> enables byte <em>i</em>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><code>be</code></th>
+<th>Byte 3</th>
+<th>Byte 2</th>
+<th>Byte 1</th>
+<th>Byte 0</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>0001</code></td>
+<td>no</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td><code>0100</code></td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr class="odd">
+<td><code>0011</code></td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td><code>1111</code></td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>The signals of the response channel are:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>rdata</code></td>
+<td>the data that a read returns</td>
+</tr>
+<tr class="even">
+<td><code>err</code></td>
+<td>the subordinate signals that the transaction failed</td>
+</tr>
+<tr class="odd">
+<td><code>rvalid</code></td>
+<td>response valid: the subordinate has a response</td>
+</tr>
+<tr class="even">
+<td><code>rready</code></td>
+<td>the manager is ready to accept the response</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="write-and-read-transactions" class="level3" data-number="14.4.4">
+<h3 data-number="14.4.4" class="anchored" data-anchor-id="write-and-read-transactions"><span class="header-section-number">14.4.4</span> Write and read transactions</h3>
+<div id="fig-obi-write" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-obi-write-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/obi_write.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-obi-write-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.6: An OBI write transaction. The manager holds <code>req</code> and the request signals in cycles 2 and 3. The subordinate grants in cycle 3, after one wait cycle, and signals that the write is complete with <code>rvalid</code> in cycle 5.
+</figcaption>
+</figure>
+</div>
+<p>A write transaction (<a href="#fig-obi-write" class="quarto-xref">Figure&nbsp;<span>14.6</span></a>) has three steps.</p>
+<ol type="1">
+<li><strong>Address phase.</strong> The manager drives the address and the write signals, <code>addr</code>, <code>we</code>, <code>be</code> and <code>wdata</code>, onto channel A and raises <code>req</code> to say that the request is valid. In the figure this starts in cycle 2.</li>
+<li><strong>Grant.</strong> The address phase completes in the cycle in which the subordinate raises <code>gnt</code>, because that is the signal for “I have accepted the address and the write data”. Until then, the manager holds <code>req</code> and all request signals unchanged. In the figure the subordinate needs one wait cycle, so the grant comes in cycle 3. The manager is now free to issue the next request, even though the response to this one is still pending.</li>
+<li><strong>Response phase.</strong> Some cycles after the grant, the subordinate raises <code>rvalid</code>, which means that the write has completed. In the figure this is cycle 5.</li>
+</ol>
+<p>We assume that <code>rready</code> is always 1, so the response completes in the cycle of <code>rvalid</code>. In general, the response completes only in a cycle in which both <code>rvalid</code> and <code>rready</code> are 1.</p>
+<div id="fig-obi-read" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-obi-read-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="../images/waves/obi_read.svg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-obi-read-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14.7: An OBI read transaction. The address phase is the same as for a write, with <code>we = 0</code>. In the response phase, <code>rvalid</code> marks the cycle in which <code>rdata</code> is valid.
+</figcaption>
+</figure>
+</div>
+<p>A read transaction (<a href="#fig-obi-read" class="quarto-xref">Figure&nbsp;<span>14.7</span></a>) follows the same flow. The only difference is in the response phase: <code>rvalid</code> now also says that the value on <code>rdata</code> is valid, and the manager must sample it in that cycle. In all other cycles, <code>rdata</code> carries no information. The signal <code>wdata</code> is not used in a read and can have any value.</p>
+</section>
+<section id="two-handshakes" class="level3" data-number="14.4.5">
+<h3 data-number="14.4.5" class="anchored" data-anchor-id="two-handshakes"><span class="header-section-number">14.4.5</span> Two handshakes</h3>
+<p>OBI uses the valid/ready handshake twice, once per channel.</p>
+<ul>
+<li>On <strong>channel A</strong>, the handshake is between <code>req</code> and <code>gnt</code>. The manager plays the sender with <code>req</code> as its valid, and the subordinate plays the receiver with <code>gnt</code> as its ready. Once <code>gnt</code> is 1 while <code>req</code> is 1, the manager knows that the request has been accepted, and it can proceed to the next transaction.</li>
+<li>On <strong>channel R</strong>, the roles are reversed. The subordinate is the sender, with <code>rvalid</code>, and the manager is the receiver, with <code>rready</code>. The response completes when both are 1 in the same cycle. In our SoC, <code>rready</code> is always 1, because the manager can always take the response.</li>
+</ul>
+<p>The two handshakes are independent, and this is what makes the pipelining possible. The address phase of a new transaction runs on channel A, while the response to an older one runs on channel R. In <a href="#fig-obi-pipelined" class="quarto-xref">Figure&nbsp;<span>14.4</span></a> the requests <code>A1</code> and <code>A2</code> travel at the same time as the responses <code>R0</code> and <code>R1</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+An analogy
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Think of a lecture. The professor calls on you and asks a question, which is <code>req</code>. You nod to show that you understood, which is <code>gnt</code>. The professor may now think of the next question. When you are ready to answer, you check that the professor is listening, which is <code>rready</code>. You give your answer, which is <code>rvalid</code> with the data on <code>rdata</code>, and the transaction is complete.</p>
+</div>
+</div>
+</section>
+<section id="obi-in-hipv" class="level3" data-number="14.4.6">
+<h3 data-number="14.4.6" class="anchored" data-anchor-id="obi-in-hipv"><span class="header-section-number">14.4.6</span> OBI in HIPV</h3>
+<p>HIPV is an OBI manager, and it implements the subset of the protocol that a simple core needs. The instruction port of the <a href="../chapters/06b-ifu.html">IFU</a> only reads, so it has <code>req</code>, <code>addr</code>, <code>gnt</code>, <code>rvalid</code> and <code>rdata</code>. The data port of the <a href="../chapters/06e-lsu.html">LSU</a> has the full request side, with <code>we</code>, <code>be</code> and <code>wdata</code>. Neither port has <code>rready</code> or <code>err</code>. They behave as if <code>rready</code> were always 1 and no transaction ever failed. The names carry the stage suffix, so that <code>ObiReqF</code> is the <code>req</code> of the IFU, and <code>ObiGntM</code> is the <code>gnt</code> of the LSU.</p>
+<p>Each of the two ports is one manager. The rest of the SoC, the interconnect with its decoder and multiplexer and the subordinates behind it, is what we design next.</p>
+</section>
+</section>
+<section id="summary" class="level2" data-number="14.5">
+<h2 data-number="14.5" class="anchored" data-anchor-id="summary"><span class="header-section-number">14.5</span> Summary</h2>
+<p>A system on chip puts the processor, the memory, the peripherals and the accelerators on one chip. On an FPGA, we choose each of them, and the design process starts with a partition of the functions into hardware and software, followed by parallel development of both sides, integration, and a system-level test.</p>
+<p>The parts communicate over an interconnect. Its basic components are the masters that initiate transactions, the slaves that respond, a decoder that selects the slave by address, a multiplexer that returns the data of the selected one, and bridges to other buses. Its quality is judged by bandwidth, latency, concurrency, and the handling of clock domains. At the bottom of every protocol is the valid/ready handshake.</p>
+<p>OBI uses the handshake twice. The address channel carries the request with <code>req</code> and <code>gnt</code>, and the response channel carries the answer with <code>rvalid</code> and <code>rready</code>. Because the channels are independent, transactions can be pipelined, which raises the throughput to one transaction per cycle. The two ports of HIPV already speak this protocol, and in the next step, we connect them to memories and peripherals.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/07-pipeline-hazards.html" class="pagination-link" aria-label="Pipeline hazards and the HIPV core">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Pipeline hazards and the HIPV core</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/07c-hipv-soc.html" class="pagination-link" aria-label="The HIPV SoC">
+        <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">The HIPV SoC</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
